@@ -55,7 +55,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Install dependencies
-        run: zef install --deps-only --/test "./${{ matrix.dist }}"
+        # --install-to=home, because ~/.raku is the one repository BOTH engines
+        # read. zef's default is the *Rakudo installation's* `site`, which the
+        # standalone rakupp binary knows nothing about — it has no idea where
+        # this Rakudo lives. The first CI run died on "Could not find
+        # JSON::Fast" under Raku++ having passed every test under Rakudo.
+        run: zef install --deps-only --/test --install-to=home "./${{ matrix.dist }}"
 
       - name: Test under Rakudo
         working-directory: ${{ matrix.dist }}
