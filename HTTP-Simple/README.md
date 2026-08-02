@@ -4,7 +4,7 @@ A batteries-included HTTP client for Raku: redirects, timeouts, JSON, cookies
 and retries behind one call.
 
 > **Status: v0.0.1 — the interface below is implemented and tested on both
-> engines, over plain HTTP.** See [Scope](#scope) for what the first version
+> engines, over HTTP and HTTPS.** See [Scope](#scope) for what the first version
 > leaves out, and [TLS](#tls) for the one dependency that is loaded on demand.
 
 ```raku
@@ -20,34 +20,15 @@ http-post 'https://api.example.com/users', json => %payload;
 http-post 'https://api.example.com/users', form => { name => 'Ada' };
 ```
 
-## Why it exists
-
-Raku has four partial answers and no complete one. `Cro::HTTP::Client` is
-capable but arrives with the whole Cro stack; `HTTP::UserAgent` is synchronous
-and long unmaintained; `HTTP::Tiny` and `WWW` are deliberately minimal; the curl
-bindings are native and archive-only. Nothing gives you redirects, cookies,
-TLS, JSON, timeouts and retries behind a single call — which is the baseline
-`requests`, `httpx`, `axios` and `faraday` all set in their own languages.
-
-## It is not a port of Perl's HTTP::Simple
-
-Perl's `HTTP::Simple` is a thin procedural veneer over `HTTP::Tiny` — `get`,
-`getjson`, `getstore`, `postform`. Two reasons this module is shaped
-differently:
-
-- **`get`, `put` and `head` are Raku CORE subs.** Exporting those names would
-  shadow the line-reading `get` and the printing `put` in every file that
-  imports the module. The procedural spelling Perl uses is simply not available.
-- That veneer is not the gap. Raku's own `LWP::Simple` already occupies it.
-
-So the shape borrowed here is the one every language converged on
-independently: **module-level functions for one-shot calls, a client object for
-anything stateful**. Method names are safe — a class has its own namespace — so
-the client gets the natural `.get`, `.put`, `.head`.
+Module-level functions for one-shot calls, a client object for anything
+stateful. It is not a port of Perl's `HTTP::Simple`, which is a procedural
+veneer over `HTTP::Tiny`.
 
 ## The one-shot layer
 
-Prefixed subs, because of the CORE collision above:
+The subs are prefixed because `get`, `put` and `head` are Raku CORE subs and
+exporting those names would shadow them. The client's *methods* keep the natural
+spelling — a class has its own namespace.
 
 | | |
 |---|---|
@@ -74,9 +55,8 @@ Options, identical on the subs and on the client:
 | `:ca-file($path)` / `:ca-path($dir)` | — | trust these anchors instead of the system store |
 | `:insecure` | `False` | accept any certificate — for testing, and it says so |
 
-Two defaults chosen deliberately: **there is a timeout** (having none is a
-famous footgun in `requests`) and **there are no retries unless asked** —
-silently repeating a non-idempotent call is worse than failing once.
+Note the two defaults: **there is a timeout**, and **there are no retries unless
+asked for**.
 
 ## The client layer
 
@@ -131,14 +111,12 @@ load time.
 
 **Certificates are verified**, against the system trust store by default.
 `:ca-file` / `:ca-path` name your own trust anchors; `:insecure` turns
-verification off, which is spelled that way on purpose. A rejected certificate
-throws `X::HTTP::Simple::Transport` carrying the reason OpenSSL gave — it used
-to be reported as a connection timeout, which sent you looking in the wrong
-place entirely.
+verification off. A rejected certificate throws
+`X::HTTP::Simple::Transport` carrying the reason OpenSSL gave.
 
-`t/05-tls.t` runs all of this against a TLS server the suite starts in-process,
-using the throwaway CA in [`t/tls/`](t/tls) — so the `https` path is tested on
-both engines, with no network and no public certificate authority involved.
+`t/05-tls.t` covers this against a TLS server the suite starts in-process, using
+the throwaway CA in [`t/tls/`](t/tls): no network, no public certificate
+authority.
 
 ## Scope
 
@@ -149,11 +127,9 @@ cookie jar on the client, opt-in retries with exponential backoff on transport
 failures for idempotent methods only, chunked transfer decoding, and
 `HTTP_PROXY` / `NO_PROXY` for plain HTTP.
 
-A response is framed by `Content-Length` or by its terminal chunk — the
-connection closing is only the delimiter when the response carries no framing of
-its own. Reading to the close in every case costs a round trip, and makes every
-request depend on the peer hanging up promptly, which is not a client's to
-assume.
+A response is framed by `Content-Length` or by its terminal chunk; the
+connection closing is the delimiter only when the response carries no framing of
+its own.
 
 **Deliberately out:** HTTP/2 (Cro has it, and it is a different module),
 streaming bodies and multipart uploads (v0.2 — the response type is designed to
@@ -168,25 +144,12 @@ and caching.
 Like everything in this repository, it is released only once its tests pass
 under Rakudo **and** under Raku++. All 95 assertions in `t/` pass on both.
 
-Writing it has surfaced four Raku++ bugs so far, which is the intended outcome
-rather than an obstacle. All four are fixed in Raku++:
-
-- `next without $x` read `without` as a loop label.
-- `Buf.new($blob)` stored the blob's element *count* as a single byte.
-- A `constant` used as a return type (`sub f() returns DH`) was reported
-  undeclared the moment the routine returned. This one blocked TLS outright:
-  `IO::Socket::Async::SSL` builds its DH parameters in exactly such a routine.
-- `orwith` after an `if`/`elsif` ran even when an earlier branch had already been
-  taken, so the chain was not a chain. That made a TLS client re-run its
-  handshake branch after every read.
-
-One deviation is still open, and the tests do not depend on it: under Raku++'s
-GIL a `Lock` is a no-op, so a `start` block taking a lock can run *inside* the
-holder's critical section where Rakudo makes it wait. `IO::Socket::Async::SSL`
-relies on that ordering to retire finished writes, and without it a TLS server
-never closes a connection. A client is not entitled to assume the peer closes
-anyway — hence the framing above, which is why this does not show up in `t/`.
-
 ## Licence
 
 Artistic-2.0.
+
+---
+
+Design notes — why it is shaped this way, and what running it on two engines has
+turned up — are kept out of the distribution, in
+[notes/HTTP-Simple.md](https://github.com/ash/raku-modules/blob/main/notes/HTTP-Simple.md).
