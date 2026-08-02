@@ -1,0 +1,39 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "JSON::Fast",
+    "URI",
+    "IO::Socket::Async::SSL"
+  ],
+  "description": "A batteries-included HTTP client: redirects, timeouts, JSON, cookies and retries behind one call",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "HTTP::Simple",
+  "provides": {
+    "HTTP::Simple": "lib/HTTP/Simple.rakumod",
+    "HTTP::Simple::Client": "lib/HTTP/Simple/Client.rakumod",
+    "HTTP::Simple::Response": "lib/HTTP/Simple/Response.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules",
+  "support": {
+    "source": "https://github.com/ash/raku-modules"
+  },
+  "tags": [
+    "HTTP",
+    "client",
+    "web",
+    "REST"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
