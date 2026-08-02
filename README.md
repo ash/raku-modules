@@ -7,6 +7,14 @@ Rakudo and `rakupp` — before it is released.
 They are modules for **Raku**, not for Raku++. The aim of Raku++ is to work
 everywhere Rakudo does, so anything published from here has to run on both.
 
+## What is here
+
+| distribution | version | Rakudo | Raku++ |
+|---|---|---|---|
+| [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 81/81 | 81/81 |
+
+Nothing has been released to the ecosystem yet.
+
 ## Layout
 
 One directory per distribution, each a complete distribution root:
@@ -61,14 +69,22 @@ replacing them would hide the bugs they find.
 ## Testing a distribution on both engines
 
 ```sh
-cd HTTP-Simple
-zef install --deps-only .
-raku   -Ilib t/            # Rakudo
-rakupp -Ilib t/            # Raku++
+./test.sh                  # every distribution, both engines
+./test.sh HTTP-Simple      # just one
 ```
 
-Both are expected to pass before anything is released. CI does the same for
-every distribution in the repository, on every push.
+Or by hand, from a distribution directory:
+
+```sh
+zef install --deps-only .
+raku   -Ilib t/01-response.t
+rakupp -Ilib t/01-response.t
+```
+
+Both engines are expected to pass before anything is released. CI does the same
+for every distribution in the repository, on every push — against the *released*
+Raku++ binary, so a module that depends on an unreleased engine fix will fail
+there until the next Raku++ release.
 
 ## Releasing
 

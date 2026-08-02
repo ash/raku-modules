@@ -3,8 +3,9 @@
 A batteries-included HTTP client for Raku: redirects, timeouts, JSON, cookies
 and retries behind one call.
 
-> **Status: design settled, implementation not started.** This file is the
-> agreed interface. Nothing below works yet.
+> **Status: v0.0.1 — the interface below is implemented and tested on both
+> engines, over plain HTTP.** See [Scope](#scope) for what the first version
+> leaves out, and [TLS](#tls) for the one dependency that is loaded on demand.
 
 ```raku
 use HTTP::Simple;
@@ -118,27 +119,43 @@ A **transport** failure — DNS, connect, TLS, timeout — throws
 not a malfunction, so it comes back as a response with `.ok` False. Pass
 `:fatal`, or call `.raise-for-status`, to invert that.
 
+## TLS
+
+`https` is served by `IO::Socket::Async::SSL`, which the client `require`s the
+first time an `https` URL comes along. That keeps plain HTTP working on a box
+where the TLS distribution will not build; when it is missing, an `https` call
+throws `X::HTTP::Simple::Transport` saying exactly that rather than failing at
+load time.
+
+It is listed in `depends`, so a normal `zef install` gets it. It is **not**
+installed on either engine here yet, so the `https` path is the one part of
+v0.0.1 with no test behind it.
+
 ## Scope
 
-**In v0.1:** the seven methods, query parameters, headers, basic and bearer
-auth, string/blob/form/JSON bodies, redirects with history, connect and total
-timeouts, TLS, a cookie jar on the client, proxies from `HTTP_PROXY` /
-`HTTPS_PROXY` / `NO_PROXY`, and opt-in retries with backoff.
+**In v0.0.1:** the seven methods, query parameters, headers, basic and bearer
+auth, string/blob/form/JSON bodies, redirects with history and RFC method
+rewriting, connect and total timeouts, a cookie jar on the client, opt-in
+retries with exponential backoff on transport failures for idempotent methods
+only, chunked transfer decoding, and `HTTP_PROXY` / `NO_PROXY` for plain HTTP.
 
 **Deliberately out:** HTTP/2 (Cro has it, and it is a different module),
 streaming bodies and multipart uploads (v0.2 — the response type is designed to
 allow it), an async API (v0.2, as `http-get-async` returning a `Promise`),
-gzip/deflate (needs a compression dependency; v0.1 asks for `identity`), and
-caching.
+gzip/deflate (needs a compression dependency; v0.0.1 asks for `identity`),
+connection reuse (every request sends `Connection: close`), `https` through a
+proxy (it needs `CONNECT` tunnelling; the client says so rather than pretending),
+and caching.
 
 ## Both engines
 
 Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++.
+under Rakudo **and** under Raku++. All 81 assertions in `t/` pass on both.
 
-`URI` currently passes 3 of its 14 test files under Raku++, so this module is
-expected to surface engine bugs before it ships. That is the intended outcome,
-not an obstacle: the fixes land in Raku++ and every module here gets re-run.
+Writing it surfaced two Raku++ bugs, which is the intended outcome rather than
+an obstacle: `next without $x` read `without` as a loop label, and
+`Buf.new($blob)` stored the blob's element *count* as a single byte. Both are
+fixed in Raku++.
 
 ## Licence
 

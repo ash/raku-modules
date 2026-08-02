@@ -17,7 +17,8 @@
   "provides": {
     "HTTP::Simple": "lib/HTTP/Simple.rakumod",
     "HTTP::Simple::Client": "lib/HTTP/Simple/Client.rakumod",
-    "HTTP::Simple::Response": "lib/HTTP/Simple/Response.rakumod"
+    "HTTP::Simple::Response": "lib/HTTP/Simple/Response.rakumod",
+    "HTTP::Simple::X": "lib/HTTP/Simple/X.rakumod"
   },
   "raku": "6.d",
   "resources": [

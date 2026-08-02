@@ -59,8 +59,14 @@ jobs:
 
       - name: Test under Rakudo
         working-directory: ${{ matrix.dist }}
-        run: raku -Ilib $(find t -name '*.t' -o -name '*.rakutest' | sort)
+        run: |
+          for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
+            echo "# $t"; raku -Ilib "$t" || exit 1
+          done
 
       - name: Test under Raku++
         working-directory: ${{ matrix.dist }}
-        run: rakupp -Ilib $(find t -name '*.t' -o -name '*.rakutest' | sort)
+        run: |
+          for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
+            echo "# $t"; rakupp -Ilib "$t" || exit 1
+          done
