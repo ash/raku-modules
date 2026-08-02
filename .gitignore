@@ -1,0 +1,3 @@
+.precomp/
+*.tar.gz
+lib/.precomp/

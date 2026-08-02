@@ -1,0 +1,66 @@
+name: both engines
+
+# Every distribution in the repository is tested under Rakudo AND Raku++ on
+# every push. That invariant is the reason these modules live in one repository
+# rather than one each.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      dists: ${{ steps.find.outputs.dists }}
+      any: ${{ steps.find.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        # a distribution is any directory holding a META6.json
+        run: |
+          dists=$(find . -maxdepth 2 -name META6.json -not -path './.*' \
+                  | sed 's|^\./||; s|/META6.json$||' | sort | jq -R . | jq -sc .)
+          echo "dists=$dists" >> "$GITHUB_OUTPUT"
+          [ "$dists" = "[]" ] && echo "any=false" >> "$GITHUB_OUTPUT" \
+                              || echo "any=true"  >> "$GITHUB_OUTPUT"
+          echo "found: $dists"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dist: ${{ fromJSON(needs.discover.outputs.dists) }}
+    name: ${{ matrix.dist }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rakudo
+        uses: Raku/setup-raku@v1
+
+      - name: Install Raku++
+        run: |
+          # The released binary, not a build: CI should test what users install.
+          url=$(gh release view --repo ash/rakupp --json assets \
+                -q '.assets[] | select(.name == "rakupp-linux-x86_64.tar.gz") | .url')
+          curl -sSL "$url" -o rakupp.tar.gz
+          tar xzf rakupp.tar.gz
+          sudo install -m 755 "$(find . -name rakupp -type f -perm -u+x | head -1)" /usr/local/bin/rakupp
+          rakupp --version
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Install dependencies
+        run: zef install --deps-only --/test "./${{ matrix.dist }}"
+
+      - name: Test under Rakudo
+        working-directory: ${{ matrix.dist }}
+        run: raku -Ilib $(find t -name '*.t' -o -name '*.rakutest' | sort)
+
+      - name: Test under Raku++
+        working-directory: ${{ matrix.dist }}
+        run: rakupp -Ilib $(find t -name '*.t' -o -name '*.rakutest' | sort)
