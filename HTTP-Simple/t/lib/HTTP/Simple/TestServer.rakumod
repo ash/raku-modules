@@ -10,14 +10,30 @@ has Int   $.port;
 has       &.handler is required;
 has       @.requests;
 has       $!tap;
+has Bool  $.tls = False;                #= serve https instead of http
+has Str   $.certificate-file;           #= required when :tls
+has Str   $.private-key-file;
 
 method start(--> HTTP::Simple::TestServer) {
+    my $listener = $!tls ?? self!tls-listener !! Nil;
+    my $last-error = '';
     for 31_500 .. 31_600 -> $candidate {
         my $failed = Promise.new;
         my $vow    = $failed.vow;
-        my $tap = IO::Socket::Async.listen('127.0.0.1', $candidate).tap(
+        my $supply = $!tls
+            ?? $listener.listen('127.0.0.1', $candidate,
+                   certificate-file => $!certificate-file,
+                   private-key-file => $!private-key-file)
+            !! IO::Socket::Async.listen('127.0.0.1', $candidate);
+        my $tap = $supply.tap(
             -> $conn { self!serve($conn) },
-            quit => { $vow.keep(True) if $failed.status ~~ Planned },
+            # Keep the reason. A port in use and a listener that cannot start at
+            # all both land here, and reporting the first for the second sends
+            # you looking in entirely the wrong place.
+            quit => -> $e {
+                $last-error = ~$e;
+                $vow.keep(True) if $failed.status ~~ Planned;
+            },
         );
         await Promise.anyof($failed, Promise.in(0.2));
         if $failed.status ~~ Kept {
@@ -28,12 +44,21 @@ method start(--> HTTP::Simple::TestServer) {
         $!port = $candidate;
         return self;
     }
-    die 'no free port in 31500..31600 for the test server';
+    die "no free port in 31500..31600 for the test server"
+        ~ ($last-error ?? " (last error: $last-error)" !! '');
 }
 
 method stop() { .close with $!tap; $!tap = Nil }
 
-method base(--> Str) { "http://127.0.0.1:{$!port}" }
+#| Loaded on demand, exactly as the client does it, so the plain-HTTP tests
+#| still run where the TLS distribution is not installed.
+method !tls-listener() {
+    my $c = try { require ::('IO::Socket::Async::SSL'); ::('IO::Socket::Async::SSL') };
+    die 'the TLS test server needs IO::Socket::Async::SSL' if $c.^name eq 'Any';
+    $c
+}
+
+method base(--> Str) { ($!tls ?? 'https' !! 'http') ~ "://127.0.0.1:{$!port}" }
 
 method url(Str $path --> Str) { self.base ~ $path }
 

@@ -15,6 +15,9 @@ has Bool $.follow = True;
 has Int  $.max-redirects = 10;
 has Bool $.proxy = True;                #= honour HTTP_PROXY / HTTPS_PROXY / NO_PROXY
 has Str  $.user-agent = 'HTTP::Simple/0.0.1 Raku';
+has Str  $.ca-file;                     #= trust anchors, instead of the system store
+has Str  $.ca-path;
+has Bool $.insecure = False;            #= accept any certificate — for testing only
 
 has %!jar;                              #= host => { name => value }
 has $!ssl;                              #= IO::Socket::Async::SSL, if installed
@@ -153,7 +156,15 @@ method !one-request(Str $method, Str $url, %opt, Real $timeout --> HTTP::Simple:
              ~ "\r\n";
     my $wire = Buf.new(|$head.encode('utf8').list, |$body-bytes.list);
 
-    my $raw  = self!exchange($scheme, $conn-host, $conn-port, $wire, $timeout, $url);
+    # Certificate trust is per-client, overridable per request. Without any of
+    # these the system trust store applies, which is what a caller wants.
+    my %tls;
+    with %opt<ca-file> // $!ca-file { %tls<ca-file> = .Str }
+    with %opt<ca-path> // $!ca-path { %tls<ca-path> = .Str }
+    %tls<insecure> = True if %opt<insecure> // $!insecure;
+
+    my $raw  = self!exchange($scheme, $conn-host, $conn-port, $wire, $timeout, $url,
+                             $method, %tls);
     my $resp = self!parse($raw, $url, $method);
     self!remember-cookies($host, $resp) if $!cookies;
     $resp
@@ -161,13 +172,24 @@ method !one-request(Str $method, Str $url, %opt, Real $timeout --> HTTP::Simple:
 
 # ------------------------------------------------------------------ transport
 
-#| Send the request and read until the server closes. `Connection: close` makes
-#| that exactly one response, which is why 0.0.1 does not reuse connections.
-method !exchange(Str $scheme, Str $host, Int $port, Blob $wire, Real $timeout, Str $url --> Blob) {
-    my $factory = $scheme eq 'https' ?? self!ssl-class !! IO::Socket::Async;
-
-    my $connecting = $factory.connect($host, $port);
+#| Send the request and read the response. The message frames itself —
+#| Content-Length, or the terminal chunk — and only a response with no framing
+#| at all is read until the server closes. Waiting for the close in every case
+#| costs a round trip, and makes every request depend on the peer hanging up
+#| promptly, which is not something a client gets to assume.
+method !exchange(Str $scheme, Str $host, Int $port, Blob $wire, Real $timeout, Str $url,
+                 Str $method, %tls = {} --> Blob) {
+    my $connecting = $scheme eq 'https'
+        ?? self!ssl-class.connect($host, $port, |%tls)
+        !! IO::Socket::Async.connect($host, $port);
     await Promise.anyof($connecting, Promise.in($!connect-timeout));
+    # A refused connection and a rejected certificate both land here; saying
+    # which one it was matters far more than saying "timed out" for both.
+    if $connecting.status ~~ Broken {
+        my $why = $connecting.cause.?message // ~$connecting.cause;
+        X::HTTP::Simple::Transport.new(:$url,
+            detail => "could not connect to $host:$port: $why").throw;
+    }
     unless $connecting.status ~~ Kept {
         X::HTTP::Simple::Transport.new(:$url,
             detail => "could not connect to $host:$port within {$!connect-timeout} s").throw;
@@ -177,8 +199,13 @@ method !exchange(Str $scheme, Str $host, Int $port, Blob $wire, Real $timeout, S
     my $buf  = Buf.new;
     my $done = Promise.new;
     my $vow  = $done.vow;
+    my %framing;                        # what !complete has worked out so far
     $conn.Supply(:bin).tap(
-        -> $chunk { $buf.append($chunk) },
+        -> $chunk {
+            $buf.append($chunk);
+            $vow.keep(True) if $done.status ~~ Planned
+                            && self!complete($buf, $method, %framing);
+        },
         done => { $vow.keep(True) if $done.status ~~ Planned },
         quit => { $vow.keep(True) if $done.status ~~ Planned },
     );
@@ -207,15 +234,44 @@ method !ssl-class() {
 
 # --------------------------------------------------------------------- parsing
 
+#| Has a complete response arrived? What it works out about the framing is kept
+#| in %st, so every chunk after the first costs a length comparison (or a walk
+#| resumed at the last chunk boundary) rather than a rescan of everything.
+method !complete(Blob $buf, Str $method, %st --> Bool) {
+    without %st<head> {
+        my ($sep, $gap) = head-end($buf);
+        return False without $sep;
+        %st<head> = $sep + $gap;
+        %st<from> = %st<head>;
+        my @lines  = $buf.subbuf(0, $sep).decode('latin-1').lines;
+        my $status = ((@lines[0] // '').split(' ')[1] // '0').Int;
+        my %h;
+        for @lines.skip(1) -> $line {
+            my $c = $line.index(':');
+            next without $c;
+            my $k = $line.substr(0, $c).trim.lc;
+            %h{$k} = $line.substr($c + 1).trim unless %h{$k}:exists;
+        }
+        # RFC 9110 §6.4.1: these carry no body, whatever the headers claim.
+        %st<none>    = $method eq 'HEAD' || $status == 204 | 304 || 100 <= $status < 200;
+        %st<chunked> = (%h<transfer-encoding> // '').lc.contains('chunked');
+        %st<want>    = Int;
+        with %h<content-length> { %st<want> = (try { .Int }) // Int }
+    }
+    return True if %st<none>;
+    if %st<chunked> {
+        my ($ended, $resume) = chunk-walk($buf, %st<from>);
+        %st<from> = $resume;
+        return $ended;
+    }
+    with %st<want> { return $buf.elems - %st<head> >= $_ }
+    False   # nothing frames this response but the close, so wait for it
+}
+
 method !parse(Blob $raw, Str $url, Str $method --> HTTP::Simple::Response) {
     # Byte offsets throughout: in a Raku string "\r\n" is a single grapheme, so
     # character positions would not line up with the wire at all.
-    my $sep = blob-index($raw, CRLF2);
-    my $gap = 4;
-    without $sep {
-        $sep = blob-index($raw, LF2);
-        $gap = 2;
-    }
+    my ($sep, $gap) = head-end($raw);
     X::HTTP::Simple::Transport.new(:$url,
         detail => $raw.elems ?? 'response headers never ended' !! 'empty response').throw
         without $sep;
@@ -326,6 +382,35 @@ method !remember-cookies(Str $host, HTTP::Simple::Response $resp) {
         my $eq   = $pair.index('=');
         next without $eq;
         %!jar{$host}{$pair.substr(0, $eq).trim} = $pair.substr($eq + 1).trim;
+    }
+}
+
+#| End of the header block: (offset of the blank line, its width in bytes), or
+#| the empty list while the headers are still arriving. A bare LF is accepted
+#| because servers in the wild send it.
+sub head-end(Blob $b --> List) {
+    my $sep = blob-index($b, CRLF2);
+    return ($sep, 4) with $sep;
+    $sep = blob-index($b, LF2);
+    return ($sep, 2) with $sep;
+    ()
+}
+
+#| Walk chunk headers from $from: (is the body complete?, where to resume). The
+#| resume offset is the last chunk boundary reached, so re-checking after each
+#| new chunk of bytes does not re-walk the ones already counted.
+sub chunk-walk(Blob $b, Int $from is copy --> List) {
+    loop {
+        my $nl = blob-index($b, CRLF, $from);
+        return (False, $from) without $nl;
+        my $size-line = $b.subbuf($from, $nl - $from).decode('latin-1').split(';')[0].trim;
+        my $size = try { :16($size-line) };
+        return (False, $from) without $size;
+        # After the terminal chunk come optional trailers and then a blank line.
+        return (blob-index($b, CRLF2, $nl).defined, $from) if $size == 0;
+        my $start = $nl + 2;
+        return (False, $from) if $b.elems < $start + $size + 2;
+        $from = $start + $size + 2;
     }
 }
 

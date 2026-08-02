@@ -11,7 +11,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 
 | distribution | version | Rakudo | Raku++ |
 |---|---|---|---|
-| [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 81/81 | 81/81 |
+| [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 95/95 | 95/95 |
 
 Nothing has been released to the ecosystem yet.
 
@@ -80,6 +80,22 @@ zef install --deps-only .
 raku   -Ilib t/01-response.t
 rakupp -Ilib t/01-response.t
 ```
+
+### If the two engines are built for different architectures
+
+A dependency with a native library records **one** absolute path at build time
+(`OpenSSL` writes it into `resources/libraries.json`), and both engines share one
+installation repository — so an x86_64 Rakudo and an arm64 Raku++ on the same Mac
+cannot both load it. Build a universal library once and point the install at it:
+
+```sh
+lipo -create /usr/local/opt/openssl@3/lib/libssl.3.dylib /opt/homebrew/opt/openssl@3/lib/libssl.3.dylib -output ~/.local/openssl-universal/lib/libssl.dylib
+```
+
+Do the same for `libcrypto`, then install with
+`OPENSSL_PREFIX=~/.local/openssl-universal`. Each slice keeps its own load paths,
+so both engines get a library of their own architecture from one file. CI is
+single-architecture and needs none of this.
 
 Both engines are expected to pass before anything is released. CI does the same
 for every distribution in the repository, on every push — against the *released*

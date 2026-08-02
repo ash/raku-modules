@@ -71,6 +71,8 @@ Options, identical on the subs and on the client:
 | `:retries($n)` | `0` | opt-in, exponential backoff, idempotent methods only |
 | `:auth($user, $pass)` / `:bearer($token)` | — | |
 | `:fatal` | `False` | throw on a 4xx/5xx instead of returning it |
+| `:ca-file($path)` / `:ca-path($dir)` | — | trust these anchors instead of the system store |
+| `:insecure` | `False` | accept any certificate — for testing, and it says so |
 
 Two defaults chosen deliberately: **there is a timeout** (having none is a
 famous footgun in `requests`) and **there are no retries unless asked** —
@@ -127,17 +129,31 @@ where the TLS distribution will not build; when it is missing, an `https` call
 throws `X::HTTP::Simple::Transport` saying exactly that rather than failing at
 load time.
 
-It is listed in `depends`, so a normal `zef install` gets it. It is **not**
-installed on either engine here yet, so the `https` path is the one part of
-v0.0.1 with no test behind it.
+**Certificates are verified**, against the system trust store by default.
+`:ca-file` / `:ca-path` name your own trust anchors; `:insecure` turns
+verification off, which is spelled that way on purpose. A rejected certificate
+throws `X::HTTP::Simple::Transport` carrying the reason OpenSSL gave — it used
+to be reported as a connection timeout, which sent you looking in the wrong
+place entirely.
+
+`t/05-tls.t` runs all of this against a TLS server the suite starts in-process,
+using the throwaway CA in [`t/tls/`](t/tls) — so the `https` path is tested on
+both engines, with no network and no public certificate authority involved.
 
 ## Scope
 
 **In v0.0.1:** the seven methods, query parameters, headers, basic and bearer
 auth, string/blob/form/JSON bodies, redirects with history and RFC method
-rewriting, connect and total timeouts, a cookie jar on the client, opt-in
-retries with exponential backoff on transport failures for idempotent methods
-only, chunked transfer decoding, and `HTTP_PROXY` / `NO_PROXY` for plain HTTP.
+rewriting, connect and total timeouts, TLS with certificate verification, a
+cookie jar on the client, opt-in retries with exponential backoff on transport
+failures for idempotent methods only, chunked transfer decoding, and
+`HTTP_PROXY` / `NO_PROXY` for plain HTTP.
+
+A response is framed by `Content-Length` or by its terminal chunk — the
+connection closing is only the delimiter when the response carries no framing of
+its own. Reading to the close in every case costs a round trip, and makes every
+request depend on the peer hanging up promptly, which is not a client's to
+assume.
 
 **Deliberately out:** HTTP/2 (Cro has it, and it is a different module),
 streaming bodies and multipart uploads (v0.2 — the response type is designed to
@@ -150,12 +166,26 @@ and caching.
 ## Both engines
 
 Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++. All 81 assertions in `t/` pass on both.
+under Rakudo **and** under Raku++. All 95 assertions in `t/` pass on both.
 
-Writing it surfaced two Raku++ bugs, which is the intended outcome rather than
-an obstacle: `next without $x` read `without` as a loop label, and
-`Buf.new($blob)` stored the blob's element *count* as a single byte. Both are
-fixed in Raku++.
+Writing it has surfaced four Raku++ bugs so far, which is the intended outcome
+rather than an obstacle. All four are fixed in Raku++:
+
+- `next without $x` read `without` as a loop label.
+- `Buf.new($blob)` stored the blob's element *count* as a single byte.
+- A `constant` used as a return type (`sub f() returns DH`) was reported
+  undeclared the moment the routine returned. This one blocked TLS outright:
+  `IO::Socket::Async::SSL` builds its DH parameters in exactly such a routine.
+- `orwith` after an `if`/`elsif` ran even when an earlier branch had already been
+  taken, so the chain was not a chain. That made a TLS client re-run its
+  handshake branch after every read.
+
+One deviation is still open, and the tests do not depend on it: under Raku++'s
+GIL a `Lock` is a no-op, so a `start` block taking a lock can run *inside* the
+holder's critical section where Rakudo makes it wait. `IO::Socket::Async::SSL`
+relies on that ordering to retire finished writes, and without it a TLS server
+never closes a connection. A client is not entitled to assume the peer closes
+anyway — hence the framing above, which is why this does not show up in `t/`.
 
 ## Licence
 
