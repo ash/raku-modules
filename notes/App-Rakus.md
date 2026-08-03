@@ -68,8 +68,11 @@ Both cost an afternoon each, and neither is obvious from the failure:
 | bug | what it broke |
 |---|---|
 | a synchronous socket reported its type as `Socket`, not `IO::Socket::INET` | `sub accept-loop(IO::Socket::INET $listener)` rejected its own listener — the one signature a server naturally writes |
-| `$( … )` interpolated nothing in a regex | `/ 'Content-Length: ' $($body.bytes) /` silently matched nothing; the async socket already had the type mapping the sync one lacked, one line away in the same switch |
+| `$( … )` interpolated nothing in a regex | `/ 'Content-Length: ' $($body.bytes) /` silently matched nothing, without erroring |
+| `IO::Handle.flush` did not exist | a trace file written while a test runs stayed empty until exit, and asking for it died |
+| `&MAIN`'s usage text differed from Rakudo's in five ways | options after positionals, no candidate description, unquoted `Str` defaults, `--x` for a one-character option — and a candidate's `#\|` leaking onto its first parameter |
 
-Both are fixed in Raku++. A third, not fixed and blocking nothing here:
-`IO::Handle.flush` does not exist under Raku++, so a test that flushes its own
-trace file dies rather than flushing.
+All are fixed in Raku++. Two were found by the module and two by simply reading
+`rakus --help` beside `raku`'s own output, which is worth doing for anything
+that ships a command: `rakupp prog.raku --help` and `raku prog.raku --help` are
+now byte-identical for a multi `MAIN` with docs, defaults and short options.
