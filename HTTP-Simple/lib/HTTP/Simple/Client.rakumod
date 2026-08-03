@@ -179,9 +179,18 @@ method !one-request(Str $method, Str $url, %opt, Real $timeout --> HTTP::Simple:
 #| promptly, which is not something a client gets to assume.
 method !exchange(Str $scheme, Str $host, Int $port, Blob $wire, Real $timeout, Str $url,
                  Str $method, %tls = {} --> Blob) {
-    my $connecting = $scheme eq 'https'
-        ?? self!ssl-class.connect($host, $port, |%tls)
-        !! IO::Socket::Async.connect($host, $port);
+    my $https = $scheme eq 'https';
+    my $ssl   = $https ?? self!ssl-class !! Nil;    # throws if the TLS dist is absent
+    my $connecting = try $https ?? $ssl.connect($host, $port, |%tls)
+                                !! IO::Socket::Async.connect($host, $port);
+    # A name that does not resolve is thrown by `.connect` itself instead of
+    # breaking the promise it would have returned, so it escapes past the check
+    # below — as a bare X::AdHoc, for a failure this module documents as a
+    # transport error like any other.
+    without $connecting {
+        X::HTTP::Simple::Transport.new(:$url,
+            detail => "could not connect to $host:$port: {$!.?message // $!}").throw;
+    }
     await Promise.anyof($connecting, Promise.in($!connect-timeout));
     # A refused connection and a rejected certificate both land here; saying
     # which one it was matters far more than saying "timed out" for both.

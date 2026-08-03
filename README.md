@@ -11,7 +11,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 
 | distribution | version | Rakudo | Raku++ |
 |---|---|---|---|
-| [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 95/95 | 95/95 |
+| [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
 
 Nothing has been released to the ecosystem yet.
 

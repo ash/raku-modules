@@ -72,6 +72,26 @@ The test certificates in `HTTP-Simple/t/tls/` are a private CA, a leaf for
 hostname check is tested. They expire in 2046, so the suite needs no `openssl`
 at run time, and the keys guard nothing.
 
+## How the proxy is tested without a proxy
+
+Nothing is forwarded. What separates a proxied request from a direct one is
+entirely in the bytes the client sends — the connection goes to the proxy's
+address, and the request line carries an absolute URL instead of a path — so the
+ordinary test server plays the proxy and the assertions are about what it
+received.
+
+The target host in those tests is `example.invalid`. A reserved TLD cannot
+resolve, so a request that arrives at the server at all can only have gone
+through the proxy; and where the point is that a request must NOT be proxied, the
+stand-in proxy is a dead address, so an exemption that failed to fire could not
+succeed by accident.
+
+Writing them turned up a module bug the suite had never covered: a name that does
+not resolve escaped as a bare `X::AdHoc`, because `.connect` throws on a
+resolution failure rather than breaking the promise it would have returned — and
+the check for a failed connection only inspected the promise. The README had been
+promising DNS failures as `X::HTTP::Simple::Transport` since the first commit.
+
 ## What two engines have found
 
 Bugs this module surfaced in Raku++, which is the intended outcome rather than

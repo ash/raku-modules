@@ -142,7 +142,7 @@ and caching.
 ## Both engines
 
 Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++. All 95 assertions in `t/` pass on both.
+under Rakudo **and** under Raku++. All 107 assertions in `t/` pass on both.
 
 ## Licence
 
