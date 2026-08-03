@@ -54,10 +54,21 @@ response says `Connection: close`. It is a development and local-network
 server, in the same spirit as `python3 -m http.server`, and it says so rather
 than implying otherwise.
 
-## Both engines
+## Compatibility
 
 Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++. All 37 assertions in `t/` pass on both.
+under Rakudo **and** under Raku++.
+
+| engine | version | `t/` |
+|---|---|---|
+| Rakudo | `v2026.07` (MoarVM `2026.07`, Raku `v6.d`) | 37/37 |
+| Raku++ | `v1.8.0` | 37/37 |
+
+**`v1.8.0` is the minimum Raku++**, not merely the one it was tried on: before
+it, a socket did not report its own type, so `accept-loop`'s
+`IO::Socket::INET $listener` parameter rejected the listener it was handed. It
+was tested on the build that became `v1.8.0` (`v1.7.0-63-gd3bdea5`). Rakudo has
+no such floor.
 
 ## Licence
 

@@ -139,10 +139,21 @@ connection reuse (every request sends `Connection: close`), `https` through a
 proxy (it needs `CONNECT` tunnelling; the client says so rather than pretending),
 and caching.
 
-## Both engines
+## Compatibility
 
 Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++. All 107 assertions in `t/` pass on both.
+under Rakudo **and** under Raku++.
+
+| engine | version | `t/` |
+|---|---|---|
+| Rakudo | `v2026.07` (MoarVM `2026.07`, Raku `v6.d`) | 107/107 |
+| Raku++ | `v1.8.0` | 107/107 |
+
+**`v1.8.0` is the minimum Raku++**, not merely the one it was tried on: the
+engine fixes this distribution needs landed after `v1.7.0`, and against that
+binary the suite fails rather than degrading. It was tested on the build that
+became `v1.8.0` (`v1.7.0-63-gd3bdea5`). Rakudo has no such floor — nothing here
+depends on a recent Rakudo.
 
 ## Licence
 

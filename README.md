@@ -9,12 +9,17 @@ everywhere Rakudo does, so anything published from here has to run on both.
 
 ## What is here
 
-| distribution | version | Rakudo | Raku++ |
+| distribution | version | Rakudo `v2026.07` | Raku++ `v1.8.0` |
 |---|---|---|---|
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
 | [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.1 | 37/37 | 37/37 |
 
 Nothing has been released to the ecosystem yet.
+
+`v1.8.0` is the **minimum** Raku++ for both, not just the version they were tried
+on: each needs engine fixes that landed after `v1.8.0`'s predecessor, and against
+an older binary the suites fail rather than degrading. Rakudo has no such floor —
+nothing here depends on a recent one.
 
 ## Layout
 
