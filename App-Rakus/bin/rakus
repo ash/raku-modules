@@ -1,0 +1,12 @@
+#!/usr/bin/env raku
+use App::Rakus;
+
+#| Serve a directory over HTTP. With no arguments: the current directory on 8080.
+sub MAIN(
+    Int  $port = (%*ENV<PORT> // 8080).Int,   #= port to listen on (default 8080)
+    Str  $root = '.',                         #= directory to serve (default .)
+    Str  :$host = '0.0.0.0',                  #= address to bind
+    Bool :$quiet,                             #= do not log requests
+) {
+    exit run(:$port, :$root, :$host, log => !$quiet);
+}

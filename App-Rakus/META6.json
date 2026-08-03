@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A static HTTP file server for the command line, on nothing but IO::Socket::INET",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "App::Rakus",
+  "provides": {
+    "App::Rakus": "lib/App/Rakus.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules",
+  "support": {
+    "source": "https://github.com/ash/raku-modules"
+  },
+  "tags": [
+    "HTTP",
+    "server",
+    "static",
+    "web",
+    "CLI"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

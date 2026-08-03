@@ -12,6 +12,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | distribution | version | Rakudo | Raku++ |
 |---|---|---|---|
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
+| [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.1 | 37/37 | 37/37 |
 
 Nothing has been released to the ecosystem yet.
 
@@ -35,6 +36,7 @@ outside the distribution, so it is a design log rather than something a user
 installing the module has to read past:
 
 - [notes/HTTP-Simple.md](notes/HTTP-Simple.md)
+- [notes/App-Rakus.md](notes/App-Rakus.md)
 
 ### Why one repository
 
@@ -61,6 +63,12 @@ which is why the default starts here.
 
 Modules ship under their **functional** name — `HTTP::Simple`, `Data::Schema`,
 `Terminal::Rich`. Not under a vendor prefix.
+
+A distribution whose product is a **command** takes the ecosystem's `App::`
+namespace — `App::Rakus` installs `rakus`, the way `App::Mi6` installs `mi6` and
+`App::Rak` installs `rak`. The command itself keeps the short name. Nothing has
+to be declared for it: a script in `bin/` is discovered and installed by zef on
+its own.
 
 `RakuPP::` is reserved for the narrow case where the coupling to the engine is
 real and a portable module could not express the same thing: variadic C calls,
