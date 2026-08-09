@@ -1,3 +1,4 @@
 .precomp/
 *.tar.gz
 lib/.precomp/
+resources/libraries/

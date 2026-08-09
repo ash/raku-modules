@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "JSON::Fast"
+  ],
+  "description": "JSON parsing with a native fast path on Raku++, and JSON::Fast everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Rakupp::JSON",
+  "provides": {
+    "Rakupp::JSON": "lib/Rakupp/JSON.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/json"
+  ],
+  "source-url": "https://github.com/ash/raku-modules",
+  "support": {
+    "source": "https://github.com/ash/raku-modules"
+  },
+  "tags": [
+    "JSON",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
