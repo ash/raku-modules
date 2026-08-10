@@ -61,8 +61,21 @@ is to-json({b => 1, a => 2}, :!pretty, :sorted-keys),
    ':sorted-keys is delegated';
 
 # Round trip, which is the property a user actually relies on.
-for '{"a":[1,2.5,true,null],"b":{"c":"d"}}', '[]', '{}', '[[[]]]' -> $json {
-    is to-json(from-json($json), :!pretty), $json, "round-trips $json";
+#
+# Compared as DATA, not as text, for anything with more than one key in an
+# object: Raku++ iterates a hash in key order, Rakudo in an order it randomises
+# per process, so `to-json` is free to emit `b` before `a` and a text comparison
+# here would fail on Rakudo roughly half the time. (It did — this test passed
+# twice and then failed, which is exactly how that kind of assertion announces
+# itself.) The contract is that the values survive, not that the bytes do.
+for '{"a":[1,2.5,true,null],"b":{"c":"d"}}', '{"z":1,"a":2}' -> $json {
+    is-deeply from-json(to-json(from-json($json), :!pretty)), from-json($json),
+              "round-trips $json";
+}
+
+# Where there is no ordering to disagree about, the bytes must survive too.
+for '[]', '{}', '[[[]]]', '[1,2,3]', '{"only":1}', '"str"', '42' -> $json {
+    is to-json(from-json($json), :!pretty), $json, "round-trips $json byte for byte";
 }
 
 # An Array argument must not flatten on its way in — `to-json([1,2,3])` gave
