@@ -1,4 +1,8 @@
 .precomp/
 *.tar.gz
 lib/.precomp/
-resources/libraries/
+# **/, because a pattern with an interior slash is anchored to THIS directory:
+# plain `resources/libraries/` matched only a top-level one, never a
+# distribution's — so Rakupp-JSON's compiled extension was showing as untracked
+# and was one `git add .` away from being committed.
+**/resources/libraries/

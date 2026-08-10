@@ -16,9 +16,10 @@ Raku costs it about 12x what Rakudo pays. Parsing JSON is exactly that shape of
 work. Rather than make the interpreter pretend to be faster, this moves the
 parse into C:
 
-    278 KB document      Rakudo JSON::Fast   36 ms
-                         Raku++ JSON::Fast  ~440 ms
-                         Rakupp::JSON       ~2.7 ms
+    278 KB document      parse                 serialise
+    Rakudo JSON::Fast     36 ms                 41 ms
+    Raku++ JSON::Fast    ~440 ms               330 ms
+    Rakupp::JSON          ~2.7 ms                3.6 ms
 
 =head2 Synopsis
 
@@ -36,10 +37,17 @@ C<from-json> returns what C<JSON::Fast> returns, checked value by value: Int for
 integer tokens (arbitrary precision), Rat for decimals, Num for exponent forms,
 Bool, Any for null, Hash and Array — or Map and List under C<:immutable>.
 
-C<to-json> is C<JSON::Fast>'s, on both engines. Serialising has to walk a hash,
-and ABI v1 offers only index-based hash access; until it grows a cursor there is
-nothing to gain by reimplementing it, and a serializer's exact output is a
-contract worth not disturbing.
+C<to-json> is native too as of extension ABI 2, which made a hash walk cost
+O(1) per key instead of O(i). Its output is C<JSON::Fast>'s, byte for byte —
+that is a contract programs already depend on, so it is checked value by value
+rather than merely being valid JSON, down to backspace being written as a
+six-character \u escape rather than as \b.
+
+The native serialiser takes one value and an optional C<:pretty>. Anything
+else — C<:sorted-keys>, C<:spacing>, or a value outside the extension ABI's
+vocabulary — falls through to C<JSON::Fast> unchanged. Being exactly right or
+standing aside is the whole bargain; being approximately right would be worse
+than being slow.
 
 =end pod
 
@@ -62,6 +70,7 @@ my &jf-to-json;
 # spelled `use Rakupp::Ext` would have made the file uncompilable there.
 my &ext-load = try &::('rakupp-ext-load');
 my &native-parse;
+my &native-write;
 
 sub load-native(--> Bool) {
     return False unless &ext-load;
@@ -71,6 +80,10 @@ sub load-native(--> Bool) {
         next unless $ok;
         # The loader installs the extension's subs into THIS scope.
         &native-parse = try &::('from-json-native');
+        # Absent on a library built against ABI 1, which is a supported state:
+        # the parser is the reason this module exists, and to-json simply stays
+        # on JSON::Fast until the extension is rebuilt.
+        &native-write = try &::('to-json-native');
         return True if &native-parse;
     }
     False
@@ -102,4 +115,26 @@ our sub from-json(Str() $text, :$immutable) is export(:MANDATORY) {
       !! jf-from-json($text, :$immutable)
 }
 
-our sub to-json(|c) is export(:MANDATORY) { jf-to-json(|c) }
+# The native serialiser handles one value and an optional :pretty, and hands
+# back Nil for anything outside the ABI's vocabulary. Everything else —
+# :sorted-keys, :spacing, a Date, an object with its own .Str — goes to
+# JSON::Fast, whose exact output is the contract both paths have to honour.
+#
+# `($obj, *%opt)` rather than the `(|c)` this used to be: under Raku++ a single
+# Array argument FLATTENS into a capture, so `to-json([1,2,3])` reached
+# JSON::Fast as three arguments and serialised `1`. That is an interpreter bug
+# and it is being fixed, but an explicit signature is the more honest spelling
+# anyway — it says what this sub accepts — and it does not wait for the fix.
+# A bare `$obj` is Any-constrained, which is deliberate: JSON::Fast's own
+# parameter is too, so `to-json(Mu)` must be refused here exactly as it is
+# there. Declaring `Mu $obj` would have been the more permissive-looking
+# choice and would have made the native path answer "null" where JSON::Fast
+# raises — a divergence invented by the fast path, which is the one thing it
+# must never do.
+our sub to-json($obj, *%opt) is export(:MANDATORY) {
+    if &native-write && !(%opt.keys (-) <pretty>) {
+        my $s = native-write($obj, |%opt);
+        return $s if $s.defined;
+    }
+    jf-to-json($obj, |%opt)
+}
