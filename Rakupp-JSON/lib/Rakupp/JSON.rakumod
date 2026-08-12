@@ -5,9 +5,10 @@
 A JSON parser with a native fast path on Raku++, and JSON::Fast everywhere else.
 
 The XS pattern: the distribution ships C source, the build step compiles it
-against Raku++'s extension ABI, and the module uses it when it is there. On
-Rakudo — or on a Raku++ that could not build the extension — nothing breaks, it
-simply calls C<JSON::Fast>. The same program runs on both.
+against Raku++'s extension ABI, and the module uses it when it is there. On a
+Raku++ without the built extension, C<from-json> still runs native through the
+interpreter's own built-in codec. On Rakudo — or wherever neither is present —
+nothing breaks, it simply calls C<JSON::Fast>. The same program runs on both.
 
 =head2 Why it exists
 
@@ -106,13 +107,31 @@ sub libraries() {
 
 my Bool $is-native = load-native();
 
-# Which parser is in use: 'native' (the compiled extension) or 'JSON::Fast'.
-our sub json-backend() is export(:MANDATORY) { $is-native ?? 'native' !! 'JSON::Fast' }
+# The middle path: on Raku++ WITHOUT a compiled extension, from-json still
+# runs native — the interpreter's own C++ parser, reached through the
+# Rakudo::Internals::JSON compatibility class it answers to. It types values
+# exactly as JSON::Fast does (Int/Rat/Num per Str.Numeric, strict escapes,
+# surrogate pairs), so the compatibility contract holds. Gated on &ext-load
+# resolving, which only Raku++ answers: under Rakudo the same class name
+# exists but is the slow vendored copy, and JSON::Fast is the right choice
+# there. Two things deliberately stay OFF this path: :immutable (the engine
+# class does not take it) and to-json (the engine's is compact-only where
+# JSON::Fast pretty-prints by default, and byte-identical output is the
+# contract — approximately right would be worse than slow).
+my Bool $engine-codec = ?(!$is-native && &ext-load);
+
+# Which parser is in use: 'native' (the compiled extension), 'engine'
+# (Raku++'s built-in codec, no extension present) or 'JSON::Fast'.
+our sub json-backend() is export(:MANDATORY) {
+    $is-native      ?? 'native'
+    !! $engine-codec ?? 'engine'
+    !!                  'JSON::Fast'
+}
 
 our sub from-json(Str() $text, :$immutable) is export(:MANDATORY) {
-    $is-native
-      ?? native-parse($text, :$immutable)
-      !! jf-from-json($text, :$immutable)
+    return native-parse($text, :$immutable) if $is-native;
+    return Rakudo::Internals::JSON.from-json($text) if $engine-codec && !$immutable;
+    jf-from-json($text, :$immutable)
 }
 
 # The native serialiser handles one value and an optional :pretty, and hands

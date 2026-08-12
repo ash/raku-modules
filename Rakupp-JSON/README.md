@@ -10,8 +10,14 @@ my $data = from-json('{"a": [1, 2.5, true, null]}');
 say $data<a>[1].WHAT;      # (Rat) — Raku numerics, not doubles
 say to-json($data, :!pretty);
 
-say json-backend();        # 'native' or 'JSON::Fast'
+say json-backend();        # 'native', 'engine' or 'JSON::Fast'
 ```
+
+Three backends, tried in order: the compiled C extension (`native`), then —
+on Raku++ without one — the interpreter's own built-in codec (`engine`, no C
+compiler needed; 308 KB parsed in ~30 ms whole-process against ~1.1 s through
+interpreted `JSON::Fast`), then `JSON::Fast` itself. The engine backend takes
+`from-json` only: `to-json` and `:immutable` keep their exact-output paths.
 
 ## What it is
 
