@@ -120,6 +120,13 @@ my Bool $is-native = load-native();
 # contract — approximately right would be worse than slow).
 my Bool $engine-codec = ?(!$is-native && &ext-load);
 
+# The codec's first-party name, when this Raku++ has it; older builds answer
+# only the Rakudo-compatibility spelling. Probed FUNCTIONALLY — a type object
+# is undefined, so `(try ::(…)) // fallback` would always take the fallback.
+my $engine-json = (try { ::('Rakupp::Internals::JSON').from-json('1') === 1 })
+    ?? ::('Rakupp::Internals::JSON')
+    !! Rakudo::Internals::JSON;
+
 # Which parser is in use: 'native' (the compiled extension), 'engine'
 # (Raku++'s built-in codec, no extension present) or 'JSON::Fast'.
 our sub json-backend() is export(:MANDATORY) {
@@ -130,7 +137,7 @@ our sub json-backend() is export(:MANDATORY) {
 
 our sub from-json(Str() $text, :$immutable) is export(:MANDATORY) {
     return native-parse($text, :$immutable) if $is-native;
-    return Rakudo::Internals::JSON.from-json($text) if $engine-codec && !$immutable;
+    return $engine-json.from-json($text) if $engine-codec && !$immutable;
     jf-from-json($text, :$immutable)
 }
 
