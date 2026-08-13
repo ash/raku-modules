@@ -17,7 +17,7 @@ class Build {
 
         my $inc = self!include-dir;
         unless $inc && $inc.add('rakupp/rakupp_ext.h').e {
-            note "Rakupp::JSON: no rakupp headers found; using the JSON::Fast fallback";
+            note "JSON::Native: no rakupp headers found; using the JSON::Fast fallback";
             return True;
         }
 
@@ -30,7 +30,7 @@ class Build {
                   |self!link-flags, $src.Str, '-o', $out.Str;
         my $p = run(|@cmd, :out, :err);
         unless $p.exitcode == 0 {
-            note "Rakupp::JSON: native build failed, using the JSON::Fast fallback";
+            note "JSON::Native: native build failed, using the JSON::Fast fallback";
             note $p.err.slurp(:close).indent(4);
             return True;
         }

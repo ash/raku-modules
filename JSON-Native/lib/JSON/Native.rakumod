@@ -1,6 +1,6 @@
 =begin pod
 
-=head1 Rakupp::JSON
+=head1 JSON::Native
 
 A JSON parser with a native fast path on Raku++, and JSON::Fast everywhere else.
 
@@ -20,17 +20,17 @@ parse into C:
     278 KB document      parse                 serialise
     Rakudo JSON::Fast     36 ms                 41 ms
     Raku++ JSON::Fast    ~440 ms               330 ms
-    Rakupp::JSON          ~2.7 ms                3.6 ms
+    JSON::Native          ~2.7 ms                3.6 ms
 
 =head2 Synopsis
 
-    use Rakupp::JSON;
+    use JSON::Native;
 
     my $data = from-json('{"a": [1, 2.5, true, null]}');
     say $data<a>[1].WHAT;        # (Rat) — Raku numerics, not doubles
     say to-json($data, :!pretty);
 
-    say Rakupp::JSON::json-native;     # True when the compiled parser is in use
+    say JSON::Native::json-native;     # True when the compiled parser is in use
 
 =head2 Compatibility
 
@@ -52,7 +52,7 @@ than being slow.
 
 =end pod
 
-unit module Rakupp::JSON;
+unit module JSON::Native;
 
 # JSON::Fast is imported inside a BLOCK on purpose. `use` is lexically scoped,
 # so its `from-json`/`to-json` stay in here and do not collide with the ones this

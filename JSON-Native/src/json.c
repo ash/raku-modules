@@ -1,4 +1,4 @@
-/* json.c — the native half of Rakupp::JSON.
+/* json.c — the native half of JSON::Native.
  *
  * Plain C against <rakupp/rakupp_ext.h> and nothing else: no C++, no rakupp
  * source, no knowledge of how a Raku value is laid out. That is the point of the
@@ -76,7 +76,7 @@ static void fail(P* s, const char* msg) {
         char buf[160];
         /* position, so a malformed document says WHERE */
         long at = (long)(s->p - s->begin);
-        snprintf(buf, sizeof buf, "Rakupp::JSON: %s at position %ld", msg, at);
+        snprintf(buf, sizeof buf, "JSON::Native: %s at position %ld", msg, at);
         rk_die(s->c, buf);
         s->failed = 1;
     }
@@ -506,7 +506,7 @@ static const RkSubDef subs[] = {
     {"to-json-native",   to_json_native},
     {0, 0}
 };
-static const RkModule mod = { RAKUPP_EXT_ABI, "Rakupp::JSON", subs };
+static const RkModule mod = { RAKUPP_EXT_ABI, "JSON::Native", subs };
 
 RAKUPP_EXT_EXPORT const RkModule* rakupp_ext_init(unsigned host_abi) {
     /* `>=`: the serialiser needs ABI 2's amortised hash walk, so it needs a

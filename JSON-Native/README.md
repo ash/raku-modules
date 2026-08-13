@@ -1,10 +1,10 @@
-# Rakupp::JSON
+# JSON::Native
 
 JSON parsing with a native fast path on **Raku++**, and `JSON::Fast` everywhere
 else. The same program runs on both.
 
 ```raku
-use Rakupp::JSON;
+use JSON::Native;
 
 my $data = from-json('{"a": [1, 2.5, true, null]}');
 say $data<a>[1].WHAT;      # (Rat) — Raku numerics, not doubles
@@ -40,7 +40,7 @@ parse moves into C behind a module that says what it is.
 |---|---:|
 | Rakudo + `JSON::Fast` | 37.5 ms |
 | Raku++ + `JSON::Fast` | ~440 ms |
-| **Raku++ + `Rakupp::JSON`** | **5.7 ms** |
+| **Raku++ + `JSON::Native`** | **5.7 ms** |
 
 Parse time is linear in document size — worth stating, because for a while it
 was not, and a table at a single size is exactly the shape of benchmark that

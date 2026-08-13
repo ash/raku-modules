@@ -1,5 +1,5 @@
 use Test;
-use Rakupp::JSON;
+use JSON::Native;
 
 # JSON::Fast's `from-json` is the oracle, but importing it at file scope would
 # collide with the one under test. `use` is lexically scoped, so a block keeps

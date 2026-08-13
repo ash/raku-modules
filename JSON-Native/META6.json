@@ -11,9 +11,9 @@
   "description": "JSON parsing with a native fast path on Raku++, and JSON::Fast everywhere else",
   "license": "Artistic-2.0",
   "meta-version": 0,
-  "name": "Rakupp::JSON",
+  "name": "JSON::Native",
   "provides": {
-    "Rakupp::JSON": "lib/Rakupp/JSON.rakumod"
+    "JSON::Native": "lib/JSON/Native.rakumod"
   },
   "raku": "6.d",
   "resources": [

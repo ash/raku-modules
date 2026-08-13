@@ -1,5 +1,5 @@
 use Test;
-use Rakupp::JSON;
+use JSON::Native;
 
 # Same shape as 01-parse.t, and the same reasoning: the contract is not "emits
 # JSON" but "emits exactly what JSON::Fast emits", because programs already
