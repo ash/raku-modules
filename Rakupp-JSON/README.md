@@ -42,6 +42,18 @@ parse moves into C behind a module that says what it is.
 | Raku++ + `JSON::Fast` | ~440 ms |
 | **Raku++ + `Rakupp::JSON`** | **5.7 ms** |
 
+Parse time is linear in document size — worth stating, because for a while it
+was not, and a table at a single size is exactly the shape of benchmark that
+cannot tell you. Measured 2026-08-13, ~65-70 MB/s at every rung:
+
+| document | parse |
+|---|---:|
+| 278 KB | 3.6 ms |
+| 1.1 MB | 15.6 ms |
+| 2.2 MB | 31.8 ms |
+| 4.5 MB | 66.3 ms |
+| 9.6 MB (zef's own package index) | 68.5 ms |
+
 ## Compatibility
 
 `from-json` returns what `JSON::Fast` returns — same values *and* same Raku

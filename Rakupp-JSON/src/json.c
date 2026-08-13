@@ -11,6 +11,15 @@
  *
  * THE SERIALISER, and why it took until ABI 2. Walking a hash used to cost
  * O(i) per key, so a wide hash was quadratic and `to-json` stayed in Raku. The
+ * The decode buffer is shared by every string in a parse (P.sbuf) and sized to
+ * the string being read. Both halves of that matter: it was a fresh malloc per
+ * string, sized to the rest of the DOCUMENT, so a document with K strings did
+ * K allocations of O(N) bytes — linear to about half a megabyte and quadratic
+ * past a megabyte (9.6 MB took 3.3 s, with the profile dominated by free and
+ * madvise rather than by parsing). A shared buffer also means an object's key
+ * must be copied out before its value is parsed, since that recursion reuses
+ * the same bytes.
+ *
  * host now remembers its position between rk_key_at calls and a sequential walk
  * is O(1) per key: 40,000 keys serialise in 9.6 ms, a flat 0.24 us per key from
  * 5,000 keys up, where the old walk would have taken ~800 million iterator
@@ -49,6 +58,15 @@ typedef struct {
     RkCtx c;
     int failed;
     int immutable;
+    /* ONE decode buffer for the whole parse, grown geometrically and reused by
+       every string. It used to be a fresh malloc per string, sized to the rest
+       of the DOCUMENT — so a document with K strings did K allocations of O(N)
+       bytes each and freed them again, which is O(N*K): 47 MB/s at 278 KB but
+       2.8 MB/s at 9.5 MB, with the profile dominated by free/madvise rather
+       than by parsing. Reused here, and sized to the string actually being
+       read (see jstring). */
+    char*  sbuf;
+    size_t scap;
 } P;
 
 static RkValue thing(P* s, int depth);
@@ -110,14 +128,28 @@ static long jstring(P* s, char** buf, size_t* cap) {
     char* o;
     if (s->p >= s->end || *s->p != '"') { fail(s, "expected a string"); return -1; }
     s->p++;
-    /* The decoded form is never longer than the source, plus room for one
-       4-byte sequence per escape; the raw span is a safe upper bound. */
+    /* The decoded form is never longer than the source span, plus room for one
+       4-byte sequence per escape. Bound it by THIS STRING's extent, not by the
+       rest of the document: scanning to the closing quote costs the same bytes
+       the decode loop is about to walk anyway, so the parse stays linear, while
+       the old whole-document bound made every string allocate megabytes. */
     {
-        size_t need = (size_t)(s->end - s->p) + 8;
+        const char* q = s->p;
+        size_t need;
+        while (q < s->end) {
+            if (*q == '\\') { q += 2; continue; }  /* skip the escaped byte too */
+            if (*q == '"') break;
+            q++;
+        }
+        if (q > s->end) q = s->end;               /* a trailing backslash ran past the end */
+        need = (size_t)(q - s->p) + 8;
         if (need > *cap) {
-            char* nb = (char*)realloc(*buf, need);
+            size_t want = *cap ? *cap * 2 : 256;  /* geometric: a long string must not realloc per call */
+            char* nb;
+            if (want < need) want = need;
+            nb = (char*)realloc(*buf, want);
             if (!nb) { fail(s, "out of memory"); return -1; }
-            *buf = nb; *cap = need;
+            *buf = nb; *cap = want;
         }
     }
     o = *buf;
@@ -229,18 +261,26 @@ static RkValue thing(P* s, int depth) {
             ws(s);
             if (s->p < s->end && *s->p == '}') { s->p++; return h; }
             for (;;) {
-                char* kb = NULL; size_t kc = 0; long kl;
+                long kl;
                 RkValue v;
                 ws(s);
-                kl = jstring(s, &kb, &kc);
-                if (kl < 0) { free(kb); return 0; }
+                kl = jstring(s, &s->sbuf, &s->scap);
+                if (kl < 0) return 0;
                 ws(s);
-                if (s->p >= s->end || *s->p != ':') { free(kb); fail(s, "expected ':'"); return 0; }
+                if (s->p >= s->end || *s->p != ':') { fail(s, "expected ':'"); return 0; }
                 s->p++;
-                v = thing(s, depth + 1);
-                if (!v) { free(kb); return 0; }
-                rk_set(s->c, h, kb, (size_t)kl, v);
-                free(kb);
+                /* the key must be copied out BEFORE parsing the value: that
+                   recursion reuses the same shared buffer for its own strings */
+                {
+                    char kstack[128];
+                    char* kcopy = (size_t)kl < sizeof kstack ? kstack : (char*)malloc((size_t)kl + 1);
+                    if (!kcopy) { fail(s, "out of memory"); return 0; }
+                    memcpy(kcopy, s->sbuf, (size_t)kl);
+                    v = thing(s, depth + 1);
+                    if (v) rk_set(s->c, h, kcopy, (size_t)kl, v);
+                    if (kcopy != kstack) free(kcopy);
+                    if (!v) return 0;
+                }
                 ws(s);
                 if (s->p < s->end && *s->p == ',') { s->p++; continue; }
                 if (s->p < s->end && *s->p == '}') { s->p++; return h; }
@@ -266,13 +306,11 @@ static RkValue thing(P* s, int depth) {
             }
         }
         case '"': {
-            char* b = NULL; size_t c = 0;
-            long n = jstring(s, &b, &c);
-            RkValue v;
-            if (n < 0) { free(b); return 0; }
-            v = rk_str(s->c, b, (size_t)n);
-            free(b);
-            return v;
+            long n = jstring(s, &s->sbuf, &s->scap);
+            if (n < 0) return 0;
+            /* rk_str copies into the arena, so the shared buffer is free to be
+               reused by the next string the moment this returns */
+            return rk_str(s->c, s->sbuf, (size_t)n);
         }
         case 't':
             if (s->end - s->p >= 4 && !memcmp(s->p, "true", 4)) { s->p += 4; return rk_bool(s->c, 1); }
@@ -296,10 +334,13 @@ static RkValue from_json_native(RkCtx c) {
     RkValue out;
     s.p = text; s.begin = text; s.end = text + len; s.c = c; s.failed = 0;
     s.immutable = imm ? rk_truthy(c, imm) : 0;
+    s.sbuf = NULL; s.scap = 0;
     out = thing(&s, 0);
-    if (!out) return 0;
-    ws(&s);
-    if (s.p != s.end) { fail(&s, "trailing content after the document"); return 0; }
+    if (out) {
+        ws(&s);
+        if (s.p != s.end) { fail(&s, "trailing content after the document"); out = 0; }
+    }
+    free(s.sbuf); /* one buffer for the whole parse — freed once, on every path */
     return out;
 }
 
