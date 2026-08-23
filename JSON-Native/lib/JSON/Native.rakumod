@@ -13,14 +13,16 @@ nothing breaks, it simply calls C<JSON::Fast>. The same program runs on both.
 =head2 Why it exists
 
 Raku++ interprets an AST rather than JIT-compiling, so a tokenizer written in
-Raku costs it about 12x what Rakudo pays. Parsing JSON is exactly that shape of
-work. Rather than make the interpreter pretend to be faster, this moves the
-parse into C:
+Raku costs it roughly an order of magnitude more than it costs Rakudo, and
+JSON is exactly that shape of work. The engine fast-paths the C<JSON::Fast>
+calls it can cover — both directions — so what this module adds is the parse
+column below, and a name that says at the point of C<use> that the code leans
+on native speed. 278 KB document, measured 2026-08-23:
 
-    278 KB document      parse                 serialise
-    Rakudo JSON::Fast     36 ms                 41 ms
-    Raku++ JSON::Fast    ~440 ms               330 ms
-    JSON::Native          ~2.7 ms                3.6 ms
+    278 KB document                  parse       serialise
+    Rakudo JSON::Fast                42 ms        41 ms
+    Raku++ JSON::Fast (fast path)    ~6 ms        6.1 ms
+    JSON::Native (extension)          5.0 ms       3.5 ms
 
 =head2 Synopsis
 
@@ -30,7 +32,7 @@ parse into C:
     say $data<a>[1].WHAT;        # (Rat) — Raku numerics, not doubles
     say to-json($data, :!pretty);
 
-    say JSON::Native::json-native;     # True when the compiled parser is in use
+    say json-backend;                  # 'native', 'engine' or 'JSON::Fast'
 
 =head2 Compatibility
 
@@ -45,10 +47,13 @@ rather than merely being valid JSON, down to backspace being written as a
 six-character \u escape rather than as \b.
 
 The native serialiser takes one value and an optional C<:pretty>. Anything
-else — C<:sorted-keys>, C<:spacing>, or a value outside the extension ABI's
-vocabulary — falls through to C<JSON::Fast> unchanged. Being exactly right or
-standing aside is the whole bargain; being approximately right would be worse
-than being slow.
+else — C<:sorted-keys>, C<:spacing>, NaN/Inf (whose rendering follows
+C<$*JSON_NAN_INF_SUPPORT>), or a value outside the extension ABI's
+vocabulary — falls through to C<JSON::Fast> unchanged. C<from-json> follows
+the same rule for adverbs: C<:immutable> is native, anything else
+(C<:allow-jsonc>, or whatever C<JSON::Fast> grows next) is delegated, never
+refused. Being exactly right or standing aside is the whole bargain; being
+approximately right would be worse than being slow.
 
 =end pod
 
@@ -135,10 +140,19 @@ our sub json-backend() is export(:MANDATORY) {
     !!                  'JSON::Fast'
 }
 
-our sub from-json(Str() $text, :$immutable) is export(:MANDATORY) {
+# Same bargain as to-json below: the native parser claims the text plus an
+# optional :immutable, and every OTHER adverb — :allow-jsonc today, whatever
+# JSON::Fast grows tomorrow — goes to JSON::Fast untouched. Refusing an adverb
+# the module it stands in for accepts would make `use JSON::Native` a
+# downgrade, and this used to do exactly that ("Unexpected named argument").
+our sub from-json(Str() $text, *%opt) is export(:MANDATORY) {
+    if %opt.keys (-) <immutable> {
+        return jf-from-json($text, |%opt);
+    }
+    my $immutable = %opt<immutable>;
     return native-parse($text, :$immutable) if $is-native;
     return $engine-json.from-json($text) if $engine-codec && !$immutable;
-    jf-from-json($text, :$immutable)
+    jf-from-json($text, |%opt)
 }
 
 # The native serialiser handles one value and an optional :pretty, and hands

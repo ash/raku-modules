@@ -44,13 +44,17 @@ jobs:
 
       - name: Install Raku++
         run: |
-          # The released binary, not a build: CI should test what users install.
+          # The released install LAYOUT, not just the binary: an extension
+          # build needs <prefix>/include/rakupp/rakupp_ext.h, and Build.rakumod
+          # finds it relative to bin/rakupp — so the whole prefix goes in, and
+          # CI still tests exactly what users download.
           url=$(gh release view --repo ash/rakupp --json assets \
                 -q '.assets[] | select(.name == "rakupp-linux-x86_64.tar.gz") | .url')
-          curl -sSL "$url" -o rakupp.tar.gz
-          tar xzf rakupp.tar.gz
-          sudo install -m 755 "$(find . -name rakupp -type f -perm -u+x | head -1)" /usr/local/bin/rakupp
-          rakupp --version
+          curl -sSL "$url" -o /tmp/rakupp.tar.gz
+          mkdir -p "$HOME/rakupp-prefix"
+          tar xzf /tmp/rakupp.tar.gz -C "$HOME/rakupp-prefix" --strip-components=1
+          echo "$HOME/rakupp-prefix/bin" >> "$GITHUB_PATH"
+          "$HOME/rakupp-prefix/bin/rakupp" --version
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -62,9 +66,24 @@ jobs:
         # JSON::Fast" under Raku++ having passed every test under Rakudo.
         run: zef install --deps-only --/test --install-to=home "./${{ matrix.dist }}"
 
+      - name: Build the native extension (Raku++)
+        working-directory: ${{ matrix.dist }}
+        # --deps-only above skips zef's build phase, so run the hook the way
+        # zef would. Without this the rakupp column only ever exercised the
+        # fallback — a green suite proving nothing about the extension it
+        # exists to test.
+        run: |
+          if [ -f Build.rakumod ]; then
+            rakupp -I. -MBuild -e 'exit(Build.new.build($*CWD.Str) ?? 0 !! 1)'
+          fi
+
       - name: Test under Rakudo
         working-directory: ${{ matrix.dist }}
         run: |
+          if [ "${{ matrix.dist }}" = "JSON-Native" ]; then
+            # the suite asserts which backend it exercised (see t/02-write.t)
+            export JSON_NATIVE_REQUIRE_BACKEND=JSON::Fast
+          fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; raku -Ilib "$t" || exit 1
           done
@@ -72,6 +91,10 @@ jobs:
       - name: Test under Raku++
         working-directory: ${{ matrix.dist }}
         run: |
+          if [ "${{ matrix.dist }}" = "JSON-Native" ]; then
+            # the extension was built two steps up; a fallback run here is red
+            export JSON_NATIVE_REQUIRE_BACKEND=native
+          fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; rakupp -Ilib "$t" || exit 1
           done

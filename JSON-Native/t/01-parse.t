@@ -28,7 +28,14 @@ my @cases =
     '{"big":12345678901234567890,"neg":-0.0001}',
     '[0.1, 0.2, 0.3]';
 
-plan @cases + 8;
+# legal-but-huge number tokens: arbitrary precision is the module's point, so
+# a 600-digit integer must parse, not die on a fixed-size buffer.
+@cases.push('[' ~ ('9' x 600) ~ ']');
+@cases.push('0.' ~ ('3' x 600));
+
+diag "json-backend: {json-backend}";
+
+plan @cases + 10;
 
 for @cases -> $json {
     my $ours = from-json($json);
@@ -50,5 +57,12 @@ ok from-json('[1,2]',  :immutable) ~~ List,  ':immutable gives a List';
 # Malformed input raises rather than returning junk
 dies-ok { from-json('{"a":}') },   'a malformed object dies';
 dies-ok { from-json('[1,2] junk') }, 'trailing content dies';
+dies-ok { from-json('+1') }, 'a leading plus dies — not JSON, and JSON::Fast refuses it';
+
+# An adverb the native path does not claim delegates to JSON::Fast untouched
+# rather than being refused as an unexpected named argument.
+my $jsonc = Q[{"a":1} // trailing comment];
+is-deeply from-json($jsonc, :allow-jsonc), oracle($jsonc, :allow-jsonc),
+          ':allow-jsonc delegates to JSON::Fast';
 
 done-testing;

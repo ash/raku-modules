@@ -10,6 +10,18 @@ class Build {
     method build($dist-path --> Bool) {
         my $root = $dist-path.IO;
         my $src  = $root.add('src/json.c');
+
+        # The declared resource must exist on EVERY path out of here, built or
+        # not: the installer copies each META6 resource and dies on a missing
+        # file, so "nothing to build" without a stub means "cannot install" —
+        # on Rakudo, which is most machines. An empty stub is safe: ext-load
+        # refuses it and the module falls back, same as any failed build.
+        my $ext = $*DISTRO.is-win ?? 'dll' !! ($*KERNEL.name eq 'darwin' ?? 'dylib' !! 'so');
+        my $stem = $*DISTRO.is-win ?? "json.$ext" !! "libjson.$ext";
+        my $out = $root.add("resources/libraries/$stem");
+        $out.parent.mkdir;
+        $out.spurt('') unless $out.e;
+
         return True unless $src.e;
 
         # Rakudo has no extension ABI to build against; nothing to do.
@@ -20,11 +32,6 @@ class Build {
             note "JSON::Native: no rakupp headers found; using the JSON::Fast fallback";
             return True;
         }
-
-        my $ext = $*DISTRO.is-win ?? 'dll' !! ($*KERNEL.name eq 'darwin' ?? 'dylib' !! 'so');
-        my $stem = $*DISTRO.is-win ?? "json.$ext" !! "libjson.$ext";
-        my $out = $root.add("resources/libraries/$stem");
-        $out.parent.mkdir;
 
         my @cmd = self!compiler, '-shared', '-fPIC', "-I$inc",
                   |self!link-flags, $src.Str, '-o', $out.Str;
@@ -45,7 +52,7 @@ class Build {
             my $i = $p.add('include');
             return $i if $i.add('rakupp/rakupp_ext.h').e;
         }
-        # a git checkout: headers live in src/
+        # a git checkout: point RAKUPP_SRC at its include/ directory
         my $env = %*ENV<RAKUPP_SRC>;
         return $env.IO if $env && $env.IO.add('rakupp/rakupp_ext.h').e;
         Nil
