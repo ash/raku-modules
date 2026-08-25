@@ -228,6 +228,10 @@ sub app(Str $name, &body) is export {
     my $auto = (%*ENV<WINGS_AUTODRIVE> // 0).Int;
     my @auto-at = $auto ?? (1 .. $auto).map(now + *) !! ();
     my $sigint-at = $auto ?? now + $auto + 1 !! Nil;   # a beat after the last click
+    # WINGS_AUTOCLOSE=secs presses the close button after that many seconds —
+    # performClose: is exactly the red button, so this times the close path.
+    my $close-after = (%*ENV<WINGS_AUTOCLOSE> // 0).Num;
+    my $close-at = $close-after ?? now + $close-after !! Nil;
 
     my $mode = ns-str('kCFRunLoopDefaultMode');
     while $done.status ~~ Planned {
@@ -247,6 +251,10 @@ sub app(Str $name, &body) is export {
         if $sigint-at && now > $sigint-at {
             $sigint-at = Nil;
             raise(2);                            # SIGINT, the app's own exit path
+        }
+        if $close-at && now > $close-at {
+            $close-at = Nil;
+            msg-p-p(.ns, sel('performClose:'), Pointer) for @WINDOWS.grep(*.ns.defined);
         }
         if @WINDOWS && !@WINDOWS.grep({ .ns.defined && msg-b(.ns, sel('isVisible')) }) {
             debug 'all windows closed';
