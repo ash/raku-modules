@@ -1,0 +1,33 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A native GUI framework: declarative windows, widgets as Supplies, react/whenever as the event loop. Cocoa backend over NativeCall, no C glue.",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Wings",
+  "provides": {
+    "Wings": "lib/Wings.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules",
+  "support": {
+    "source": "https://github.com/ash/raku-modules"
+  },
+  "tags": [
+    "GUI",
+    "Cocoa",
+    "macOS",
+    "NativeCall",
+    "desktop",
+    "reactive"
+  ],
+  "version": "0.0.1"
+}
