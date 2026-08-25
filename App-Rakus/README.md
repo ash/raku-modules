@@ -62,18 +62,14 @@ than implying otherwise.
 
 ## Compatibility
 
-Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++.
+It is released only once its tests pass under Rakudo **and** under Raku++.
 
 | engine | version | `t/` |
 |---|---|---|
 | Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 37/37 |
 | Raku++ | `v3.7.0` (the released binary, which is what CI installs) | 37/37 |
 
-**`v1.8.0` is the minimum Raku++**, not merely an old version it once passed
-on: before it, a socket did not report its own type, so `accept-loop`'s
-`IO::Socket::INET $listener` parameter rejected the listener it was handed.
-Rakudo has no such floor.
+`v1.8.0` is the minimum Raku++ version.
 
 ## Licence
 
