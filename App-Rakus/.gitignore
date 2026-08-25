@@ -1,0 +1,7 @@
+# fez bundles the upload from THIS directory's .gitignore, not the repo
+# root's — and when this file exists it replaces fez's built-in defaults, so
+# everything that must stay out of the tarball has to be stated here.
+# fez writes the upload tarball here
+sdist/
+# the precomp cache that -Ilib test runs leave in lib/
+.precomp/

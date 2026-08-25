@@ -61,14 +61,13 @@ under Rakudo **and** under Raku++.
 
 | engine | version | `t/` |
 |---|---|---|
-| Rakudo | `v2026.07` (MoarVM `2026.07`, Raku `v6.d`) | 37/37 |
-| Raku++ | `v1.8.0` | 37/37 |
+| Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 37/37 |
+| Raku++ | `v3.7.0` (the released binary, which is what CI installs) | 37/37 |
 
-**`v1.8.0` is the minimum Raku++**, not merely the one it was tried on: before
-it, a socket did not report its own type, so `accept-loop`'s
-`IO::Socket::INET $listener` parameter rejected the listener it was handed. It
-was tested on the build that became `v1.8.0` (`v1.7.0-63-gd3bdea5`). Rakudo has
-no such floor.
+**`v1.8.0` is the minimum Raku++**, not merely an old version it once passed
+on: before it, a socket did not report its own type, so `accept-loop`'s
+`IO::Socket::INET $listener` parameter rejected the listener it was handed.
+Rakudo has no such floor.
 
 ## Licence
 
