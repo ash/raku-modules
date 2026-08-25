@@ -30,8 +30,9 @@ rakus --quiet 9000 ~/site  # without the request log
 
 ## As a library
 
-The routing is a pure function — it returns the whole response and touches no
-socket — so it can be used, and tested, without a server:
+The routing — `handle` — is a pure function of (method, target, root): it
+returns the whole response and touches no socket, so what the server *answers*
+can be used, and tested, with no port and no network:
 
 ```raku
 use App::Rakus;
@@ -39,11 +40,16 @@ use App::Rakus;
 my ($status, $type, $body, $extra) = handle('GET', '/index.html', '/var/www');
 
 say mime-for('logo.svg');            # image/svg+xml
+```
 
+The rest of the module is the server around that function — these do open
+sockets, in stages, so a caller can choose where to take over:
+
+```raku
 my $listener = listen-on(8080);      # bind, and keep the socket
 accept-loop($listener, '/var/www');  # serve on it until it closes
 
-run(:port(8080), :root('/var/www')); # or all three at once
+run(:port(8080), :root('/var/www')); # bind, announce, serve — the whole thing
 ```
 
 ## Scope
