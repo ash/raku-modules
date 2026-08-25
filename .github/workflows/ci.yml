@@ -12,6 +12,7 @@ on:
 jobs:
   discover:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       dists: ${{ steps.find.outputs.dists }}
       any: ${{ steps.find.outputs.any }}
@@ -31,6 +32,12 @@ jobs:
     needs: discover
     if: needs.discover.outputs.any == 'true'
     runs-on: ubuntu-latest
+    # A hang is invisible from outside: t/05-tls.t under Raku++ printed
+    # nothing and burned the runner's six-hour default ceiling on every push
+    # for days (notes/HTTP-Simple.md tells that story). A green job takes a
+    # few minutes; past fifteen it is a hang, and a hang should be a fast
+    # red, not a bill.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
