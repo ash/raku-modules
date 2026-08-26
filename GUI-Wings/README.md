@@ -33,8 +33,11 @@ RAKUPP_MAIN_THREAD=1 rakupp -I lib examples/counter.raku   # Raku++
 raku -I lib examples/counter.raku                          # Rakudo
 ```
 
-`examples/calculator.raku` is the second example: a calculator — seventeen keys (digits, a decimal comma, four operators, C, a full-width =) feeding one `react`, a big right-aligned monospaced readout, orange operator keys — whose arithmetic is exact `Rat`s behind a rounded display, so
-`1 ÷ 3 × 3` is exactly `1`, which is more than most desk calculators manage.
+`examples/calculator.raku` is the second example: a calculator — seventeen keys
+(digits, a decimal comma, four operators, C, a full-width =) feeding one
+`react`, a big right-aligned monospaced readout, orange operator keys — whose
+arithmetic is exact `Rat`s behind a rounded display, so `1 ÷ 3 × 3` is exactly
+`1`, which is more than most desk calculators manage.
 
 Close the window or Ctrl+C to quit. Two environment knobs:
 
@@ -84,3 +87,26 @@ What v0.0.1 deliberately leaves out: any widget beyond label and button, real
 layout (children stack top-down, centered), menus, dialogs, images, multiple
 apps per process, and non-macOS backends. The architecture has room for GTK
 and terminal backends behind the same builder API, but none exists yet.
+
+## Compatibility
+
+The `t/` suite is deliberately headless — the native declarations dlopen on
+first call, so loading the module opens no window and the tests run on any OS.
+The GUI itself is tested by the examples, which `WINGS_AUTODRIVE` drives to a
+clean exit with no hands on the mouse.
+
+| engine | version | `t/` | examples |
+|---|---|---|---|
+| Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 8/8 | both self-drive to exit 0 |
+| Raku++ | `v3.7.0` (with `RAKUPP_MAIN_THREAD=1`) | 8/8 | both self-drive to exit 0 |
+
+These are the versions it was run on, not established floors — no older engine
+has been tried.
+
+## Author
+
+Andrew Shitov (`zef:ash`).
+
+## Licence
+
+Artistic-2.0.

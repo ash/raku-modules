@@ -35,8 +35,10 @@ HTTP-Simple/
 The directory name is the distribution name with `::` written `-`, which is the
 convention zef uses when it unpacks one.
 
-Each distribution's README documents the module. **Why** it is shaped that way,
-and what running it under two engines turned up, goes in `notes/<Dist>.md` —
+Each distribution's README documents the module, and follows the one shape
+written down in [notes/README-shape.md](notes/README-shape.md). **Why** it is
+shaped that way, and what running it under two engines turned up, goes in
+`notes/<Dist>.md` —
 outside the distribution, so it is a design log rather than something a user
 installing the module has to read past:
 
