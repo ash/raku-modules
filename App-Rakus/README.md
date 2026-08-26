@@ -30,8 +30,9 @@ rakus --quiet 9000 ~/site  # without the request log
 
 ## As a library
 
-The routing is a pure function — it returns the whole response and touches no
-socket — so it can be used, and tested, without a server:
+The routing — `handle` — is a pure function of (method, target, root): it
+returns the whole response and touches no socket, so what the server *answers*
+can be used, and tested, with no port and no network:
 
 ```raku
 use App::Rakus;
@@ -39,11 +40,16 @@ use App::Rakus;
 my ($status, $type, $body, $extra) = handle('GET', '/index.html', '/var/www');
 
 say mime-for('logo.svg');            # image/svg+xml
+```
 
+The rest of the module is the server around that function — these do open
+sockets, in stages, so a caller can choose where to take over:
+
+```raku
 my $listener = listen-on(8080);      # bind, and keep the socket
 accept-loop($listener, '/var/www');  # serve on it until it closes
 
-run(:port(8080), :root('/var/www')); # or all three at once
+run(:port(8080), :root('/var/www')); # bind, announce, serve — the whole thing
 ```
 
 ## Scope
@@ -56,19 +62,14 @@ than implying otherwise.
 
 ## Compatibility
 
-Like everything in this repository, it is released only once its tests pass
-under Rakudo **and** under Raku++.
+It is released only once its tests pass under Rakudo **and** under Raku++.
 
 | engine | version | `t/` |
 |---|---|---|
-| Rakudo | `v2026.07` (MoarVM `2026.07`, Raku `v6.d`) | 37/37 |
-| Raku++ | `v1.8.0` | 37/37 |
+| Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 37/37 |
+| Raku++ | `v3.7.0` (the released binary, which is what CI installs) | 37/37 |
 
-**`v1.8.0` is the minimum Raku++**, not merely the one it was tried on: before
-it, a socket did not report its own type, so `accept-loop`'s
-`IO::Socket::INET $listener` parameter rejected the listener it was handed. It
-was tested on the build that became `v1.8.0` (`v1.7.0-63-gd3bdea5`). Rakudo has
-no such floor.
+`v1.8.0` is the minimum Raku++ version.
 
 ## Licence
 

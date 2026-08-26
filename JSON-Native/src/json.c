@@ -205,7 +205,9 @@ static RkValue number(P* s) {
     const char* start = s->p;
     int any = 0, frac = 0, expo = 0;
     size_t len, dot;
-    if (s->p < s->end && (*s->p == '-' || *s->p == '+')) s->p++;
+    /* '-' only: JSON has no leading '+', and JSON::Fast dies on one — accepting
+       it here would parse a document the fallback path rejects. */
+    if (s->p < s->end && *s->p == '-') s->p++;
     while (s->p < s->end && *s->p >= '0' && *s->p <= '9') { s->p++; any = 1; }
     if (s->p < s->end && *s->p == '.') {
         int d = 0;
@@ -223,26 +225,40 @@ static RkValue number(P* s) {
     if (!any) { fail(s, "expected a number"); return 0; }
     len = (size_t)(s->p - start);
     {
-        char tok[512];
-        if (len >= sizeof tok - 1) { fail(s, "number token too long"); return 0; }
+        /* The stack covers every token a real document has; the heap covers the
+           legal-but-huge ones — a 600-digit integer is still JSON, and parsing
+           into Raku's arbitrary precision is the point of this module. */
+        char tokbuf[512];
+        char* tok = len < sizeof tokbuf ? tokbuf : (char*)malloc(len + 1);
+        RkValue r = 0;
+        if (!tok) { fail(s, "out of memory"); return 0; }
         memcpy(tok, start, len);
         tok[len] = 0;
-        if (expo) return rk_num(s->c, strtod(tok, NULL));
-        if (!frac) return rk_int_s(s->c, tok);
-        /* Rat: digits with the point removed, over 10^(digits after the point) */
-        {
-            char num[512], den[512];
-            size_t i, j = 0, scale;
-            const char* d = strchr(tok, '.');
-            dot = (size_t)(d - tok);
-            for (i = 0; i < len; i++) if (i != dot) num[j++] = tok[i];
-            num[j] = 0;
-            scale = len - dot - 1;
-            den[0] = '1';
-            for (i = 0; i < scale; i++) den[i + 1] = '0';
-            den[scale + 1] = 0;
-            return rk_rat_s(s->c, num, den);
+        if (expo) r = rk_num(s->c, strtod(tok, NULL));
+        else if (!frac) r = rk_int_s(s->c, tok);
+        else {
+            /* Rat: digits with the point removed, over 10^(digits after the point) */
+            char numbuf[512], denbuf[512];
+            char* num = len < sizeof numbuf ? numbuf : (char*)malloc(len + 1);
+            char* den = len + 2 < sizeof denbuf ? denbuf : (char*)malloc(len + 2);
+            if (num && den) {
+                size_t i, j = 0, scale;
+                const char* d = strchr(tok, '.');
+                dot = (size_t)(d - tok);
+                for (i = 0; i < len; i++) if (i != dot) num[j++] = tok[i];
+                num[j] = 0;
+                scale = len - dot - 1;
+                den[0] = '1';
+                for (i = 0; i < scale; i++) den[i + 1] = '0';
+                den[scale + 1] = 0;
+                r = rk_rat_s(s->c, num, den);
+            }
+            else fail(s, "out of memory");
+            if (num != numbuf) free(num);
+            if (den != denbuf) free(den);
         }
+        if (tok != tokbuf) free(tok);
+        return r;
     }
 }
 
@@ -379,8 +395,12 @@ static void windent(W* w, int depth) {
 }
 
 /* JSON::Fast's escaping, measured: \t \n \r by name; everything else below
- * 0x20 as lower-case \u00xx — 0x08 and 0x0c included, which is why there is no
- * \b or \f here. DEL, the solidus and every non-ASCII byte go through raw. */
+ * 0x20 as lower-case \u00xx — 0x08 and 0x0c included, which is why there is
+ * no \b or \f here. DEL, the solidus and BMP text go through raw; an ASTRAL
+ * codepoint leaves as an upper-case-hex surrogate pair, which is the one
+ * place the module and a raw byte copy disagree — this file emitted the raw
+ * bytes for a while, and only a test corpus with no astral string in it let
+ * that pass. */
 static void wjson_str(W* w, const char* s, size_t n) {
     size_t i;
     wch(w, '"');
@@ -398,6 +418,19 @@ static void wjson_str(W* w, const char* s, size_t n) {
                     snprintf(esc, sizeof esc, "\\u%04x", ch);
                     wstr(w, esc);
                 }
+                else if ((ch & 0xF8) == 0xF0 && i + 3 < n) {
+                    /* astral: one 4-byte UTF-8 sequence -> \uXXXX\uXXXX */
+                    unsigned cp = (unsigned)(ch & 0x07), v;
+                    int k;
+                    char esc[16];
+                    for (k = 1; k < 4; k++)
+                        cp = (cp << 6) | (unsigned)((unsigned char)s[i + k] & 0x3F);
+                    v = cp - 0x10000;
+                    snprintf(esc, sizeof esc, "\\u%04X\\u%04X",
+                             0xD800 + (v >> 10), 0xDC00 + (v & 0x3FF));
+                    wstr(w, esc);
+                    i += 3;
+                }
                 else wch(w, (char)ch);
         }
     }
@@ -412,7 +445,10 @@ static void wnumber(W* w, RkValue v, RkType t) {
     const char* s;
     if (t == RK_NUM) {
         double d = rk_num_get(w->c, v);
-        if (isnan(d) || isinf(d)) { wstr(w, "null"); return; }
+        /* JSON::Fast consults $*JSON_NAN_INF_SUPPORT here — "null" without it,
+           the bare token with it. A dynamic is the host program's business:
+           stand aside and the module answers whichever way it points. */
+        if (isnan(d) || isinf(d)) { w->unsupported = 1; return; }
     }
     s = rk_str_get(w->c, v, &n);
     wmem(w, s, n);

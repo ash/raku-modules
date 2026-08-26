@@ -23,6 +23,10 @@ my @cases =
   "plain", "", "quote\"back\\slash", "tab\ttab", "nl\nnl", "cr\rcr",
   "backspace\x[8]here", "formfeed\x[c]here", "ctrl\x[1]\x[1f]",
   "unicode é ☃ 高", "sol/idus", "del\x[7f]",
+  # astral characters are the one non-ASCII case JSON::Fast does NOT pass
+  # raw — it writes a surrogate-pair escape — and a corpus without one let a
+  # raw-bytes serialiser pass this whole file once
+  "\x[1F600]", "a\x[1F600]z", "e\x[301]", "\x[10FFFF]",
   True, False, Any,
   # containers, including the empty ones, which pretty-print oddly
   [], [1, 2, 3], [[1], [2]], [Any, True, "s"], [[[[1]]]],
@@ -87,5 +91,25 @@ is to-json([1, 2, 3], :!pretty), '[1,2,3]', 'an Array argument is one argument';
 my %wide;
 %wide{"key-{$_.fmt('%05d')}"} = $_ for ^5000;
 is to-json(%wide, :!pretty), oracle(%wide, :!pretty), 'a 5,000-key hash matches';
+
+# NaN/Inf hang on a DYNAMIC: "null" by default, the bare token under
+# $*JSON_NAN_INF_SUPPORT. A dynamic is the host program's business, so the
+# native path stands aside — the default case is in @cases above; this is the
+# other way the dynamic can point.
+{
+    my $*JSON_NAN_INF_SUPPORT = True;
+    for Inf, -Inf, NaN -> $n {
+        is to-json($n, :!pretty), oracle($n, :!pretty),
+           "honours \$*JSON_NAN_INF_SUPPORT for $n";
+    }
+}
+
+diag "json-backend: {json-backend}";
+
+# CI pins which backend a run exercised: a green suite on the wrong backend is
+# the failure mode where the native path is never tested at all.
+with %*ENV<JSON_NATIVE_REQUIRE_BACKEND> -> $want {
+    is json-backend, $want, "backend is $want (JSON_NATIVE_REQUIRE_BACKEND)";
+}
 
 done-testing;

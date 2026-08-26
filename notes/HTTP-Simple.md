@@ -123,12 +123,81 @@ inside a lock release the GIL the way Rakudo's thread-pool await does.
 
 Nothing in `t/` depends on it, because of the framing change above.
 
-## CI is red on purpose, for now
+### Open: `await` inside a socket tap deadlocks (found 2026-08-25)
 
-CI installs the *released* Raku++ binary rather than a local build — testing
-what a user would actually install is the point. The released binary predates
-the engine fixes above, so `t/` fails there until the next Raku++ release, at
-which point it goes green with no change on this side.
+`t/05-tls.t` under Raku++ does not fail — it hangs before its first line of
+output, and it took the CI bill to notice: with no job timeout, every push
+from 2026-08-13 on burned GitHub's six-hour ceiling in the "Test under
+Raku++" step (runs 31737793146, 32771085733, 32772086542). It never hung
+locally, because `IO::Socket::Async::SSL` was never installed here and the
+file's own guard skipped it; CI installs it — META lists it as a hard
+dependency — so CI was the only place the TLS code ever ran under Raku++.
 
-Worth knowing: the released binary and a current local build both report
-`1.7.0`, so the version string does not distinguish them.
+The thread stacks (macOS `sample` of the hung process; the same signature
+every run) close the cycle:
+
+| thread | stuck in |
+|---|---|
+| connection tap, running the handler | `awaitPromise` → `condition_variable::wait`, **holding the interpreter's `recursive_mutex`** (taken in `methodCallPart2`) |
+| `spawnPromise` runner that would keep that promise | `recursive_mutex::lock()`, same offset |
+| main test flow | `recursive_mutex::lock()` |
+| listener and second reader | blocking `__accept` / `__recvfrom` |
+
+An `await` on a tap thread parks it with the interpreter lock still held —
+the mutex is recursive and was acquired at depth, so whatever single release
+the await path performs is not enough — and the thread that would keep the
+promise needs that same lock to run any Raku at all. This is the shape the
+Lock section above ends on: an `await` has to release the GIL — every
+acquisition of it, not one — before parking a thread. Rakudo has no such
+lock; the file passes there, 14/14 in ~5 s.
+
+What does *not* reproduce it, which is why it went unseen: `await start { }`
+inside a `Supply.interval` tap is fine under Raku++, so is one inside a tap
+inside a tap, and so are the plain-HTTP files, whose TestServer `await`s a
+socket write inside a connection tap on every request. The smallest known
+reproduction is the real TLS shape — run from `HTTP-Simple/` with
+`IO::Socket::Async::SSL` installed; Rakudo prints two lines and exits,
+Raku++ (released `v3.7.0` and the 2026-08-25 dev build alike) prints
+nothing, forever, at 0% CPU:
+
+```raku
+use IO::Socket::Async::SSL;
+
+my $tls  = 't/tls'.IO;
+my $port = 31557;
+
+my $tap = IO::Socket::Async::SSL.listen('127.0.0.1', $port,
+    certificate-file => $tls.add('server.crt').Str,
+    private-key-file => $tls.add('server.key').Str,
+).tap(-> $conn {
+    $conn.Supply(:bin).tap(-> $chunk {
+        await $conn.write("hello over TLS\n".encode);
+        $conn.close;
+    });
+});
+
+my $c = await IO::Socket::Async::SSL.connect('127.0.0.1', $port,
+    ca-file => $tls.add('ca.crt').Str);
+await $c.print("ping");
+say "got: ", (await $c.Supply.head).trim;
+say "completed without deadlock";
+```
+
+Until the engine fix lands, `t/05-tls.t` gates itself under Raku++ — in the
+test file rather than in CI, because a Raku++ user running `zef install`
+with the TLS module present would hang their install the same way. Drop the
+gate when the fix lands.
+
+## CI: red on purpose, then red by accident
+
+When this file first said "CI is red on purpose", the released Raku++ was
+`v1.7.0`, the engine fixes in the table were local only, and red meant
+"waiting for the next engine release" — with the footnote that released and
+local builds both reported `1.7.0`. That release came: under `v3.7.0`
+(released 2026-08-24) the plain-HTTP files `t/01`–`t/04` pass in CI, and
+`t/06` passes locally (CI never reached it — the job always died at
+`t/05`). What kept the workflow red was no longer principle but the TLS
+deadlock above: a hang, not a failure, at six runner-hours per push. With
+`t/05-tls.t` gated under Raku++ and `timeout-minutes` on the jobs, the
+workflow is green again, and a future hang costs fifteen minutes instead of
+an afternoon.
