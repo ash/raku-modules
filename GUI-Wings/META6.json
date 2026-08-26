@@ -12,7 +12,9 @@
   "meta-version": 0,
   "name": "GUI::Wings",
   "provides": {
-    "GUI::Wings": "lib/GUI/Wings.rakumod"
+    "GUI::Wings": "lib/GUI/Wings.rakumod",
+    "GUI::Wings::Backend::Cocoa": "lib/GUI/Wings/Backend/Cocoa.rakumod",
+    "GUI::Wings::Backend::Gtk": "lib/GUI/Wings/Backend/Gtk.rakumod"
   },
   "raku": "6.d",
   "resources": [
@@ -29,5 +31,5 @@
     "desktop",
     "reactive"
   ],
-  "version": "0.0.1"
+  "version": "0.0.2"
 }

@@ -5,10 +5,12 @@ windows and widgets, every event a `Supply`, `react`/`whenever` as the event
 loop. The Cocoa backend reaches AppKit through `objc_msgSend` over NativeCall —
 no C glue, no bindings distribution to install.
 
-> **Status: v0.0.1 — a working proof of concept.** The example below runs on
-> both engines on macOS: Raku++ (arm64, with `RAKUPP_MAIN_THREAD=1`) and Rakudo
-> (main thread by default; an x86-64 Rosetta build works). Widgets so far:
-> `window`, `label`, `button`. See [Scope](#scope).
+> **Status: v0.0.2 — a working proof of concept with two backends.** The same
+> examples run unchanged on the Cocoa backend (macOS: Raku++ arm64 with
+> `RAKUPP_MAIN_THREAD=1`, Rakudo as-is) and on the Gtk backend (GTK3 — for
+> Linux, so far exercised through a Rosetta Rakudo against Homebrew GTK).
+> `WINGS_BACKEND=Cocoa|Gtk` overrides the default choice by OS. Widgets so
+> far: `window`, `label`, `button`. See [Scope](#scope).
 
 ```raku
 use GUI::Wings;
@@ -32,6 +34,10 @@ app 'Counter', {
 RAKUPP_MAIN_THREAD=1 rakupp -I lib examples/counter.raku   # Raku++
 raku -I lib examples/counter.raku                          # Rakudo
 ```
+
+The module splits into a toolkit-free front (`GUI::Wings`) and backends behind
+ten methods (`GUI::Wings::Backend::Cocoa`, `::Gtk`); `WINGS_BACKEND` picks one
+explicitly.
 
 `examples/calculator.raku` is the second example: a calculator — seventeen keys
 (digits, a decimal comma, four operators, C, a full-width =) feeding one
@@ -73,6 +79,12 @@ Close the window or Ctrl+C to quit. Two environment knobs:
   Wings touches is decades older. Tested on macOS 15.7.
 - **Intel and Apple Silicon** both, same module file; the alignment enum is the
   one arch difference and is picked at runtime.
+- **Backends**: `GUI::Wings::Backend::Cocoa` (AppKit) is the macOS default;
+  `GUI::Wings::Backend::Gtk` (GTK3, `libgtk-3.so.0` on Linux) is the default
+  elsewhere and needs no main-thread env var — GTK only requires that one
+  thread makes all its calls, which the pump guarantees. The Gtk backend is
+  verified against GTK 3.24 via Rosetta on this Mac; a genuine Linux run is
+  still pending.
 - **Raku++**: a build from current `main` — the main-thread hook and the
   declared-Str/word-list marshalling fixes are newer than the v3.6.x release
   binaries. **Rakudo**: any recent release works as-is (2026.08 tested; the
