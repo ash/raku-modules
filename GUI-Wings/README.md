@@ -5,12 +5,13 @@ windows and widgets, every event a `Supply`, `react`/`whenever` as the event
 loop. The Cocoa backend reaches AppKit through `objc_msgSend` over NativeCall —
 no C glue, no bindings distribution to install.
 
-> **Status: v0.0.2 — a working proof of concept with two backends.** The same
-> examples run unchanged on the Cocoa backend (macOS: Raku++ arm64 with
-> `RAKUPP_MAIN_THREAD=1`, Rakudo as-is) and on the Gtk backend (GTK3 — for
-> Linux, so far exercised through a Rosetta Rakudo against Homebrew GTK).
-> `WINGS_BACKEND=Cocoa|Gtk` overrides the default choice by OS. Widgets so
-> far: `window`, `label`, `button`. See [Scope](#scope).
+> **Status: v0.0.3 — a proof of concept with three backends, two of them
+> proven.** The same examples run unchanged on **Cocoa** (macOS: Raku++ arm64
+> with `RAKUPP_MAIN_THREAD=1`, Rakudo as-is) and on **Gtk** (GTK3, the Linux
+> default — so far exercised through a Rosetta Rakudo against Homebrew GTK).
+> **Win32** is written but **never run**: no Windows machine has touched it.
+> `WINGS_BACKEND=Cocoa|Gtk|Win32` overrides the default choice by OS. Widgets
+> so far: `window`, `label`, `button`. See [Scope](#scope).
 
 ```raku
 use GUI::Wings;
@@ -40,7 +41,7 @@ ten methods (`GUI::Wings::Backend::Cocoa`, `::Gtk`); `WINGS_BACKEND` picks one
 explicitly.
 
 `examples/calculator.raku` is the second example: a calculator — seventeen keys
-(digits, a decimal comma, four operators, C, a full-width =) feeding one
+(digits, a decimal point, four operators, C, a full-width =) feeding one
 `react`, a big right-aligned monospaced readout, orange operator keys — whose
 arithmetic is exact `Rat`s behind a rounded display, so `1 ÷ 3 × 3` is exactly
 `1`, which is more than most desk calculators manage.
@@ -79,12 +80,21 @@ Close the window or Ctrl+C to quit. Two environment knobs:
   Wings touches is decades older. Tested on macOS 15.7.
 - **Intel and Apple Silicon** both, same module file; the alignment enum is the
   one arch difference and is picked at runtime.
-- **Backends**: `GUI::Wings::Backend::Cocoa` (AppKit) is the macOS default;
-  `GUI::Wings::Backend::Gtk` (GTK3, `libgtk-3.so.0` on Linux) is the default
-  elsewhere and needs no main-thread env var — GTK only requires that one
-  thread makes all its calls, which the pump guarantees. The Gtk backend is
-  verified against GTK 3.24 via Rosetta on this Mac; a genuine Linux run is
-  still pending.
+- **Backends**: `GUI::Wings::Backend::Cocoa` (AppKit) is the macOS default —
+  the only one needing `RAKUPP_MAIN_THREAD=1`, since AppKit alone insists on
+  the process FIRST thread. `::Gtk` (GTK3, `libgtk-3.so.0`) is the Linux
+  default and needs no env var: GTK only requires that ONE thread makes all
+  its calls, which the pump guarantees. `::Win32` (user32/gdi32, wide APIs
+  throughout so `÷ × −` survive) is the Windows default; Win32 is thread-
+  affine like Cocoa but has no first-thread rule, so it needs no env var
+  either.
+- **Proof status**: Cocoa and Gtk are both run-verified here (macOS 15.7,
+  GTK 3.24 via Rosetta); **Win32 has never been executed** — it parses on both
+  engines and follows the same contract, but every behavioural claim about it
+  is intent until someone runs it. `:tint` is a deliberate no-op there
+  (coloured push buttons mean owner-draw), and `signal(SIGINT)` does not fire
+  on Windows, so the counter would exit by its window close rather than Ctrl+C.
+  A genuine Linux run of the Gtk backend is likewise still pending.
 - **Raku++**: a build from current `main` — the main-thread hook and the
   declared-Str/word-list marshalling fixes are newer than the v3.6.x release
   binaries. **Rakudo**: any recent release works as-is (2026.08 tested; the

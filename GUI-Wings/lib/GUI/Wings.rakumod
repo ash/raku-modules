@@ -19,6 +19,7 @@ unit module GUI::Wings;
 
 use GUI::Wings::Backend::Cocoa;
 use GUI::Wings::Backend::Gtk;
+use GUI::Wings::Backend::Win32;
 
 my $DEBUG = ?%*ENV<WINGS_DEBUG>;
 sub debug(Str $m) { note "wings: $m" if $DEBUG }
@@ -149,10 +150,13 @@ sub reconcile() {
 
 sub app(Str $name, &body) is export {
     my $bn = %*ENV<WINGS_BACKEND>
-             // ($*KERNEL.name eq 'darwin' ?? 'Cocoa' !! 'Gtk');
+             // ($*KERNEL.name eq 'darwin' ?? 'Cocoa'
+                 !! $*DISTRO.is-win    ?? 'Win32'
+                 !!                       'Gtk');
     $B = $bn eq 'Cocoa' ?? GUI::Wings::Backend::Cocoa.new
       !! $bn eq 'Gtk'   ?? GUI::Wings::Backend::Gtk.new
-      !! die "unknown WINGS_BACKEND '$bn' (Cocoa or Gtk)";
+      !! $bn eq 'Win32' ?? GUI::Wings::Backend::Win32.new
+      !! die "unknown WINGS_BACKEND '$bn' (Cocoa, Gtk or Win32)";
     debug "backend: $bn";
     $B.init();
 
