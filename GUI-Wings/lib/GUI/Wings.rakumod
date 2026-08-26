@@ -12,7 +12,7 @@
 # two doubles, which both ABIs pass exactly like two num64 arguments. Window
 # geometry goes through setStyleMask:/setContentSize:, widget geometry through
 # setFrameOrigin:/setFrameSize:.
-unit module Wings;
+unit module GUI::Wings;
 
 use NativeCall;
 
@@ -60,9 +60,12 @@ sub ns-str(Str $s) { msg-p-str(cls('NSString'), sel('stringWithUTF8String:'), $s
 my $DEBUG = ?%*ENV<WINGS_DEBUG>;
 sub debug(Str $m) { note "wings: $m" if $DEBUG }
 
-# NSTextAlignment center: arm64 uses the unified iOS values (1), x86-64 keeps
-# the classic AppKit ones (2) — TARGET_ABI_USES_IOS_VALUES in NSText.h.
-my $CENTER = $*KERNEL.hardware eq 'arm64' ?? 1 !! 2;
+# NSTextAlignment: arm64 uses the unified iOS values (center 1, right 2),
+# x86-64 keeps the classic AppKit ones (right 1, center 2) —
+# TARGET_ABI_USES_IOS_VALUES in NSText.h. Left is 0 on both.
+my %ALIGN = $*KERNEL.hardware eq 'arm64'
+    ?? (left => 0, center => 1, right => 2)
+    !! (left => 0, center => 2, right => 1);
 
 # ---------- widgets ----------
 
@@ -131,7 +134,8 @@ multi sub window(&body, *%opts) is export {
                          size  => ($w, $h), y-cursor => $h - 100);
     on-main {
         my $ns = msg-p(msg-p(cls('NSWindow'), sel('alloc')), sel('init'));
-        msg-p-i($ns, sel('setStyleMask:'), 15);      # titled|closable|mini|resizable
+        # titled|closable|mini (11), plus resizable (|4) unless :fixed
+        msg-p-i($ns, sel('setStyleMask:'), %opts<fixed> ?? 11 !! 15);
         msg-p-dd($ns, sel('setContentSize:'), $w.Num, $h.Num);
         msg-p-p($ns, sel('setTitle:'), ns-str($win.title));
         msg-p($ns, sel('center'));
@@ -149,12 +153,19 @@ multi sub window(&body, *%opts) is export {
 
 multi sub window() is export { $CURRENT-WINDOW }
 
-sub place(Window $win, Pointer $ns, $w, $h) {
-    my $x = ($win.size[0] - $w) / 2;
+# With :$at the widget sits at that exact origin; otherwise it stacks
+# top-down, centered, the way the counter example lays out.
+sub place(Window $win, Pointer $ns, $w, $h, :$at) {
     msg-p-dd($ns, sel('setFrameSize:'), $w.Num, $h.Num);
-    msg-p-dd($ns, sel('setFrameOrigin:'), $x.Num, $win.y-cursor.Num);
+    if $at {
+        msg-p-dd($ns, sel('setFrameOrigin:'), $at[0].Num, $at[1].Num);
+    }
+    else {
+        my $x = ($win.size[0] - $w) / 2;
+        msg-p-dd($ns, sel('setFrameOrigin:'), $x.Num, $win.y-cursor.Num);
+        $win.y-cursor -= $h + 24;
+    }
     msg-p-p(msg-p($win.ns, sel('contentView')), sel('addSubview:'), $ns);
-    $win.y-cursor -= $h + 24;
 }
 
 sub label(Str $text, *%opts) is export {
@@ -162,10 +173,14 @@ sub label(Str $text, *%opts) is export {
     my $l = Label.new(:$text, font => %opts<font> // 13, applied => $text);
     on-main {
         my $ns = msg-p-p(cls('NSTextField'), sel('labelWithString:'), ns-str($text));
-        msg-p-p($ns, sel('setFont:'),
-                msg-p-d(cls('NSFont'), sel('systemFontOfSize:'), $l.font.Num));
-        msg-p-i($ns, sel('setAlignment:'), $CENTER);
-        place($win, $ns, $win.size[0] - 80, $l.font * 1.6);
+        # :mono — fixed-width digits, so a changing readout does not jitter
+        my $font = %opts<mono>
+            ?? msg-p-dd(cls('NSFont'), sel('monospacedDigitSystemFontOfSize:weight:'), $l.font.Num, 0e0)
+            !! msg-p-d(cls('NSFont'), sel('systemFontOfSize:'), $l.font.Num);
+        msg-p-p($ns, sel('setFont:'), $font);
+        msg-p-i($ns, sel('setAlignment:'), %ALIGN{%opts<align> // 'center'} // %ALIGN<center>);
+        my ($w, $h) = %opts<size> // ($win.size[0] - 80, $l.font * 1.6);
+        place($win, $ns, $w, $h, at => %opts<at>);
         $l.ns = $ns;
     }
     $win.widgets.push: $l;
@@ -179,7 +194,16 @@ sub button(Str $title, *%opts) is export {
         my $t = ensure-target();
         my $ns = msg-ppp(cls('NSButton'), sel('buttonWithTitle:target:action:'),
                          ns-str($title), $t, sel('clicked:'));
-        place($win, $ns, 150, 36);
+        my ($w, $h) = %opts<size> // (150, 36);
+        # the default rounded bezel has a fixed height — a taller button needs
+        # the flexible regular-square bezel to actually draw at its size
+        msg-p-i($ns, sel('setBezelStyle:'), 2) if $h > 32;
+        msg-p-p($ns, sel('setFont:'), msg-p-d(cls('NSFont'), sel('systemFontOfSize:'), %opts<font>.Num))
+            if %opts<font>;
+        # :tint<orange> etc — any NSColor system color name
+        msg-p-p($ns, sel('setBezelColor:'), msg-p(cls('NSColor'), sel('system' ~ %opts<tint>.tc ~ 'Color')))
+            if %opts<tint>;
+        place($win, $ns, $w, $h, at => %opts<at>);
         $b.ns = $ns;
         %BUTTONS{+$ns} = $b;
     }

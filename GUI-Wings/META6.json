@@ -10,9 +10,9 @@
   "description": "A native GUI framework: declarative windows, widgets as Supplies, react/whenever as the event loop. Cocoa backend over NativeCall, no C glue.",
   "license": "Artistic-2.0",
   "meta-version": 0,
-  "name": "Wings",
+  "name": "GUI::Wings",
   "provides": {
-    "Wings": "lib/Wings.rakumod"
+    "GUI::Wings": "lib/GUI/Wings.rakumod"
   },
   "raku": "6.d",
   "resources": [

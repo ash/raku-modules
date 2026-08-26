@@ -1,4 +1,4 @@
-# Wings
+# GUI::Wings
 
 Windows with wings: a native GUI framework for Raku. Declarative builders for
 windows and widgets, every event a `Supply`, `react`/`whenever` as the event
@@ -11,7 +11,7 @@ no C glue, no bindings distribution to install.
 > `window`, `label`, `button`. See [Scope](#scope).
 
 ```raku
-use Wings;
+use GUI::Wings;
 
 app 'Counter', {
     my $n = 0;
@@ -32,6 +32,9 @@ app 'Counter', {
 RAKUPP_MAIN_THREAD=1 rakupp -I lib examples/counter.raku   # Raku++
 raku -I lib examples/counter.raku                          # Rakudo
 ```
+
+`examples/calculator.raku` is the second example: a calculator — seventeen keys (digits, a decimal comma, four operators, C, a full-width =) feeding one `react`, a big right-aligned monospaced readout, orange operator keys — whose arithmetic is exact `Rat`s behind a rounded display, so
+`1 ÷ 3 × 3` is exactly `1`, which is more than most desk calculators manage.
 
 Close the window or Ctrl+C to quit. Two environment knobs:
 
