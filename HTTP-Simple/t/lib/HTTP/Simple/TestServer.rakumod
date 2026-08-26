@@ -91,8 +91,14 @@ method !serve($conn) {
                     @!requests.push(%req);
                     # A handler that returns Nil answers nothing and holds the
                     # connection open — that is how a timeout gets tested.
+                    # A handler that returns a Callable is handed the connection
+                    # and writes the response itself, over as long as it likes:
+                    # that is how a *stream* gets tested.
                     my $out = &!handler(%req);
-                    if $out.defined {
+                    if $out ~~ Callable {
+                        start { $out($conn) }
+                    }
+                    elsif $out.defined {
                         await $conn.write($out ~~ Blob ?? $out !! $out.Str.encode('utf8'));
                         $conn.close;
                     }

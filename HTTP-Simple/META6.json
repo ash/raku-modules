@@ -10,14 +10,17 @@
     "URI",
     "IO::Socket::Async::SSL"
   ],
-  "description": "A batteries-included HTTP client: redirects, timeouts, JSON, cookies and retries behind one call",
+  "description": "A batteries-included HTTP client: redirects, timeouts, JSON, cookies, retries and streaming bodies behind one call",
   "license": "Artistic-2.0",
   "meta-version": 0,
   "name": "HTTP::Simple",
   "provides": {
     "HTTP::Simple": "lib/HTTP/Simple.rakumod",
     "HTTP::Simple::Client": "lib/HTTP/Simple/Client.rakumod",
+    "HTTP::Simple::Message": "lib/HTTP/Simple/Message.rakumod",
     "HTTP::Simple::Response": "lib/HTTP/Simple/Response.rakumod",
+    "HTTP::Simple::SSE": "lib/HTTP/Simple/SSE.rakumod",
+    "HTTP::Simple::Stream": "lib/HTTP/Simple/Stream.rakumod",
     "HTTP::Simple::X": "lib/HTTP/Simple/X.rakumod"
   },
   "raku": "6.d",
@@ -31,10 +34,12 @@
     "HTTP",
     "client",
     "web",
-    "REST"
+    "REST",
+    "streaming",
+    "SSE"
   ],
   "test-depends": [
     "Test"
   ],
-  "version": "0.0.1"
+  "version": "0.1.0"
 }

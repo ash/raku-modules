@@ -1,5 +1,8 @@
 use HTTP::Simple::X;
+use HTTP::Simple::Message;
 use HTTP::Simple::Response;
+use HTTP::Simple::SSE;
+use HTTP::Simple::Stream;
 use HTTP::Simple::Client;
 
 unit module HTTP::Simple;
@@ -57,4 +60,10 @@ sub http-options(Str $url, *%opt --> HTTP::Simple::Response) is export {
 #| JSON to hand back from one.
 sub http-get-json(Str $url, *%opt) is export {
     http-request('GET', $url, |%opt).raise-for-status.json
+}
+
+#| The head now, the body as it arrives. Returns an `HTTP::Simple::Stream`; see
+#| its `.body`, `.lines` and `.sse`.
+sub http-stream(Str $method, Str $url, *%opt --> HTTP::Simple::Stream) is export {
+    client(%opt).stream($method, $url, |%opt)
 }
