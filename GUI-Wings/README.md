@@ -64,6 +64,23 @@ Close the window or Ctrl+C to quit. Two environment knobs:
   (`objc_allocateClassPair` + `class_addMethod`) whose action method IS a Raku
   sub → `Supplier.emit` → your `whenever`.
 
+## Requirements
+
+- **macOS 10.12.2 or newer** (10.12 if you drop `:tint`). The floor comes from
+  Apple's availability annotations — `labelWithString:` and
+  `buttonWithTitle:target:action:` are 10.12, the monospaced-digit font 10.11,
+  `setBezelColor:` and the `system*Color` family 10.12.2 — and everything else
+  Wings touches is decades older. Tested on macOS 15.7.
+- **Intel and Apple Silicon** both, same module file; the alignment enum is the
+  one arch difference and is picked at runtime.
+- **Raku++**: a build from current `main` — the main-thread hook and the
+  declared-Str/word-list marshalling fixes are newer than the v3.6.x release
+  binaries. **Rakudo**: any recent release works as-is (2026.08 tested; the
+  framework-dlopen and signed-mask workarounds are already inside the module).
+- Verified matrix: arm64 rakupp natively and x86-64 Rakudo under Rosetta, both
+  on macOS 15.7. A native arm64 Rakudo is untested but each of its halves —
+  the arm64 path (via rakupp) and Rakudo itself (via Rosetta) — is.
+
 ## Portability
 
 macOS only — the one backend is Cocoa. Both Mac ABIs are served by the same
