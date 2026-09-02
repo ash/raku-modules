@@ -136,33 +136,63 @@ our sub from-csv($src, Str:D :$sep = ',', Str:D :$quote = '"', :$headers,
 # to, and what runs on Rakudo. Reachable by its full name so a test can run
 # the same input through both.
 #
-# The scan keeps a memo of where each of the four interesting strings (the
-# separator, the quote, LF, CR) NEXT occurs, refreshed only when the cursor
-# passes it. Calling `.index` afresh per field would be quadratic on a file
-# where one of them is rare — a single-column file has no separator at all,
-# and every field would rescan to the end of the text looking for one.
+# Line-oriented, and built on `split` rather than on a character scanner. The
+# text is split into lines with their terminators kept; a line without a
+# quote in it is one `split` on the separator; a line that holds a quote is
+# gathered with the lines that follow it while its quotes are unbalanced (a
+# quoted field may span lines) and then split on the QUOTE: the pieces at
+# even positions are outside quotes, those at odd positions inside, and an
+# empty outside piece between two inside ones is a doubled quote. Every rule
+# of the format is then a check on a piece: the outside text before an
+# opening quote must end at a separator, the outside text after a closing
+# one must start at a separator or end the record.
+#
+# Why not scan the whole text with `.index($needle, $pos)`, the obvious
+# shape? Because on Raku++ every `index` costs the whole string wherever the
+# match is (13 ms per call on 800 KB, measured 2026-09-02), so that scanner
+# was quadratic there — a thousand rows took twelve seconds — and on Rakudo a
+# per-record scanner was slower than this by three times. `lines`, `split`
+# and `contains` are linear on both engines, and this never asks either for a
+# position except to name the line of an error.
 our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$headers,
                    Bool:D :$strict = False) {
     # from-csv validates the whole dialect; these two are repeated here because
-    # an empty needle is found at every position, and a scan that never
-    # advances is a hang, not an error — a direct caller deserves the error.
+    # an empty needle is found at every position, and a split that produces
+    # nothing but empty pieces is not an answer — a direct caller deserves the
+    # error.
     die "CSV::Native: sep must not be empty"   unless $sep.chars;
     die "CSV::Native: quote must be exactly one character, not '$quote'" unless $quote.chars == 1;
     my $s = $text.starts-with("\x[FEFF]") ?? $text.substr(1) !! $text;
-    my int $len  = $s.chars;
-    my int $sepl = $sep.chars;
-    my int $pos  = 0;
-    my int $line = 1;
-    my int $nsep = $s.index($sep)   // $len;
-    my int $nq   = $s.index($quote) // $len;
-    # Three line-ending needles, because CRLF is ONE grapheme in Raku: a
-    # search for "\n" does not find the "\n" inside a "\r\n", and a search for
-    # "\r\n" does not find a lone "\r". Each is its own memo for the same
-    # reason the separator is — a file that ends its lines one way would
-    # otherwise rescan to the end for the other two on every field.
-    my int $nlf   = $s.index("\n")   // $len;
-    my int $ncr   = $s.index("\r")   // $len;
-    my int $ncrlf = $s.index("\r\n") // $len;
+
+    # The lines. A text with no CR in it — every file read through .slurp,
+    # which turns CRLF into LF — is one plain `split`, and the terminator
+    # between any two lines is "\n". Otherwise the three terminators are
+    # split out in turn, CRLF first (it is one grapheme on both engines, and
+    # the lone "\n" and "\r" that remain cannot be halves of one), and the
+    # lines are listed alternating with the terminator that followed each,
+    # so that a field spanning lines is put back together exactly.
+    #
+    # Plain splits, never `split(..., :v)`: on Rakudo the :v form is
+    # quadratic (18 ms for 10,000 lines, 2 s for 100,000 — measured
+    # 2026-09-02), and it was most of this parser's time until it went.
+    my @pieces;
+    my Bool $terms = $s.contains("\r") || $s.contains("\r\n");
+    if $terms {
+        for $s.split("\r\n").kv -> $oi, $o {
+            @pieces.push("\r\n") if $oi;
+            for $o.split("\n").kv -> $pi, $p {
+                @pieces.push("\n") if $pi;
+                for $p.split("\r").kv -> $li, $l {
+                    @pieces.push("\r") if $li;
+                    @pieces.push($l);
+                }
+            }
+        }
+    }
+    else {
+        @pieces = $s.split("\n");
+    }
+    my int $step = $terms ?? 2 !! 1;   # from one line to the next in @pieces
 
     my @names;
     my Bool $want-header = False;
@@ -173,68 +203,12 @@ our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$header
     }
 
     my @rows;
-    while $pos < $len {
-        my int $row-line = $line;
-        my @cells;
-        loop {
-            my int $fline = $line;
-            my $field;
-            my $term;
-            $nq = $s.index($quote, $pos) // $len if $nq < $pos;
-            if $nq == $pos && $pos < $len {
-                # quoted: the text up to the next quote, a doubled quote being
-                # one quote of content, then whatever ends the field
-                $pos = $pos + 1;
-                $field = '';
-                loop {
-                    my $q = $s.index($quote, $pos);
-                    die "CSV::Native: unterminated quoted field starting at line $fline"
-                        without $q;
-                    $field ~= $s.substr($pos, $q - $pos);
-                    $pos = $q + 1;
-                    if $pos < $len && $s.substr($pos, 1) eq $quote {
-                        $field ~= $quote;
-                        $pos = $pos + 1;
-                        next;
-                    }
-                    last;
-                }
-                $line = $line + count-lines($field);
-                $nq = $s.index($quote, $pos) // $len;
-                if $pos >= $len                { $term = 'eof' }
-                elsif $s.substr-eq($sep, $pos) { $pos = $pos + $sepl; $term = 'sep' }
-                elsif $s.substr($pos, 1) eq "\r\n" | "\n" | "\r" {
-                    # one grapheme, whichever line ending it is
-                    $pos = $pos + 1;
-                    $line = $line + 1;
-                    $term = 'eol';
-                }
-                else { die "CSV::Native: text after a closing quote at line $fline" }
-            }
-            else {
-                $nsep  = $s.index($sep, $pos)   // $len if $nsep  < $pos;
-                $nlf   = $s.index("\n", $pos)   // $len if $nlf   < $pos;
-                $ncr   = $s.index("\r", $pos)   // $len if $ncr   < $pos;
-                $ncrlf = $s.index("\r\n", $pos) // $len if $ncrlf < $pos;
-                my int $end = $nsep;
-                $end = $nlf   if $nlf   < $end;
-                $end = $ncr   if $ncr   < $end;
-                $end = $ncrlf if $ncrlf < $end;
-                die "CSV::Native: a quote inside an unquoted field at line $fline" if $nq < $end;
-                $field = $s.substr($pos, $end - $pos);
-                if    $end == $len  { $pos = $len; $term = 'eof' }
-                elsif $end == $nsep { $pos = $end + $sepl; $term = 'sep' }
-                else                { $pos = $end + 1; $line = $line + 1; $term = 'eol' }
-            }
-            @cells.push($field);
-            last unless $term eq 'sep';
-        }
-
+    my sub emit(Int $row-line, @cells) {
         if $want-header && !@names {
             @names = @cells;
             check-dups(@names);
             $expected = @names.elems;
-            next;
+            return;
         }
         if $strict {
             $expected //= @cells.elems;
@@ -252,13 +226,111 @@ our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$header
             @rows.push(@cells);
         }
     }
+
+    my int $n = @pieces.elems;
+    my int $i = 0;
+    my int $line = 1;
+    while $i < $n {
+        my $text = @pieces[$i];
+        # the text after the last terminator is a record only if there is one
+        last if $i == $n - 1 && $text eq '';
+        if !$text.contains($quote) {
+            emit($line, $text.split($sep).Array);
+            $i = $i + $step;
+            $line = $line + 1;
+        }
+        else {
+            # gather the lines that follow while the quotes stay unbalanced:
+            # the field runs on, or the record is malformed and the check
+            # below will say so at the line the field started on, exactly as
+            # the extension does. A line with an odd number of quotes flips
+            # the balance; the record is split on the quote once, at the end.
+            my $rec = $text;
+            my @p = $text.split($quote);
+            my Bool $open = @p.elems %% 2;      # an even piece count is an odd quote count
+            my int $j = $i + $step;             # the next line
+            if $open {
+                while $open && $j < $n {
+                    my $next = @pieces[$j];
+                    $rec ~= ($terms ?? @pieces[$j - 1] !! "\n") ~ $next;
+                    $open = !$open if $next.split($quote).elems %% 2;
+                    $j = $j + $step;
+                }
+                @p = $rec.split($quote);
+            }
+            emit($line, quoted-record($rec, @p, $line, $sep, $quote));
+            $line = $line + ($j - $i) div $step;
+            $i = $j;
+        }
+    }
     @rows
 }
 
-# Line endings inside a quoted field, counted the way the reader would: CRLF
+# One record whose text holds a quote, already split on the quote into @p.
+# Returns its fields; dies, naming the line a field started on, exactly where
+# the extension would. $start is the line the record starts on.
+sub quoted-record(Str:D $rec, @p, Int:D $start, Str:D $sep, Str:D $quote) {
+    my int $last = @p.elems - 1;
+    my @cells;
+    # the outside text before the first quote: whole fields, then an empty
+    # fragment — a quoted field opens only at the start or after a separator
+    my @f = @p[0].split($sep);
+    my $lastf = @f.pop;
+    @cells.append(@f);
+    die "CSV::Native: a quote inside an unquoted field at line {line-of-piece($rec, @p, $start, 1, 1 + $lastf.chars)}"
+        if $lastf ne '';
+    my int $k = 1;
+    loop {
+        # @p[$k] is inside a quoted field; the piece after it is outside —
+        # unless that piece is empty and another inside piece follows, which
+        # is a doubled quote: one quote of content
+        my int $opened = $k;
+        my $field = @p[$k];
+        $k = $k + 1;
+        die "CSV::Native: unterminated quoted field starting at line {line-of-piece($rec, @p, $start, $opened, 1)}"
+            if $k > $last;
+        while @p[$k] eq '' && $k < $last {
+            $k = $k + 1;
+            $field ~= $quote ~ @p[$k];
+            $k = $k + 1;
+            die "CSV::Native: unterminated quoted field starting at line {line-of-piece($rec, @p, $start, $opened, 1)}"
+                if $k > $last;
+        }
+        @cells.push($field);
+        # the outside text after the closing quote: nothing, or a separator
+        # and whole fields — and, when another quote follows, an empty last
+        # fragment again
+        my $out = @p[$k];
+        last if $k == $last && $out eq '';
+        my @g = $out.split($sep);
+        die "CSV::Native: text after a closing quote at line {line-of-piece($rec, @p, $start, $opened, 1)}"
+            if @g.shift ne '';
+        if $k == $last {
+            @cells.append(@g);
+            last;
+        }
+        my $lastg = @g.pop;
+        @cells.append(@g);
+        die "CSV::Native: a quote inside an unquoted field at line {line-of-piece($rec, @p, $start, $k + 1, 1 + $lastg.chars)}"
+            if $lastg ne '';
+        $k = $k + 1;
+    }
+    @cells
+}
+
+# The line on which piece $k of a record split on the quote begins, $back
+# characters earlier. Only an error needs it, so offsets are computed here
+# and not carried: piece $k starts after the pieces before it and the $k
+# quotes between them.
+sub line-of-piece(Str:D $rec, @p, Int:D $start, Int:D $k, Int:D $back) {
+    my $off = [+](@p[^$k].map(*.chars)) + $k - $back;
+    $start + count-lines($rec.substr(0, $off))
+}
+
+# Line endings in a stretch of text, counted the way the reader would: CRLF
 # is one, and so is a lone CR or LF — and since CRLF is one grapheme, each
 # line ending is exactly one character to count. The three `contains` checks
-# keep the (much more common) single-line field off the character walk.
+# keep the (much more common) single-line text off the character walk.
 sub count-lines(Str:D $s) {
     return 0 unless $s.contains("\n") || $s.contains("\r") || $s.contains("\r\n");
     $s.comb.grep({ $_ eq "\r\n" | "\n" | "\r" }).elems

@@ -4,7 +4,7 @@ CSV parsing and writing with a native fast path on **Raku++**, and pure Raku
 everywhere else. No dependencies. The same program runs on both engines.
 
 > Version 0.0.1. The interface below is implemented and tested on both
-> engines; what it deliberately leaves out is under Scope.
+> engines; what it leaves out is under Scope.
 
 ```raku
 use CSV::Native;
@@ -27,13 +27,12 @@ rakupp -Ilib examples/roundtrip.raku
 ## Walkthrough
 
 `t/mock-customers.csv` ships with the distribution: 1,000 invented customer
-records in the shape of a real export — quoted company names holding commas,
-non-ASCII cities, a few multi-line notes, CRLF line endings. Every flow below
-is run against it by `examples/customers.raku`, on both engines, and prints
-what is shown.
+records with quoted company names, non-ASCII cities, a few multi-line notes
+and CRLF line endings. `examples/customers.raku` runs every flow below on
+both engines and prints what is shown.
 
-**Rows.** Without `:headers` the file is a list of records, the header line
-among them, each a list of `Str`:
+**Rows.** Without `:headers`, every line is a list of `Str`, the header
+line included:
 
 ```raku
 use CSV::Native;
@@ -44,29 +43,27 @@ say @rows[0];        # [Index Customer Id First Name Last Name Company City …]
 say @rows[1][2..5];  # (Ada Easley Wonka Labs Sevilla)
 ```
 
-**Records.** With `:headers` the first line names the columns and each
-record is a hash (a key with a space in it is written as a string — the
-`<…>` quoting would split it). A quoted field arrives decoded — the doubled
-quotes and the line ending inside it are content:
+**Records.** With `:headers`, the first line names the columns and each
+record is a hash. Quoted fields arrive decoded:
 
 ```raku
 my @customers = from-csv("t/mock-customers.csv".IO, :headers);
 say @customers.elems;                       # 1000
 say @customers[0]<Company City>;            # (Wonka Labs Sevilla)
-say @customers[0]{'First Name'};            # Ada
+say @customers[0]{'First Name'};            # Ada — a key with a space is a string
 say @customers[16]<Notes>;                  # said "call me", then left
 say @customers.grep(*<Company>.contains(',')).elems;   # 302
 ```
 
 **Which implementation answered.** `native` on Raku++ with the extension
-built, `raku` everywhere else — the results above are the same either way:
+built, `raku` everywhere else; the results are the same either way:
 
 ```raku
 say csv-backend();   # native
 ```
 
-**Writing.** `to-csv` returns text; a file is one `spurt` away. Rows write
-as they are, so a slice of the rows is a valid file with its header line:
+**Writing.** `to-csv` returns text, so a file is one `spurt` away. A slice
+of the rows is a valid file, header line included:
 
 ```raku
 "three.csv".IO.spurt(to-csv(@rows[^3]));
@@ -76,9 +73,8 @@ print "three.csv".IO.slurp;
 # 2,14d96cb14241a7a,Rasmus,Stroustrup,Sirius & Wonka,Paris,France,…
 ```
 
-Records write in sorted key order unless `:headers` picks the columns and
-their order. Names with spaces need a real list — `<Index First Name>` would
-split into three words:
+Records write in sorted key order unless `:headers` picks the columns. Names
+with spaces need a real list — `<Index First Name>` would be three words:
 
 ```raku
 my @vips = @customers.grep(*<Notes> eq 'VIP');
@@ -92,51 +88,48 @@ say from-csv("vips.csv".IO, :headers).elems;   # 10
 ```
 
 **Round trip.** What `to-csv` writes, `from-csv` reads back as the same
-data; and a file that was written minimally quoted comes back byte for byte:
+data, and a minimally quoted file comes back byte for byte:
 
 ```raku
 say to-csv(@rows) eq "t/mock-customers.csv".IO.slurp;   # True
 ```
 
-(`eq`, not `:eol("\r\n")`: reading a file through `IO::Path` or
-`IO::Handle` goes through the engine's text decoding, which turns CRLF into
-LF on the way in — on both engines for `.slurp`. The parser keeps whatever
-line endings it is actually given; hand it a `Str` with CRLF in it and they
-survive, inside quoted fields as well.)
+(In LF form: reading a file through `IO::Path` or `IO::Handle` goes through
+the engine's text decoding, which turns CRLF into LF on both engines. The
+parser keeps whatever line endings it is given — a `Str` with CRLF in it
+keeps them, inside quoted fields too.)
 
 ## What it is
 
-The XS pattern, for Raku++, as [JSON::Native](../JSON-Native) does it. The
-distribution ships **C source**; the build step compiles it against Raku++'s
-extension ABI at install time; the module uses the result if it is there. On
-Rakudo — or on a Raku++ whose headers or compiler are missing — the same
-specification runs as plain Raku from the module file. A failed native build
-costs speed, never function.
+The XS pattern, as [JSON::Native](../JSON-Native) does it: the distribution
+ships C source, the build step compiles it against Raku++'s extension ABI,
+and the module uses the result if it is there. On Rakudo, or on a Raku++
+without the headers or a compiler, the same specification runs as plain Raku
+from the module file. A failed native build costs speed, never function.
 
-The difference from JSON::Native is what the fallback is. There is no
-`JSON::Fast` of CSV to stand on: the ecosystem's `Text::CSV` depends on a
-slang, which depends on the compiler's grammar internals, so it neither loads
-on any engine but Rakudo nor belongs as a dependency of a module meant to run
-on two. So this module carries its own Raku implementation, and the two
-implementations — C and Raku — are held to one specification by the test
-suite, which on Raku++ runs every case through both and demands the same
-rows, the same bytes and the same error message.
+Unlike JSON::Native there is no ecosystem module to fall back on. The
+ecosystem's `Text::CSV` depends on a slang, which depends on Rakudo's
+grammar internals, so it neither loads on another engine nor belongs as a
+dependency here. So this module carries its own Raku implementation, and the
+test suite holds the two implementations to one specification: on Raku++
+every case runs through both and must give the same rows, the same bytes and
+the same error message.
 
 ## The format
 
 RFC 4180, read strictly and written minimally.
 
 - **Fields are `Str`, always.** A CSV file carries no types; `"007"` stays
-  `"007"`. Coerce what you know to be a number.
+  `"007"`.
 - A quoted field may hold the separator, line endings, and the quote itself
-  written twice. Anything after a closing quote other than a separator or a
-  line ending is an error, and so is a quote inside an unquoted field.
+  written twice. Anything else after a closing quote is an error, and so is
+  a quote inside an unquoted field.
 - LF, CRLF and a lone CR all end a record. Inside a quoted field they are
-  content and kept exactly as written.
-- A trailing line ending does not start an empty record; a blank line in the
+  content, kept as written.
+- A trailing line ending does not add an empty record; a blank line in the
   middle is one record with one empty field.
 - Spaces are content. A leading UTF-8 byte-order mark is dropped.
-- Records may have different lengths (`:strict` forbids it).
+- Records may differ in length unless `:strict` says otherwise.
 
 Every error names its line:
 
@@ -160,15 +153,14 @@ Every error names its line:
 | `:strict` | `False` | every record must have as many fields as the first (or as the header) |
 
 Without `:headers` each record is an `Array` of `Str`. With it each record is
-a `Hash`; a record shorter than the header simply lacks those keys, a record
-longer than it is an error (a hash has nowhere to put a nameless field), and
-a duplicate name in the header is an error.
+a `Hash`: a record shorter than the header lacks those keys, a longer one is
+an error, and a duplicate header name is an error.
 
 ## Writing
 
-`to-csv(@rows, *%options)` returns a `Str`, one line per row, each ending in
-`:eol`. A row is a list of cells or a hash; a cell is written as its `.Str`,
-an undefined cell as an empty field.
+`to-csv(@rows, *%options)` returns a `Str`, one line per row. A row is a
+list of cells or a hash; a cell is written as its `.Str`, an undefined cell
+as an empty field.
 
 | option | default | meaning |
 |---|---|---|
@@ -178,12 +170,10 @@ an undefined cell as an empty field.
 | `:always-quote` | `False` | quote every field |
 
 A field is quoted when it contains the separator, the quote or a line
-ending, and otherwise not; a quote inside it is doubled. Hash rows are
-written in the order of `:headers` when given, else in the **sorted** key
-order of the first row (Rakudo randomises hash order per process; sorted is
-the one order both engines agree on), and the names become the first line
-unless `:!headers` says not to. List rows get a header line only when
-`:headers` names one.
+ending; a quote inside it is doubled. Hash rows follow `:headers` when
+given, else the sorted keys of the first row (the one order both engines
+agree on), and get a header line unless `:!headers`. List rows get a header
+line only when `:headers` names one.
 
 ## Backends
 
@@ -193,75 +183,57 @@ unless `:!headers` says not to. List rows get a header line only when
 | `raku` | Rakudo, or Raku++ without the extension |
 
 `CSV_NATIVE_BACKEND=raku` in the environment forces the Raku implementation
-on a Raku++ that has the extension — for measuring one against the other, or
-for confirming in one run that a suspected native bug is not one. The raw
-implementations are reachable as `CSV::Native::parse-raku` and
-`CSV::Native::write-raku` with the same options `from-csv` and `to-csv` pass
-on (the writer takes the resolved `:names` and `:header-line`); the test
-suite uses them, and nothing else should need to.
+on a Raku++ that has the extension, to compare the two or to rule the native
+path out of a suspected bug. The raw implementations are reachable as
+`CSV::Native::parse-raku` and `CSV::Native::write-raku`; the test suite uses
+them.
 
 ## Measured
 
-A generated corpus of the shapes real files have — plain fields, quoted
-fields with separators and doubled quotes, a multi-line field now and then,
-non-ASCII — best of three, measured 2026-09-02 on an arm64 Mac with Rakudo
-v2026.08 and Raku++ 3.24.0. The corpora, the generator and the timing
-scripts are in the repository under
-[benchmarks/csv](https://github.com/ash/raku-modules/tree/main/benchmarks/csv)
-(outside the distribution, so they are not installed with it); its README
-says how to reproduce every number below.
+Generated corpora with the shapes real files have (quoted fields with
+separators and doubled quotes, multi-line fields, non-ASCII), best of three,
+2026-09-02, arm64 Mac, Rakudo v2026.08 and Raku++ 3.24.0. The corpora, the
+generator and the scripts are in the repository under
+[benchmarks/csv](https://github.com/ash/raku-modules/tree/main/benchmarks/csv),
+outside the distribution; its README says how to re-run every number.
 
 | 100,000 rows, 8.5 MB | parse | parse `:headers` | write | write hashes |
 |---|---:|---:|---:|---:|
-| **Raku++ + CSV::Native (extension)** | **86 ms** | **133 ms** | **49 ms** | **86 ms** |
-| Rakudo + CSV::Native (Raku) | 1,798 ms | 2,293 ms | 1,494 ms | 1,848 ms |
-| Rakudo + `Text::CSV` 0.022 | 15,245 ms | | | |
+| **Raku++, extension** | **107 ms** | **150 ms** | **48 ms** | **137 ms** |
+| Raku++, Raku implementation | 1,075 ms | 1,778 ms | 3,551 ms | 3,984 ms |
+| Rakudo, Raku implementation | 1,617 ms | 3,566 ms | 1,475 ms | 2,097 ms |
+| Rakudo, `Text::CSV` 0.022 | 15,245 ms | | | |
 
 | 10,000 rows, 813 KB | parse | parse `:headers` | write | write hashes |
 |---|---:|---:|---:|---:|
-| Raku++ + CSV::Native (extension) | 10 ms | 17 ms | 6 ms | 10 ms |
-| Rakudo + CSV::Native (Raku) | 169 ms | 226 ms | 139 ms | 158 ms |
-| Rakudo + `Text::CSV` 0.022 | 1,631 ms | | | |
+| **Raku++, extension** | **6 ms** | **10 ms** | **4 ms** | **8 ms** |
+| Raku++, Raku implementation | 98 ms | 151 ms | 308 ms | 371 ms |
+| Rakudo, Raku implementation | 130 ms | 171 ms | 143 ms | 174 ms |
+| Rakudo, `Text::CSV` 0.022 | 1,631 ms | | | |
 
-The Raku implementation on **Raku++** is missing from both tables because
-today it is the no-compiler fallback for correctness, not for size: Raku++'s
-`Str.index` with a start position costs time proportional to that position,
-so a scanner that advances with it — which is what the Raku parser is — is
-quadratic there. Measured, one parse and one write each:
-
-| rows | bytes | parse (Raku++, Raku) | write (Raku++, Raku) |
-|---:|---:|---:|---:|
-| 1,000 | 78 KB | 12.1 s | 34 ms |
-| 2,000 | 159 KB | 48.3 s | 64 ms |
-| 4,000 | 323 KB | 196 s | 133 ms |
-
-Doubling the input quadruples the parse; the writer, which never asks for a
-position, is linear. This is filed as an engine task, and the parser is
-already linear in the number of `index` calls it makes (it memoises where
-each needle next occurs), so the fix is entirely on the engine's side.
+The Raku implementation is built on `split` and `lines`, never on scanning
+with `index`, because on Raku++ an `index` costs the whole string on every
+call; the first version scanned that way and took 12 s for a thousand rows
+there. Both implementations are linear in the input.
 
 ## Scope
 
 Left out of 0.0.1 on purpose:
 
 - **Streaming.** `from-csv` reads the whole text and returns the whole table.
-  A lazy row iterator over a handle is the natural next feature and needs
-  parser state on the C side that outlives one call; it is designed for and
-  not built.
+  A lazy row iterator over a handle is the natural next feature.
 - **Loose quotes** (`5" pipe,x`), an escape character other than doubling,
-  comment lines, `:skip-empty-rows`. `Text::CSV` has all of them; the RFC has
-  none.
+  comment lines, `:skip-empty-rows`.
 - **Typed fields.** An opt-in allomorph mode may come; a guessing parser will
   not.
 
 ## Requirements
 
 Nothing, to work. For the fast path: Raku++, a C compiler, and Raku++'s
-headers installed (`<prefix>/include/rakupp/rakupp_ext.h`, which
-`cmake --install` places there). Set `RAKUPP_SRC` to a checkout's `include/`
-directory to build against that instead. When none of that is present the
-install still succeeds — the build step leaves a stub and the module runs the
-Raku implementation.
+headers (`<prefix>/include/rakupp/rakupp_ext.h`, installed by
+`cmake --install`; or `RAKUPP_SRC` pointing at a checkout's `include/`).
+Without them the install still succeeds and the module runs its Raku
+implementation.
 
 ## Compatibility
 
@@ -271,15 +243,14 @@ Raku implementation.
 | Raku++, extension | 3.24.0 | 139/139 | 93/93 | 19/19 |
 | Raku++, `CSV_NATIVE_BACKEND=raku` | 3.24.0 | 73/73 | 55/55 | 17/17 |
 
-The Raku++ counts are higher because every case is run through both
-implementations there. Neither version is an established floor — no older
-engine has been tried; the extension needs a Raku++ with extension ABI 2.
+The Raku++ counts are higher because every case runs through both
+implementations there. Neither version is an established floor; the
+extension needs a Raku++ with extension ABI 2.
 
-Two things worth knowing when a program moves between engines: CRLF is one
-character in Raku (`"a\r\nb".chars` is 3, and `.index("\n")` does not find
-it), which this module handles and your own string code may not; and Rakudo
+Two engine differences worth knowing: CRLF is one character in Raku
+(`"a\r\nb".chars` is 3, and `.index("\n")` does not find it); and Rakudo
 applies the single-argument rule to `[[1,2]]` (it is `[1,2]`) where Raku++
-today keeps it nested — write `[[1,2],]` for a one-row table on both.
+keeps it nested — write `[[1,2],]` for a one-row table on both.
 
 ## Author
 

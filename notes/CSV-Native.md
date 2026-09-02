@@ -146,20 +146,48 @@ Decisions argued for explicitly:
   and `[%h]` as a list of pairs; Raku++ keeps both nested. The tests carry a
   trailing comma in every one-row literal so they mean the same thing on both.
   This is an engine divergence and is filed as one.
-- **`Str.index` with a start position is O(position) on Raku++.** Each call
-  walks from the start of the string to the offset before it begins searching
-  (about 1.3 ns per character), and `substr-eq` pays the same walk, while
-  `substr` has an O(1) path. A scanner that advances with `index` — which is
-  what the Raku parser is — is therefore quadratic under Raku++: 1,000 rows
-  (78 KB) parse in 12 s, 2,000 in 48 s, 4,000 in 196 s, and the 8.5 MB corpus
-  ran for more than eleven minutes before being stopped, against 1.8 s under
-  Rakudo. The per-call cost is worse than the offset walk alone predicts, so
-  more than one string primitive is paying it. The
-  parser already keeps a memo of the next occurrence of each needle so that
-  it never rescans for one it has already found; that makes it linear in
-  `index` calls, and the remaining cost is the engine's. Filed as an engine
-  task; until it lands, the Raku implementation on Raku++ is the correctness
-  fallback the README says it is and not something to run on a large file.
+- **`Str.index` costs the whole string on Raku++, every call.** Not
+  O(position), as the first measurement on a 200 KB string suggested, but
+  O(length) wherever the match is: on an 813 KB text whose first comma is at
+  position 2, `index(",")` takes 13.6 ms per call (Rakudo: 6 µs), and
+  `substr-eq` pays similarly, while `lines`, `split`, `contains`, `chars` and
+  `substr` are linear and fast. The first Raku parser was the obvious
+  whole-text scanner advancing with `.index($needle, $pos)` — linear in
+  `index` calls, since it memoised where each needle next occurred — and was
+  therefore quadratic on Raku++: 1,000 rows (78 KB) in 12 s, 2,000 in 48 s,
+  4,000 in 196 s, and the 8.5 MB corpus ran for more than eleven minutes
+  before being stopped, against 1.8 s under Rakudo. The user reproduced the
+  12 s and, rightly, did not accept "the engine's fault" as the last word.
+  The parser is now **line-oriented and built on `split`**: the text is
+  split into lines with their terminators kept (`split` with `:v`, CRLF
+  first so that Raku++'s codepoint-based `split` and Rakudo's grapheme-based
+  one cannot disagree about a half of one); a line without a quote is one
+  `split` on the separator; a line holding a quote is gathered with the lines
+  that follow it while its quotes are unbalanced, then split on the quote —
+  even pieces are outside quotes, odd pieces inside, an empty outside piece
+  between two inside ones is a doubled quote — and every rule of the format
+  becomes a check on a piece. A first attempt kept the old character scanner
+  for the quoted lines; it was linear on Raku++ but three times slower on
+  Rakudo than the whole-text scanner had been, because a per-record scanner
+  pays its setup on every record. The split form then needed three things
+  a Rakudo profile pointed at before it matched the original there: no
+  `split(…, :v)` (quadratic on Rakudo — 18 ms for 10,000 lines, 2 s for
+  100,000 — so the terminators are implied for LF text and rebuilt from
+  nested plain splits otherwise), no range slices (`@f[0 ..^ *-1]` runs the
+  whole Range-and-slice machinery per record; `pop` and `shift` do not), and
+  no closure allocated per record. It now parses 10,000 rows faster than the
+  original on Rakudo (119 ms against 169) and 100,000 at about the same
+  speed (2.0 s against 1.8). Same specification, same error messages at the same lines
+  (the parity suite is what makes that a fact rather than a hope), and the
+  Raku implementation on Raku++ is now a row in the README's tables instead
+  of a footnote. The engine's `index` is still filed.
+- **A list holds the container it was built from.** `@records.push(($line,
+  @cells))` followed by `$line = $line + 1` reported the next line's number
+  in every error on Rakudo — a Raku list keeps the Scalar (and even a native
+  `int` lexical, by reference), it does not copy — while on Raku++ the same
+  code was correct, because Raku++ copies the value at construction. The
+  push is now `(+$line, @cells)`. Filed: a program can be right on Raku++
+  and wrong on Rakudo, and the Raku++ test column cannot catch that class.
 - **`Str.indices` is not grapheme-aware on Raku++** while `Str.index` is: it
   finds a `"\n"` inside a `"\r\n"`. The parser counts line endings inside
   quoted fields with `comb` for that reason. Filed.
