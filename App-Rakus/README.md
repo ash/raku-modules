@@ -4,7 +4,7 @@
 directory and it serves what is inside over HTTP/1.1, on nothing but
 `IO::Socket::INET`.
 
-> **Status: v0.0.1 — implemented and tested on both engines.** 37 assertions in
+> **Status: v0.0.2 — implemented and tested on both engines.** 37 assertions in
 > `t/`, no dependencies.
 
 ```sh
@@ -54,7 +54,7 @@ run(:port(8080), :root('/var/www')); # bind, announce, serve — the whole thing
 
 ## Scope
 
-**In v0.0.1:** the above, and nothing else. No configuration file, no TLS, no
+**In v0.0.2:** the above, and nothing else. No configuration file, no TLS, no
 range requests, no compression, no caching headers, no keep-alive — every
 response says `Connection: close`. It is a development and local-network
 server, in the same spirit as `python3 -m http.server`, and it says so rather

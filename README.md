@@ -12,7 +12,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | distribution | version | Rakudo `v2026.07` | Raku++ `v1.8.0` |
 |---|---|---|---|
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
-| [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.1 | 37/37 | 37/37 |
+| [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.2 | 37/37 | 37/37 |
 | [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 128/128 | 232/232 |
 
 Nothing has been released to the ecosystem yet.
