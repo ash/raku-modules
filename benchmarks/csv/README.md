@@ -11,7 +11,7 @@ purpose — an install from the ecosystem carries none of this.
 |---|---:|---:|---|
 | `corpus-100k.csv` | 100,000 | 8,512,124 | the main table |
 | `corpus-10k.csv` | 10,000 | 813,472 | the second table |
-| `corpus-1k.csv`, `corpus-2k.csv`, `corpus-4k.csv` | 1,000 / 2,000 / 4,000 | 77,603 / 159,356 / 322,895 | the size ladder for the Raku implementation on Raku++ |
+| `corpus-1k.csv`, `corpus-2k.csv`, `corpus-4k.csv` | 1,000 / 2,000 / 4,000 | 77,603 / 159,356 / 322,895 | a size ladder, to check that a backend is linear |
 
 Rows have eight columns (`id,name,email,city,amount,note,tags,active`); every
 seventh note is quoted with doubled quotes inside, every eleventh holds a line
@@ -36,7 +36,7 @@ rakupp -Ilib ../benchmarks/csv/bench.raku ../benchmarks/csv/corpus-10k.csv
 raku   -Ilib ../benchmarks/csv/bench.raku ../benchmarks/csv/corpus-10k.csv
 
 # the Raku implementation forced on Raku++, on the ladder — one parse and one
-# write each; the 4k file takes minutes today (see the README for why)
+# write each, to see that the time grows with the input and no faster
 for n in 1k 2k 4k; do
     CSV_NATIVE_BACKEND=raku rakupp -Ilib ../benchmarks/csv/ladder.raku ../benchmarks/csv/corpus-$n.csv
 done
