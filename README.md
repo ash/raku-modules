@@ -13,6 +13,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 |---|---|---|---|
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
 | [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.1 | 37/37 | 37/37 |
+| [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 128/128 | 232/232 |
 
 Nothing has been released to the ecosystem yet.
 
@@ -44,6 +45,7 @@ installing the module has to read past:
 
 - [notes/HTTP-Simple.md](notes/HTTP-Simple.md)
 - [notes/App-Rakus.md](notes/App-Rakus.md)
+- [notes/CSV-Native.md](notes/CSV-Native.md)
 
 ### Why one repository
 

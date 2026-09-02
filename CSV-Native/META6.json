@@ -1,0 +1,34 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "CSV parsing and writing with a native fast path on Raku++, and pure Raku everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "CSV::Native",
+  "provides": {
+    "CSV::Native": "lib/CSV/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/csv"
+  ],
+  "source-url": "https://github.com/ash/raku-modules",
+  "support": {
+    "source": "https://github.com/ash/raku-modules"
+  },
+  "tags": [
+    "CSV",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

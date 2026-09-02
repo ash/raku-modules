@@ -91,6 +91,9 @@ jobs:
             # the suite asserts which backend it exercised (see t/02-write.t)
             export JSON_NATIVE_REQUIRE_BACKEND=JSON::Fast
           fi
+          if [ "${{ matrix.dist }}" = "CSV-Native" ]; then
+            export CSV_NATIVE_REQUIRE_BACKEND=raku
+          fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; raku -Ilib "$t" || exit 1
           done
@@ -101,6 +104,9 @@ jobs:
           if [ "${{ matrix.dist }}" = "JSON-Native" ]; then
             # the extension was built two steps up; a fallback run here is red
             export JSON_NATIVE_REQUIRE_BACKEND=native
+          fi
+          if [ "${{ matrix.dist }}" = "CSV-Native" ]; then
+            export CSV_NATIVE_REQUIRE_BACKEND=native
           fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; rakupp -Ilib "$t" || exit 1
