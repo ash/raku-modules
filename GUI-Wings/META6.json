@@ -20,9 +20,9 @@
   "raku": "6.d",
   "resources": [
   ],
-  "source-url": "https://github.com/ash/raku-modules",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/GUI-Wings",
   "support": {
-    "source": "https://github.com/ash/raku-modules"
+    "source": "https://github.com/ash/raku-modules/tree/main/GUI-Wings"
   },
   "tags": [
     "GUI",

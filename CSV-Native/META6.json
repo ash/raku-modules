@@ -18,9 +18,9 @@
   "resources": [
     "libraries/csv"
   ],
-  "source-url": "https://github.com/ash/raku-modules",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/CSV-Native",
   "support": {
-    "source": "https://github.com/ash/raku-modules"
+    "source": "https://github.com/ash/raku-modules/tree/main/CSV-Native"
   },
   "tags": [
     "CSV",

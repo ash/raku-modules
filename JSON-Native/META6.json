@@ -19,9 +19,9 @@
   "resources": [
     "libraries/json"
   ],
-  "source-url": "https://github.com/ash/raku-modules",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/JSON-Native",
   "support": {
-    "source": "https://github.com/ash/raku-modules"
+    "source": "https://github.com/ash/raku-modules/tree/main/JSON-Native"
   },
   "tags": [
     "JSON",

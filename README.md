@@ -135,8 +135,10 @@ cd HTTP-Simple
 fez upload
 ```
 
-`META6.json` should carry `support.source` pointing at this repository, so
-[raku.land](https://raku.land) links somewhere useful.
+`META6.json` carries `source-url` and `support.source` pointing at the
+distribution's **own directory** here (`.../raku-modules/tree/main/<Dist>`),
+not at the repository root, so [raku.land](https://raku.land) lands a reader
+on the module rather than on the whole collection.
 
 ## Licence
 

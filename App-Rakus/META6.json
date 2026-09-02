@@ -17,9 +17,9 @@
   "raku": "6.d",
   "resources": [
   ],
-  "source-url": "https://github.com/ash/raku-modules",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/App-Rakus",
   "support": {
-    "source": "https://github.com/ash/raku-modules"
+    "source": "https://github.com/ash/raku-modules/tree/main/App-Rakus"
   },
   "tags": [
     "HTTP",
