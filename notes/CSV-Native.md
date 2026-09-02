@@ -163,6 +163,20 @@ Decisions argued for explicitly:
 - **`Str.indices` is not grapheme-aware on Raku++** while `Str.index` is: it
   finds a `"\n"` inside a `"\r\n"`. The parser counts line endings inside
   quoted fields with `comb` for that reason. Filed.
+- **Text decoding turns CRLF into LF before the parser sees it** — on both
+  engines for `IO::Path.slurp`, which is what `from-csv($path)` uses. So a
+  CRLF file reads as LF text, a CRLF inside a quoted field arrives as LF,
+  and the byte-for-byte round trip the README shows is in LF form. The
+  parser itself preserves whatever it is given, and a `Str` built in memory
+  with CRLF keeps it. Raku++ translates only in `IO::Path.slurp`:
+  `IO::Handle.slurp` and `Blob.decode` keep the CR where Rakudo's translate
+  in all three, so `from-csv($file.open)` differs between engines on the one
+  record with a CRLF inside a field. Filed.
+- **The mock file** (`t/mock-customers.csv`, 1,000 invented records) exists
+  so that a whole file — CRLF, quoted commas, non-ASCII, multi-line fields
+  together — is under test and in the README, not only hand-written cases.
+  It was generated once with a seeded script and is pinned by t/03-mock-file.t;
+  it is not a real dataset, which is the point.
 
 ## Measured
 

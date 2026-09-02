@@ -13,7 +13,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 |---|---|---|---|
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
 | [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.2 | 37/37 | 37/37 |
-| [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 128/128 | 232/232 |
+| [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 145/145 | 251/251 |
 
 Nothing has been released to the ecosystem yet.
 
@@ -35,6 +35,13 @@ HTTP-Simple/
 
 The directory name is the distribution name with `::` written `-`, which is the
 convention zef uses when it unpacks one.
+
+Anything a README measures against lives OUTSIDE the distribution directory,
+under `benchmarks/<topic>/` — the corpora, the generator that made them and
+the timing scripts — so a reader can re-run the numbers from the repository
+while an install from the ecosystem carries none of it:
+
+- [benchmarks/csv](benchmarks/csv) — the CSV::Native corpora (1k to 100k rows)
 
 Each distribution's README documents the module, and follows the one shape
 written down in [notes/README-shape.md](notes/README-shape.md). **Why** it is
