@@ -1,5 +1,7 @@
 # CSV::Native
 
+**N.B.! Status of this module: WIP (work in progress).**
+
 CSV parsing and writing with a native fast path on **Raku++**, and pure Raku
 everywhere else. No dependencies. The same program runs on both engines.
 
