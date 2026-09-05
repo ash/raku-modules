@@ -14,6 +14,16 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [HTTP::Simple](HTTP-Simple) — a batteries-included HTTP client | 0.0.1 | 107/107 | 107/107 |
 | [App::Rakus](App-Rakus) — `rakus`, a static HTTP file server | 0.0.2 | 37/37 | 37/37 |
 | [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 145/145 | 251/251 |
+| [Digest::Native](Digest-Native) — MD5, SHA-1, SHA-2 and HMAC | 0.0.1 | 343/343 † | 354/354 † |
+| [Compress::Zlib::Native](Compress-Zlib-Native) — gzip and zlib without libz | 0.0.1 | 156/156 † | 154/154 † |
+| [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 60/60 † | 60/60 † |
+
+† Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
+both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
+are lower than they look — three assertions are `todo` there, all of them
+pointing at one engine bug (a module's own `use` imports leak into whatever
+imports that module), and the Digest count is *higher* because the
+million-byte vectors are skipped on the pure-Raku fallback.
 
 Nothing has been released to the ecosystem yet.
 
@@ -53,6 +63,17 @@ installing the module has to read past:
 - [notes/HTTP-Simple.md](notes/HTTP-Simple.md)
 - [notes/App-Rakus.md](notes/App-Rakus.md)
 - [notes/CSV-Native.md](notes/CSV-Native.md)
+- [notes/Digest-Native.md](notes/Digest-Native.md)
+- [notes/Compress-Zlib-Native.md](notes/Compress-Zlib-Native.md)
+- [notes/Data-Native.md](notes/Data-Native.md)
+
+The two `**::Native` distributions added for the `Data::Native` campaign each
+carry their conformance vectors INSIDE `t/vectors/`, together with the
+generator that produced them from an independent oracle — the system `openssl`
+for the digests, real libz and the system `gzip` for the compression. Those
+files are meant to be shared with the engine's own implementations of the same
+formats when those land, which is what keeps two deliberately separate codebases
+agreeing; see `docs/dev/plans/NATIVE-MODULES-PLAN.md` in the Raku++ repository.
 
 ### Why one repository
 

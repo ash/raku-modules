@@ -1,0 +1,45 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "JSON::Fast",
+    "CSV::Native",
+    "Digest:auth<zef:grondilu>",
+    "Digest::SHA1::Native:auth<zef:bduggan>",
+    "Digest::SHA256::Native:auth<zef:bduggan>",
+    "Digest::HMAC",
+    "Compress::Zlib",
+    "Crypt::Random"
+  ],
+  "description": "One portable use line for whatever the engine does natively — JSON, CSV, digests, compression and secure random bytes",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Data::Native",
+  "provides": {
+    "Data::Native": "lib/Data/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Data-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Data-Native"
+  },
+  "tags": [
+    "json",
+    "csv",
+    "digest",
+    "zlib",
+    "random",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
