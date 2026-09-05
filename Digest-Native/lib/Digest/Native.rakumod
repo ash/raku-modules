@@ -383,6 +383,12 @@ sub reject-adverbs(Str $name, %opt) {
 # against 4.1 for the version below. Everything unusual still goes to the
 # helpers and pays a frame there, where nothing is counting.
 my %IMPL;
+# One exported wrapper per name, filled in by dispatcher() far below and read
+# by algo-of() just after this loop. Declared HERE because a `my` is visible
+# only after its declaration: Rakudo rejects the file outright if algo-of names
+# it first, and Raku++ accepts it, which is exactly the kind of divergence a
+# module in this family must not be built on.
+my %DISPATCH;
 for @ALGOS -> $algo {
     my $hexname = "{$algo}-hex";
     %IMPL{$algo} = $is-native
@@ -409,7 +415,17 @@ for @ALGOS -> $algo {
 # `===` comparisons rather than a .WHICH table: identity of a Callable is the
 # thing being asked about, so ask it directly.
 sub algo-of(&hash) {
-    for @ALGOS -> $a { return $a if %IMPL{$a} === &hash }
+    for @ALGOS -> $a {
+        # Three things any of the six may be, depending on what the engine
+        # offers and what else the program imported: the implementation itself,
+        # the exported wrapper around it, or the engine's own primitive — which
+        # is what `use Data::Native <digest>` puts in scope. All three are the
+        # same hash and all three must be recognised, or the block size is
+        # guessed instead of known.
+        return $a if %IMPL{$a} === &hash;
+        return $a if (%DISPATCH{$a}:exists) && %DISPATCH{$a} === &hash;
+        with core-primitive($a) { return $a if $_ === &hash }
+    }
     Nil
 }
 
@@ -474,12 +490,21 @@ my $KNOWN = @NAMES.Set;
 # ===========================================================================
 
 sub dispatcher(Str $name) {
-    # Resolved on first call, when every `use` in the program has run and the
-    # registry is final. Memoised from then on.
-    my $target;
-    sub (|c) {
-        $target //= (claimed()<digest> ?? core-primitive($name) !! Nil) // %IMPL{$name};
-        $target(|c)
+    # ONE wrapper per name, built once and reused by every `use` in the
+    # program — not one per import. `hmac` recognises the tag's own hashes by
+    # IDENTITY, so a second `use Digest::Native <sha384>` handing out a second
+    # wrapper would make `hmac($k, $m, &sha384)` stop knowing what it was
+    # given, fall back, and guess a block size of 64. It did exactly that when
+    # the engine grew its `digest` primitives and this wrapper started being
+    # exported at all: hmac-sha384 and hmac-sha512 went silently non-RFC.
+    %DISPATCH{$name} //= do {
+        # Resolved on first CALL, when every `use` in the program has run and
+        # the registry is final. Memoised from then on.
+        my $target;
+        sub (|c) {
+            $target //= (claimed()<digest> ?? core-primitive($name) !! Nil) // %IMPL{$name};
+            $target(|c)
+        }
     }
 }
 
