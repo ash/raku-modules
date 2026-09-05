@@ -74,7 +74,23 @@ my &jf-to-json;
 # `&::(…)` is a RUNTIME lookup, so this line compiles on Rakudo too — where it
 # simply yields Nil and the module falls through to JSON::Fast. Anything
 # spelled `use Rakupp::Ext` would have made the file uncompilable there.
-my &ext-load = try &::('rakupp-ext-load');
+# The probe sits in a SUB, and that is load-bearing rather than tidiness. A
+# bare `my &ext-load = try &::('rakupp-ext-load');` at module scope leaves the
+# caught exception in this file's `$!`, and on Rakudo that makes the whole
+# module unserializable the moment ANOTHER MODULE `use`s it: precompiling the
+# importer walks this one's state and dies with
+#
+#     Missing serialize REPR function for REPR VMException (BOOTException)
+#
+# It only shows up when a module imports the module — a program importing it
+# directly precompiles nothing and works — which is exactly why it survived
+# until Data::Native tried to depend on this. A `do {}` block is NOT enough;
+# `$!` is scoped to the routine, so a sub is.
+sub probe-symbol(Str $name) {
+    my $c = try &::($name);
+    $c ~~ Callable ?? $c !! Nil
+}
+my &ext-load = probe-symbol('rakupp-ext-load');
 my &native-parse;
 my &native-write;
 
@@ -128,9 +144,14 @@ my Bool $engine-codec = ?(!$is-native && &ext-load);
 # The codec's first-party name, when this Raku++ has it; older builds answer
 # only the Rakudo-compatibility spelling. Probed FUNCTIONALLY — a type object
 # is undefined, so `(try ::(…)) // fallback` would always take the fallback.
-my $engine-json = (try { ::('Rakupp::Internals::JSON').from-json('1') === 1 })
-    ?? ::('Rakupp::Internals::JSON')
-    !! Rakudo::Internals::JSON;
+# Same reason as probe-symbol above: the `try` has to live inside a routine, or
+# the exception it catches stays in this file's `$!` and makes the module
+# unserializable for any module that `use`s it.
+sub engine-json-class() {
+    my $ok = try { ::('Rakupp::Internals::JSON').from-json('1') === 1 };
+    $ok ?? ::('Rakupp::Internals::JSON') !! Rakudo::Internals::JSON
+}
+my $engine-json = engine-json-class();
 
 # Which parser is in use: 'native' (the compiled extension), 'engine'
 # (Raku++'s built-in codec, no extension present) or 'JSON::Fast'.
