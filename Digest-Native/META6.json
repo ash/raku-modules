@@ -1,0 +1,41 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "Digest:auth<zef:grondilu>",
+    "Digest::SHA1::Native:auth<zef:bduggan>",
+    "Digest::SHA256::Native:auth<zef:bduggan>",
+    "Digest::HMAC"
+  ],
+  "description": "MD5, SHA-1, SHA-2 and HMAC with a native fast path on Raku++, and the established native modules everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Digest::Native",
+  "provides": {
+    "Digest::Native": "lib/Digest/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/digest"
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Digest-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Digest-Native"
+  },
+  "tags": [
+    "digest",
+    "md5",
+    "sha",
+    "hmac",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
