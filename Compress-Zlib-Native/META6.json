@@ -1,0 +1,38 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "Compress::Zlib"
+  ],
+  "description": "gzip and zlib without libz — our own DEFLATE on Raku++, and Compress::Zlib everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Compress::Zlib::Native",
+  "provides": {
+    "Compress::Zlib::Native": "lib/Compress/Zlib/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/zlib"
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Compress-Zlib-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Compress-Zlib-Native"
+  },
+  "tags": [
+    "zlib",
+    "gzip",
+    "deflate",
+    "compression",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
