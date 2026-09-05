@@ -3,16 +3,15 @@
   "authors": [
     "Andrew Shitov"
   ],
-  "build-depends": [
-  ],
-  "depends": [
-  ],
+  "build-depends": [],
+  "depends": [],
   "description": "CSV parsing and writing with a native fast path on Raku++, and pure Raku everywhere else",
   "license": "Artistic-2.0",
   "meta-version": 0,
   "name": "CSV::Native",
   "provides": {
-    "CSV::Native": "lib/CSV/Native.rakumod"
+    "CSV::Native": "lib/CSV/Native.rakumod",
+    "CSV::Native::Core": "lib/CSV/Native/Core.rakumod"
   },
   "raku": "6.d",
   "resources": [

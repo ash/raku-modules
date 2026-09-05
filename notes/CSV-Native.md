@@ -228,3 +228,35 @@ Left out of 0.0.1, deliberately:
 - **Typed fields.** See above; an opt-in allomorph mode is the likely shape.
 - **A header-line switch when writing list rows** without names, and
   `:skip-empty-rows`. Small, and waiting for a request.
+
+## The Core split (2026-09-05)
+
+The implementation moved to `CSV::Native::Core` — a plain `unit module` with
+`our` subs and no export protocol — and `lib/CSV/Native.rakumod` became a thin
+importable face carrying the `Data::Native` claim protocol.
+
+The reason is specific to this distribution. `Data::Native` delegates its `csv`
+tag here, because CSV is the one family with no ecosystem reference to stand in
+for it. But a module that `use`s a claim-protocol participant runs that
+participant's `EXPORT` **into its own scope**, and the registry announcement
+that leaves cannot be told apart from one the caller made — so `Data::Native`
+would stand aside from its own names and export nothing for the tag.
+
+`need` runs no `EXPORT` at all, on either engine, so a package with no export
+protocol is reachable without that hazard. `Data::Native` does
+`need CSV::Native::Core` and calls the full names.
+
+Nothing a user sees changed: `use CSV::Native` exports the same three names,
+and `CSV::Native::parse-raku` and `CSV::Native::write-raku` keep working — the
+face re-declares them inside a `module CSV::Native { }` **block**, because
+`sub EXPORT` has to sit at the file's outermost scope or Rakudo never runs it.
+
+Two things the retrofit cost, both worth knowing for the next module:
+
+- Without a `unit module` line, `our sub` lands in `GLOBAL` and then collides
+  with the same name coming out of `EXPORT` — Rakudo refuses the import. The
+  subs a `sub EXPORT` module hands out have to be file-scoped `sub`, not `our
+  sub`. JSON::Native hit this in the same session.
+- `::("&Some::Package::$_")` is a malformed lookup on Rakudo. An explicit table
+  of `'name' => &Some::Package::name` is checked at compile time and is clearer
+  anyway.

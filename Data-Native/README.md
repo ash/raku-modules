@@ -116,11 +116,12 @@ registry. The cost is that the digest and zlib compositions appear twice, here
 and in the distribution that owns each family; the conformance vectors in those
 distributions are what keep the copies honest.
 
-`CSV::Native` is the exception, because no reference exists for CSV. It uses
-`is export` today and is therefore outside the protocol. **If it is ever
-retrofitted onto the claim protocol, this file breaks for the `csv` tag** — and
-the fix is to give CSV the same treatment as the others, not to add a guard
-here.
+CSV has no ecosystem reference — `CSV::Native` *is* the reference — so it needs
+one more step, and the step generalises. **`need` runs no `sub EXPORT` at all**,
+on either engine, so the implementation lives in `CSV::Native::Core`, a plain
+package with no export protocol, and this module reaches it by full name. The
+importable `CSV::Native` beside it does the cooperating. Any future family where
+our own module is the reference should be shaped the same way.
 
 ## Status
 

@@ -57,7 +57,16 @@ approximately right would be worse than being slow.
 
 =end pod
 
-unit module JSON::Native;
+# No `unit module` line, and that is load-bearing rather than an omission: `sub
+# EXPORT` — which this module now uses, so it can cooperate with Data::Native —
+# must sit at the file's outermost scope. Inside a package declaration Rakudo
+# never runs it, exports nothing, and reports no error, which is the worst
+# possible shape. The subs below are file-scoped and handed out by the EXPORT
+# at the bottom.
+#
+# Unlike CSV::Native, this file needs no implementation/face split: Data::Native
+# delegates its `json` tag straight to JSON::Fast, so it never `use`s this
+# module and there is nothing here to poison the registry.
 
 # JSON::Fast is imported inside a BLOCK on purpose. `use` is lexically scoped,
 # so its `from-json`/`to-json` stay in here and do not collide with the ones this
@@ -155,7 +164,7 @@ my $engine-json = engine-json-class();
 
 # Which parser is in use: 'native' (the compiled extension), 'engine'
 # (Raku++'s built-in codec, no extension present) or 'JSON::Fast'.
-our sub json-backend() is export(:MANDATORY) {
+sub json-backend() {
     $is-native      ?? 'native'
     !! $engine-codec ?? 'engine'
     !!                  'JSON::Fast'
@@ -166,7 +175,7 @@ our sub json-backend() is export(:MANDATORY) {
 # JSON::Fast grows tomorrow — goes to JSON::Fast untouched. Refusing an adverb
 # the module it stands in for accepts would make `use JSON::Native` a
 # downgrade, and this used to do exactly that ("Unexpected named argument").
-our sub from-json(Str() $text, *%opt) is export(:MANDATORY) {
+sub from-json(Str() $text, *%opt) {
     if %opt.keys (-) <immutable> {
         return jf-from-json($text, |%opt);
     }
@@ -192,10 +201,45 @@ our sub from-json(Str() $text, *%opt) is export(:MANDATORY) {
 # choice and would have made the native path answer "null" where JSON::Fast
 # raises — a divergence invented by the fast path, which is the one thing it
 # must never do.
-our sub to-json($obj, *%opt) is export(:MANDATORY) {
+sub to-json($obj, *%opt) {
     if &native-write && !(%opt.keys (-) <pretty>) {
         my $s = native-write($obj, |%opt);
         return $s if $s.defined;
     }
     jf-to-json($obj, |%opt)
+}
+
+# ===========================================================================
+# The cooperation protocol.
+#
+# `use Data::Native <json>` exports the same names, and two modules exporting
+# one name is a hard compile error on Rakudo — so these two cooperate rather
+# than collide. Whichever loads second yields the contested names; the program
+# builds in either order, and which implementation answers is not observable,
+# which is what the conformance suites are for.
+# ===========================================================================
+
+sub claimed()  { PROCESS::<%DATA-NATIVE-CLAIMED>  //= {} }
+sub exported() { PROCESS::<%DATA-NATIVE-EXPORTED> //= {} }
+
+my %IMPL = 'from-json'    => &from-json,
+           'to-json'      => &to-json,
+           'json-backend' => &json-backend;
+
+my @NAMES = %IMPL.keys.sort;
+my $KNOWN = @NAMES.Set;
+
+sub EXPORT(*@names) {
+    my $stand-aside = ?claimed()<json>;
+    exported()<json> = 'JSON::Native' unless $stand-aside;
+
+    my @want = @names ?? @names.map(*.Str) !! @NAMES;
+    my @unknown = @want.grep({ !$KNOWN{$_} });
+    die "JSON::Native: no such name" ~ (@unknown > 1 ?? 's' !! '') ~ " "
+      ~ @unknown.map({ "'$_'" }).join(', ')
+        if @unknown;
+
+    return Map.new() if $stand-aside;
+
+    Map.new(@want.map({ "&$_" => %IMPL{$_} }))
 }

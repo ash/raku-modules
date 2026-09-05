@@ -16,7 +16,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [CSV::Native](CSV-Native) — CSV parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 145/145 | 251/251 |
 | [Digest::Native](Digest-Native) — MD5, SHA-1, SHA-2 and HMAC | 0.0.1 | 343/343 † | 354/354 † |
 | [Compress::Zlib::Native](Compress-Zlib-Native) — gzip and zlib without libz | 0.0.1 | 156/156 † | 154/154 † |
-| [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 60/60 † | 60/60 † |
+| [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 68/68 † | 68/68 † |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts

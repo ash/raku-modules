@@ -84,20 +84,27 @@ sub run-raku(Str $code) {
 
 # ---- the cooperation protocol, all four cells ---------------------------
 
-for <digest zlib> -> $tag {
-    my $mod = $tag eq 'digest' ?? 'Digest::Native' !! 'Compress::Zlib::Native';
-    my $call = $tag eq 'digest' ?? 'md5-hex("abc")' !! 'crc32("123456789").fmt("%08x")';
-    my $want = $tag eq 'digest' ?? '900150983cd24fb0d6963f7d28e17f72' !! 'cbf43926';
+# All four distributions are on the protocol now, so all four families get the
+# full table rather than only the two that were written with it.
+my %CELLS =
+    json   => ('JSON::Native',           'from-json("[7]")[0]',            '7'),
+    csv    => ('CSV::Native',            'from-csv("a,b\n").elems',        '1'),
+    digest => ('Digest::Native',         'md5-hex("abc")',
+               '900150983cd24fb0d6963f7d28e17f72'),
+    zlib   => ('Compress::Zlib::Native', 'crc32("123456789").fmt("%08x")', 'cbf43926');
+
+for %CELLS.keys.sort -> $tag {
+    my ($mod, $call, $want) = %CELLS{$tag};
 
     {
-        my ($rc, $out, $) = run-raku("use Data::Native; use $mod; say $call");
-        is $rc, 0, "Data::Native then $mod — compiles";
-        is $out, $want, "and the value is the agreed one";
+        my ($rc, $out, $err) = run-raku("use Data::Native; use $mod; say $call");
+        is $rc, 0, "<$tag>: Data::Native then $mod — compiles" or diag $err;
+        is $out, $want, "  and the value is the agreed one";
     }
     {
-        my ($rc, $out, $) = run-raku("use $mod; use Data::Native; say $call");
-        is $rc, 0, "$mod then Data::Native — compiles";
-        is $out, $want, "and the value is the agreed one";
+        my ($rc, $out, $err) = run-raku("use $mod; use Data::Native; say $call");
+        is $rc, 0, "<$tag>: $mod then Data::Native — compiles" or diag $err;
+        is $out, $want, "  and the value is the agreed one";
     }
 }
 
@@ -105,10 +112,10 @@ for <digest zlib> -> $tag {
 # the plan singles out: `use Data::Native <csv>; use JSON::Native;` must give
 # you the engine's CSV and JSON::Native's JSON.
 {
-    my ($rc, $out, $) = run-raku(
-        'use Data::Native <csv>; use Digest::Native; say md5-hex("abc")');
-    is $rc, 0, 'claiming <csv> leaves Digest::Native free to export';
-    is $out, '900150983cd24fb0d6963f7d28e17f72', 'and it answers';
+    my ($rc, $out, $err) = run-raku(
+        'use Data::Native <csv>; use JSON::Native; say from-json("[7]")[0]');
+    is $rc, 0, 'claiming <csv> leaves JSON::Native free to export' or diag $err;
+    is $out, '7', 'and it answers — the case the plan singles out';
 }
 
 done-testing;

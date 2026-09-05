@@ -43,11 +43,18 @@ and in the distribution that owns each family. The conformance vectors in those
 distributions are what keep the copies honest, and the duplication is about
 sixty lines.
 
-**`CSV::Native` is the exception and the thing to watch.** No reference exists
-for CSV — that distribution *is* the reference — so this depends on it directly.
-It uses `is export` today and is outside the protocol. If it is ever retrofitted
-onto the claim protocol, this file breaks for the `csv` tag, and the fix is to
-give CSV the same treatment, not to add a guard here.
+**CSV was the awkward one, and the fix generalises.** No reference exists for
+CSV — that distribution *is* the reference — so this has to depend on our own
+module, which is now on the claim protocol like the others. The way out is that
+`need` runs no `sub EXPORT` at all, on either engine: `CSV::Native` was split
+into `CSV::Native::Core`, a plain `unit module` with `our` subs and no export
+protocol, and a thin `CSV::Native` that does the importing and the cooperating.
+This module does `need CSV::Native::Core` and calls the full names, so nothing
+announces anything.
+
+That is the general pattern for any family where our own module is the
+reference: put the implementation in a package with no export protocol, and let
+the importable face be a separate, thin file.
 
 ## Departure 2: `:initial-hash` is passed through, on one path
 

@@ -99,11 +99,11 @@ gives you the engine's CSV and C<JSON::Native>'s JSON, as it should.
 # the distribution that owns them, and the conformance vectors in each of those
 # distributions are what keep the two copies honest.
 #
-# CSV::Native is the exception and the one thing to watch: no reference exists
-# for CSV, so this depends on the module itself. It uses `is export` today and
-# is therefore outside the protocol. **If CSV::Native is ever retrofitted onto
-# the claim protocol, this file breaks for the `csv` tag** — and the fix is to
-# give it the same treatment, not to add a guard here.
+# CSV is the exception, because no reference exists for it — that distribution
+# IS the reference. It resolves the same way anyway: CSV::Native::Core holds the
+# implementation and has no export protocol, and `need` reaches it without
+# running anything. That is the general pattern for a family where our own
+# module is the reference.
 #
 # Each `use` is in its own BLOCK: several of them export the same names
 # (Digest::SHA1 and Digest::SHA1::Native both give `&sha1`), and side by side
@@ -113,9 +113,15 @@ gives you the engine's CSV and C<JSON::Native>'s JSON, as it should.
 my (&f-from-json, &f-to-json);
 { use JSON::Fast; &f-from-json = &from-json; &f-to-json = &to-json; }
 
-my (&f-from-csv, &f-to-csv, &f-csv-backend);
-{ use CSV::Native; &f-from-csv = &from-csv; &f-to-csv = &to-csv;
-                   &f-csv-backend = &csv-backend; }
+# `need`, not `use`: CSV::Native is on the claim protocol, and `use` would run
+# its EXPORT into THIS file's scope, leaving an announcement in the registry
+# that this module would then read as the caller's and stand aside for. `need`
+# runs no EXPORT at all — probed on both engines — and CSV::Native::Core is the
+# half that holds the implementation and announces nothing.
+need CSV::Native::Core;
+my &f-from-csv    = &CSV::Native::Core::from-csv;
+my &f-to-csv      = &CSV::Native::Core::to-csv;
+my &f-csv-backend = &CSV::Native::Core::csv-backend;
 
 my %f-hash;                      # algorithm -> Blob-returning sub
 my (&f-sha1-hex, &f-sha256-hex); # the two the ecosystem produces in C directly
