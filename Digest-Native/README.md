@@ -81,9 +81,17 @@ Three, in this order:
 
 | | when | `digest-backend()` |
 |---|---|---|
-| the engine's built-ins | `Data::Native` has claimed the `digest` tag and this engine answers | `core` |
-| our compiled extension | Raku++, with the C built at install | `native` |
-| the ecosystem modules | everywhere else | `Digest` |
+| the engine's built-ins | Raku++ answers `use Digest::Native` itself — see below | `core` |
+| our compiled extension | this module actually runs, on Raku++ | `native` |
+| the ecosystem modules | this module actually runs, anywhere else | `Digest` |
+
+**On Raku++ this distribution is normally not loaded at all.** The compiler
+answers `use Digest::Native` from its own built-ins, and defers to what is
+installed only when a search path names it — which is what `rakupp test
+Digest::Native` does, so the suite below exercises this module's own C — when
+the installed version is newer than the interface the compiler implements, or
+when it cannot answer. So rows two and three describe what happens *when the
+module runs*: on another engine, on an older Raku++, or under test.
 
 The third row is **composed** rather than a single distribution, so
 `digest-backend` also takes an algorithm and names the exact one:

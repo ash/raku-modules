@@ -99,6 +99,9 @@ you this module's CSV and `Digest::Native`'s digests, which is the point.
 
 ### The one rule that shapes the dependency list
 
+(This matters on engines where the module actually runs. On Raku++ the compiler
+answers `use Data::Native` itself and none of this is loaded.)
+
 **This module must not `use` anything that participates in the claim
 protocol.** A `**::Native` module announces itself when its `EXPORT` puts names
 into a scope; loading one from here runs that `EXPORT` into *this* file's scope,
