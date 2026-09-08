@@ -264,7 +264,7 @@ method !exchange(Str $scheme, Str $host, Int $port, Blob $wire, Real $timeout, S
 #| Open the connection, or throw saying why it could not be opened.
 method !connect(Str $scheme, Str $host, Int $port, Str $url, %tls = {}) {
     my $https = $scheme eq 'https';
-    my $ssl   = $https ?? self!ssl-class !! Nil;    # throws if the TLS dist is absent
+    my $ssl   = $https ?? self!ssl-class($url) !! Nil;  # throws if the TLS dist is unusable
     my $connecting = try $https ?? $ssl.connect($host, $port, |%tls)
                                 !! IO::Socket::Async.connect($host, $port);
     # A name that does not resolve is thrown by `.connect` itself instead of
@@ -494,12 +494,26 @@ method !stream-once(Str $method, Str $url, %opt, Real $timeout, Real $idle, @his
 
 #| IO::Socket::Async::SSL is a separate distribution, so it is loaded on demand:
 #| the module installs and serves plain HTTP without it.
-method !ssl-class() {
+method !ssl-class(Str $url = '') {
     return $!ssl if $!ssl.^name ne 'Any';
     my $c = try { require ::('IO::Socket::Async::SSL'); ::('IO::Socket::Async::SSL') };
+    my $why = $!;
     if $c.^name eq 'Any' || $c ~~ Failure {
-        X::HTTP::Simple::Transport.new(url => '',
-            detail => 'https needs IO::Socket::Async::SSL, which is not installed').throw;
+        # Say WHY. The dist can be absent, but it can equally be installed and
+        # fail to load — a missing, stale or wrong-architecture libssl is the
+        # usual reason, and it is the OpenSSL binding underneath that says so.
+        # Reporting that as "not installed" sent one reporter off to reinstall a
+        # module that was already there. The reason can run to a whole dlopen
+        # trace, so only its first line goes in the message.
+        # `Could not find X in:` carries its repository list on the lines
+        # below, so the trailing `in:` would dangle once they are dropped.
+        my $reason = $why.defined
+            ?? $why.message.lines[0].trim.subst(/ \s* 'in' ':' \s* $/, '')
+            !! '';
+        X::HTTP::Simple::Transport.new(:$url,
+            detail => 'https needs IO::Socket::Async::SSL'
+                      ~ ($reason ?? " — loading it failed: $reason"
+                                 !! ', which is not installed')).throw;
     }
     $!ssl = $c;
     $c

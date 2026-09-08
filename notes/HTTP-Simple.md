@@ -108,6 +108,59 @@ an obstacle. All are fixed there.
 One trap was ours, and both engines agree on it: `"\r\n"` is a single grapheme
 in a Raku string, so splitting an HTTP response has to be done in bytes.
 
+### Reported: `https` died on a symbol name (2026-09-08)
+
+A user hit
+
+```
+Cannot locate symbol 'SSL_get1_peer_certificate' in native library …
+```
+
+and read it as the FFI mangling names. Nothing was mangled: that name is
+exactly what the OpenSSL binding asked for. `IO::Socket::Async::SSL` chooses
+between two spellings of ONE function by version number —
+`SSL_get_peer_certificate` below OpenSSL 3, `SSL_get1_peer_certificate` from 3
+on — and it decides with `OpenSSL::Version::version_num`, which is answered by
+whichever libcrypto responded, not necessarily by the libssl the call then
+binds against. When those two disagree the binding asks a 1.1-era or LibreSSL
+libssl for the 3.x name, and the symbol really is not there.
+
+Two engine fixes came out of it, both in Raku++'s NativeCall:
+
+| bug | what it broke |
+|---|---|
+| the symbol alias ran one way only (old name → new) | `https` on any machine where the version probe and the libssl disagreed — the reported failure |
+| a library name that already carried `.dylib` skipped the versioned-first rule, so a bare `libssl.dylib` opened macOS's `/usr/lib` compat stub, which does not warn-and-continue but **aborts the process** | `https` on any machine whose OpenSSL dist baked a bare or foreign-prefix path — and it aborts, so nothing catches it |
+
+The two peer-certificate spellings are interchangeable because both hand back a
+reference the caller frees. `SSL_get0_peer_certificate` is *not*, and no engine
+may substitute it: the caller's `X509_free` would over-free.
+
+`notes/tls-diagnose.raku` prints what a machine actually resolves — the baked
+path, the library that opens, the version, and which of the three spellings
+bind. It runs on both engines. The path comes from `resources/libraries.json`,
+which the OpenSSL distribution writes at INSTALL time, so a store shared
+between two toolchains hands out the other one's prefix: this laptop's store
+was written by an x86_64 Rakudo and names `/usr/local/opt/openssl@3`, which an
+arm64 engine cannot load at all. Raku++ now retries such a path by basename
+under the prefixes dyld does not search, which is what makes `https` work here.
+
+### Ours: "not installed" was the wrong diagnosis
+
+The report was hard to act on because this module said the wrong thing. TLS is
+loaded on demand, and every failure of that load was reported as
+`https needs IO::Socket::Async::SSL, which is not installed` — including the
+failures where it *is* installed and will not load, which is every case above.
+It now passes the real reason through, and names the URL it was fetching:
+
+```
+Could not fetch https://example.com: https needs IO::Socket::Async::SSL —
+loading it failed: Cannot locate native library '/usr/local/opt/openssl@3/lib/libssl.dylib'
+```
+
+A `try` that discards `$!` turns a diagnosable fault into a wrong answer with
+no trace of the right one.
+
 ### Open: a Lock is a no-op under the GIL
 
 A `start` block taking a lock runs *inside* the holder's critical section, where
