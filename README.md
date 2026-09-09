@@ -17,6 +17,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Digest::Native](Digest-Native) — MD5, SHA-1, SHA-2 and HMAC | 0.0.1 | 343/343 † | 354/354 † |
 | [Compress::Zlib::Native](Compress-Zlib-Native) — gzip and zlib without libz | 0.0.1 | 156/156 † | 154/154 † |
 | [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 68/68 † | 68/68 † |
+| [Password::Native](Password-Native) — `prompt` with a `:hidden` adverb | 0.0.1 | 32/32 ‡ | 32/32 ‡ |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -31,6 +32,15 @@ Nothing has been released to the ecosystem yet.
 on: each needs engine fixes that landed after `v1.8.0`'s predecessor, and against
 an older binary the suites fail rather than degrading. Rakudo has no such floor —
 nothing here depends on a recent one.
+
+‡ `Password::Native` is measured on Rakudo `v2026.08` and Raku++ `3.26.0`, and
+`3.26.0` is its floor for two reasons at once: `prompt(:hidden)` is an engine
+primitive that landed there, and below it the module's `stty` fallback cannot
+work on a terminal anyway — every child `run` spawned was put in its own process
+group, so `stty -echo` took `SIGTTOU` and stopped. Its 32 assertions all run on
+pipes, where there is no echo to suppress, so **the suite passes on an engine
+where the module does not actually work**; the terminal behaviour is verified
+separately under a pseudo-terminal and the matrix is in the notes.
 
 ## Layout
 
@@ -66,6 +76,7 @@ installing the module has to read past:
 - [notes/Digest-Native.md](notes/Digest-Native.md)
 - [notes/Compress-Zlib-Native.md](notes/Compress-Zlib-Native.md)
 - [notes/Data-Native.md](notes/Data-Native.md)
+- [notes/Password-Native.md](notes/Password-Native.md)
 
 The two `**::Native` distributions added for the `Data::Native` campaign each
 carry their conformance vectors INSIDE `t/vectors/`, together with the

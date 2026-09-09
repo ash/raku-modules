@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "prompt with a :hidden adverb — a password the terminal never echoes, native on Raku++ and stty everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Password::Native",
+  "provides": {
+    "Password::Native": "lib/Password/Native.rakumod",
+    "Password::Native::Win32": "lib/Password/Native/Win32.rakumod"
+  },
+  "raku": "6.d",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Password-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Password-Native"
+  },
+  "tags": [
+    "password",
+    "prompt",
+    "terminal",
+    "getpass",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
