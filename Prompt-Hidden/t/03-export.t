@@ -9,33 +9,33 @@ plan 10;
 # really took — and neither is "did it die": Rakudo's own prompt has no named
 # arguments and dies on :bogus too. Only the MESSAGE separates the two.
 my ($out, $err, $rc) = child(
-    'use Password::Native; try prompt("a: ", :hidden, :bogus); say $!.message.lines[0]',
+    'use Prompt::Hidden; try prompt("a: ", :hidden, :bogus); say $!.message.lines[0]',
     "x\n");
-like $out, /'Password::Native'/, 'the imported &prompt is ours, not the built-in';
+like $out, /'Prompt::Hidden'/, 'the imported &prompt is ours, not the built-in';
 like $out, /':bogus'/, 'and it says which named argument it will not take';
 
 ($out, $err, $rc) = child(
-    'use Password::Native; try prompt("a: ", "b: ", :hidden); say $!.message.lines[0]', "x\n");
+    'use Prompt::Hidden; try prompt("a: ", "b: ", :hidden); say $!.message.lines[0]', "x\n");
 like $out, /'at most one message'/, 'two messages is an error';
 
 # An import list, spelled <name> — not :name, which Rakudo routes through the
 # `is export(:tag)` machinery a sub EXPORT module has no part in.
 ($out, $err, $rc) = child(
-    'use Password::Native <prompt>; my $x = prompt("q: ", :hidden); say "[$x]"', "picked-2f9e\n");
-is $out, "q: [picked-2f9e]\n", 'use Password::Native <prompt> exports prompt';
+    'use Prompt::Hidden <prompt>; my $x = prompt("q: ", :hidden); say "[$x]"', "picked-2f9e\n");
+is $out, "q: [picked-2f9e]\n", 'use Prompt::Hidden <prompt> exports prompt';
 
 ($out, $err, $rc) = child(
-    'use Password::Native <password-backend>; say password-backend()', "");
+    'use Prompt::Hidden <prompt-backend>; say prompt-backend()', "");
 like $out, /^ ['core' | 'stty' | 'msvcrt'] $$/,
-     'use Password::Native <password-backend> exports it alone';
+     'use Prompt::Hidden <prompt-backend> exports it alone';
 
-# …and only that one: asking for just password-backend must NOT put prompt in
+# …and only that one: asking for just prompt-backend must NOT put prompt in
 # scope as ours. Whatever answers `prompt` then, it is not this module — so the
 # error, if any, must not carry this module's name.
 ($out, $err, $rc) = child(
-    'use Password::Native <password-backend>; try prompt("a: ", :hidden, :bogus); say ($! ?? $!.message.lines[0] !! "no error")',
+    'use Prompt::Hidden <prompt-backend>; try prompt("a: ", :hidden, :bogus); say ($! ?? $!.message.lines[0] !! "no error")',
     "x\n");
-unlike $out, /'Password::Native'/, 'an import list of one does not export the other';
+unlike $out, /'Prompt::Hidden'/, 'an import list of one does not export the other';
 
 # An unknown import name is refused, and the MESSAGE is what every engine
 # agrees on — so that is what is asserted here.
@@ -46,9 +46,9 @@ unlike $out, /'Password::Native'/, 'an import list of one does not export the ot
 # of writing) — and it is asserted THERE, in the engine's own regression suite,
 # because it is a property of the engine rather than of this module. Pinning it
 # here would only turn a version floor into a test failure.
-($out, $err, $rc) = child('use Password::Native <nonesuch>; say "loaded"', "");
+($out, $err, $rc) = child('use Prompt::Hidden <nonesuch>; say "loaded"', "");
 like $err, /'nonesuch'/, 'an unknown import name is refused, by name';
-like $err, /'Password::Native'/, 'and the refusal names this module';
+like $err, /'Prompt::Hidden'/, 'and the refusal names this module';
 
 # A MODULE importing this one must precompile. On Rakudo a module's `use` runs
 # at precompilation, in another process, and the importer's serialisation walks

@@ -1,6 +1,6 @@
 =begin pod
 
-=head1 Password::Native
+=head1 Prompt::Hidden
 
 C<prompt> with a C<:hidden> adverb — a password typed at a terminal that the
 terminal never shows.
@@ -15,7 +15,7 @@ signatures.
 
 This module makes the hidden read an B<adverb on the call you already write>:
 
-    use Password::Native;
+    use Prompt::Hidden;
 
     my $user = prompt "Username: ";
     my $pass = prompt "Password: ", :hidden;
@@ -26,15 +26,18 @@ C<:hidden> is new.
 
 =head2 What it runs on
 
-=item On B<Raku++>, C<prompt(:hidden)> is in the engine, and the module finds it
-by probing for the C<rakupp-prompt-hidden> primitive. The terminal is put back
+=item On B<Raku++>, the engine can read a line without echoing it and the
+module finds that by probing for the C<rakupp-prompt-hidden> primitive. The
+B<adverb> is still this module's — core C<prompt> takes no named arguments on
+any engine, so C<prompt("pw: ", :hidden)> without this module is an error
+everywhere, which is what keeps the spelling portable. The terminal is put back
 by a C<SIGINT> handler as well as by scope exit, so B<^C at the password prompt
 leaves the shell working>.
 =item On B<any other Raku>, the module does it itself: C<stty -g> to save,
 C<stty -echo> for the duration, and the saved settings restored in a C<LEAVE>.
 =item On B<Windows> without the engine primitive, C<_getch> from C<msvcrt>,
 which reads a key without echoing it. That half lives in
-C<Password::Native::Win32> and is loaded B<only on Windows> — C<use NativeCall>
+C<Prompt::Hidden::Win32> and is loaded B<only on Windows> — C<use NativeCall>
 costs about 70 ms on Rakudo, and no Unix program should pay it for a branch it
 cannot take.
 
@@ -60,18 +63,18 @@ line is read plainly and returned. That is what makes C<:hidden> testable, and
 it is why this distribution's own suite can assert the return type without a
 pseudo-terminal.
 
-=head2 password-backend
+=head2 prompt-backend
 
 Says which of the three is live — C<'core'>, C<'stty'> or C<'msvcrt'> — so a
 program (or a bug report) can tell them apart:
 
-    say password-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
+    say prompt-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
 
 =head2 Exports
 
-C<&prompt> and C<&password-backend>. Either alone with an import list:
+C<&prompt> and C<&prompt-backend>. Either alone with an import list:
 
-    use Password::Native <prompt>;
+    use Prompt::Hidden <prompt>;
 
 Spelled C<< <prompt> >>, not C<:prompt> — Rakudo routes C<:tag> through the
 C<is export(:tag)> machinery, which a C<sub EXPORT> module has no part in.
@@ -128,16 +131,16 @@ my &core-prompt = CORE::<&prompt>;
 # that block and Rakudo reports it undeclared outside. Verified on both
 # engines.
 #
-# RAKU_PASSWORD_FORCE_WIN exists so the dispatch can be exercised where the
+# RAKU_PROMPT_HIDDEN_FORCE_WIN exists so the dispatch can be exercised where the
 # platform cannot be: it takes this branch on any OS. Off Windows the module
 # still LOADS and the symbol still binds — `is native` resolves the library
-# lazily, on the first call — so `password-backend` answers 'msvcrt' and the
+# lazily, on the first call — so `prompt-backend` answers 'msvcrt' and the
 # test asserts the routing without ever making the call that would fail.
 # ===========================================================================
 
 my &win-hidden;
-if $*DISTRO.is-win || %*ENV<RAKU_PASSWORD_FORCE_WIN> {
-    require Password::Native::Win32 <&getch-line>;
+if $*DISTRO.is-win || %*ENV<RAKU_PROMPT_HIDDEN_FORCE_WIN> {
+    require Prompt::Hidden::Win32 <&getch-line>;
     &win-hidden = &getch-line;
     CATCH { default { &win-hidden = Nil } }
 }
@@ -231,7 +234,7 @@ sub stty-line(Str $saved) {
     LEAVE stty-set($saved);
     stty-set('-echo');
     # Refuse rather than read a visible password. Restoring is the LEAVE's job.
-    die "Password::Native: could not turn the terminal's echo off "
+    die "Prompt::Hidden: could not turn the terminal's echo off "
       ~ "(`stty -echo` reported success but the terminal still echoes); "
       ~ "refusing to read a password in the clear"
         unless stty-echo-is-off();
@@ -257,13 +260,13 @@ sub password-prompt(|c) {
     return core-prompt(|c) unless %named<hidden>:exists;
 
     my @extra = %named.keys.grep(* ne 'hidden').sort;
-    die "Password::Native: prompt takes no named argument"
+    die "Prompt::Hidden: prompt takes no named argument"
       ~ (@extra > 1 ?? 's' !! '') ~ " " ~ @extra.map({ ":$_" }).join(', ')
       ~ " beside :hidden"
         if @extra;
 
     my @pos = c.list;
-    die "Password::Native: prompt takes at most one message, got {@pos.elems}"
+    die "Prompt::Hidden: prompt takes at most one message, got {@pos.elems}"
         if @pos > 1;
 
     my $message = @pos ?? @pos[0] !! Str;
@@ -275,7 +278,7 @@ sub password-prompt(|c) {
     read-hidden($message)
 }
 
-sub password-backend(--> Str) {
+sub prompt-backend(--> Str) {
     return 'core'   if &core-hidden.defined;
     return 'msvcrt' if &win-hidden.defined;
     'stty'
@@ -289,22 +292,23 @@ sub password-backend(--> Str) {
 # exports nothing, and reports no error.
 # ===========================================================================
 
-my %IMPL = 'prompt' => &password-prompt, 'password-backend' => &password-backend;
+my %IMPL = 'prompt' => &password-prompt, 'prompt-backend' => &prompt-backend;
 my $KNOWN = %IMPL.keys.Set;
 
 sub EXPORT(*@names) {
     my @want = @names ?? @names.map(*.Str) !! %IMPL.keys;
     my @unknown = @want.grep({ !$KNOWN{$_} });
-    die "Password::Native: no such name" ~ (@unknown > 1 ?? 's' !! '') ~ " "
+    die "Prompt::Hidden: no such name" ~ (@unknown > 1 ?? 's' !! '') ~ " "
       ~ @unknown.map({ "'$_'" }).join(', ')
         if @unknown;
 
     # Built through a hash, not `Map.new(@pairs)`: on Raku++ 3.26.0 a Map
-    # constructed from a LIST of pairs comes back EMPTY, and an empty export
-    # map is silent — the program compiles, `prompt` resolves to the built-in,
-    # and every :hidden call still works because the engine happens to have the
-    # feature. It would fail on an engine that did not. Filed and fixed; this
-    # spelling is the one both engines have always agreed on.
+    # constructed from a LIST of pairs came back EMPTY, and an empty export map
+    # is silent — the program compiles and `prompt` resolves to the built-in.
+    # It went unnoticed because the engine briefly carried `:hidden` on its own
+    # `prompt` too, so the calls kept working; both halves are fixed now, and a
+    # bare `prompt(:hidden)` is an error again. This spelling is the one both
+    # engines have always agreed on.
     my %e;
     %e{"&$_"} = %IMPL{$_} for @want;
     Map.new(%e)

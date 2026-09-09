@@ -1,4 +1,4 @@
-# Password::Native
+# Prompt::Hidden
 
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
@@ -10,13 +10,13 @@ terminal never shows.
 > deliberately left out is in [Scope](#scope).
 
 ```raku
-use Password::Native;
+use Prompt::Hidden;
 
 my $user = prompt "Username: ";
 my $pass = prompt "Password: ", :hidden;
 
 say "Hello, $user ({$pass.chars} characters)";
-say password-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
+say prompt-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
 ```
 
 ```bash
@@ -42,30 +42,39 @@ without `:hidden` **is** `CORE::<&prompt>` — the whole capture is forwarded, s
 the message, the allomorph return and the `Nil` at end of input are the core
 ones, not an imitation. Only `:hidden` is new.
 
+**The adverb belongs to this module, not to any engine.** `prompt("pw: ",
+:hidden)` without `use Prompt::Hidden` is an error everywhere, Raku++ included
+— core `prompt` has two signatures, `()` and `($msg)`, and takes no named
+arguments on any of them. That is deliberate: an engine that quietly accepted
+the adverb would mint a dialect, and the program would run on one Raku and die
+on the next. What Raku++ supplies is the *capability*, as the
+`rakupp-prompt-hidden` primitive this module probes for; the spelling is the
+module's, so the same source means the same thing everywhere.
+
 ## What it exports
 
 | export | what it does |
 |---|---|
 | `prompt($message?, :hidden)` | the core `prompt`, plus the adverb |
-| `password-backend()` | `'core'`, `'stty'` or `'msvcrt'` — which one is live |
+| `prompt-backend()` | `'core'`, `'stty'` or `'msvcrt'` — which one is live |
 
 An import list is spelled `<name>`, not `:name`: Rakudo routes `:tag` through
 the `is export(:tag)` machinery, which a `sub EXPORT` module has no part in.
 
 ```raku
-use Password::Native <prompt>;
+use Prompt::Hidden <prompt>;
 ```
 
 ## The three backends
 
 | backend | when | how |
 |---|---|---|
-| `core` | Raku++ with `rakupp-prompt-hidden` | the engine's own `prompt(:hidden)` |
+| `core` | Raku++ with `rakupp-prompt-hidden` | the engine's own unechoed read |
 | `stty` | any other Unix Raku | `stty -g` to save, `stty -echo`, restored in a `LEAVE` |
 | `msvcrt` | Windows without the primitive | `_getch`, which returns a key unechoed |
 
 The module picks by probing, in that order. The Windows half lives in
-`Password::Native::Win32` and is loaded **only** on Windows: `use NativeCall`
+`Prompt::Hidden::Win32` and is loaded **only** on Windows: `use NativeCall`
 costs about 70 ms on Rakudo, and no Unix program should pay it for a branch it
 cannot take.
 
@@ -131,7 +140,7 @@ answer and the whole export surface without a pseudo-terminal.
 Neither Rakudo version is a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:
 
-- **`:hidden` in the engine landed in 3.26.0.** Below that there is no
+- **The engine primitive landed in 3.26.0.** Below that there is no
   `rakupp-prompt-hidden`, so the module falls back to `stty`.
 - **…and on Raku++ before 3.26.0 that fallback cannot work on a terminal.**
   Every child `run` spawned was put in its own process group, so an `stty`
@@ -154,4 +163,4 @@ Artistic-2.0.
 ---
 
 The design log — what running this on two engines turned up, and the four
-engine bugs it found — is in [notes/Password-Native.md](../notes/Password-Native.md).
+engine bugs it found — is in [notes/Prompt-Hidden.md](../notes/Prompt-Hidden.md).

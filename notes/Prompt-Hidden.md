@@ -1,4 +1,4 @@
-# Password::Native — the design log
+# Prompt::Hidden — the design log
 
 What `prompt` with a `:hidden` adverb cost, and what building it on two engines
 turned up. The README says what the module does; this says why it is shaped
@@ -36,16 +36,23 @@ cannot take.
 ### 1. `prompt` ignored named arguments — and printed them
 
 `B["prompt"]` took `a[0]` as the message unconditionally. Rakudo's `prompt` has
-no named parameters and dies on any of them; Raku++ accepted and discarded
-them. Worse, with no message at all:
+two signatures, `()` and `($msg)`, so every named argument is a caller error
+there; Raku++ accepted and discarded them. Worse, with no message at all:
 
 ```raku
 prompt(:hidden)       # printed "hidden<TAB>True" as the prompt string
 ```
 
-Fixed alongside the feature: nameds are partitioned off before the message is
-chosen. Any named other than `:hidden` keeps its old meaning — ignored —
-because making them fatal is a separate decision from adding this one.
+`prompt` now refuses named arguments outright, as Rakudo does.
+
+**And that is the second half of a design decision, not just a bug fix.** The
+first cut of this work put `:hidden` on the engine's own `prompt`, so
+`prompt("pw: ", :hidden)` worked on Raku++ with no module loaded at all. That
+is a dialect: the program runs on one Raku and dies on the next, and the
+divergence surfaces on the day someone ports it. So the engine keeps the
+CAPABILITY — `rakupp-prompt-hidden`, a primitive with no bearing on `prompt`'s
+signature — and the ADVERB belongs to this module, which probes for the
+primitive and falls back to `stty`. One spelling, one meaning, every engine.
 
 ### 2. `{ "a$_" => 1 }` was a Hash, and that silently emptied the export map
 
@@ -57,9 +64,10 @@ Map.new(@want.map({ "&$_" => %IMPL{$_} }))
 ```
 
 On Raku++ that produced an **empty Map**. No error, no warning: the program
-compiled, `use Password::Native` exported nothing, and a bare `prompt` call
-resolved to the built-in — which on this engine happens to have `:hidden`, so
-every test still passed. It would have failed on any engine that did not.
+compiled, `use Prompt::Hidden` exported nothing, and a bare `prompt` call
+resolved to the built-in — which at that point still carried `:hidden` itself
+(bug 1, before the adverb moved out of the engine), so every test still passed.
+It would have failed on any engine that did not, and it does fail there now.
 
 The cause was not `Map.new`, and not the `&` sigil in the key. It was the
 hash-versus-block heuristic: a `{ ... }` whose content mentions `$_` is a Block,
@@ -143,7 +151,7 @@ sharpest argument for the engine primitive existing at all.
 **A `die` inside `sub EXPORT` was downgraded to a warning on Raku++.** Rakudo
 aborts compilation and exits 1; Raku++ printed `===WARNING=== Module … EXPORT
 failed: …` and carried on at exit 0, so this module's own import-list validation
-was advisory: `use Password::Native <typo>` imported nothing, said so on stderr,
+was advisory: `use Prompt::Hidden <typo>` imported nothing, said so on stderr,
 and ran the program anyway. The catch in `Interpreter.cpp` was deliberate, but
 its stated reason covered exactly one distribution — the `if` dist, whose EXPORT
 necessarily fails — and that one was already special-cased by name in the same
@@ -208,7 +216,7 @@ harness nobody runs.
   module confirms the terminal actually obeyed and refuses to read if it did
   not, rather than accepting a password in the clear. On Raku++ 3.25.0 that
   guard never gets to run — the process is already stopped.
-- **The Windows path is untested.** `Password::Native::Win32` compiles on macOS
+- **The Windows path is untested.** `Prompt::Hidden::Win32` compiles on macOS
   and its `getch-line` is present, and the dispatch to it is exercised on any
-  OS through `RAKU_PASSWORD_FORCE_WIN`; the `_getch` call itself has never run.
+  OS through `RAKU_PROMPT_HIDDEN_FORCE_WIN`; the `_getch` call itself has never run.
   Said plainly in the README rather than implied by silence.

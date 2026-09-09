@@ -1,20 +1,20 @@
 =begin pod
 
-=head1 Password::Native::Win32
+=head1 Prompt::Hidden::Win32
 
-The Windows half of C<Password::Native>: one line read through C<_getch> from
+The Windows half of C<Prompt::Hidden>: one line read through C<_getch> from
 C<msvcrt>, which returns a key without echoing it.
 
 Loaded B<only> when C<$*DISTRO.is-win> — C<use NativeCall> costs about 70 ms on
 Rakudo, and a Unix program should not pay it for a branch it cannot take.
 
 Nothing here runs on Raku++/Windows either: the engine has C<prompt(:hidden)>
-natively, so C<Password::Native> takes the C<'core'> backend and never reaches
+natively, so C<Prompt::Hidden> takes the C<'core'> backend and never reaches
 this file.
 
 =end pod
 
-unit module Password::Native::Win32;
+unit module Prompt::Hidden::Win32;
 
 use NativeCall;
 

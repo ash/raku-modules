@@ -10,15 +10,15 @@
   "description": "prompt with a :hidden adverb — a password the terminal never echoes, native on Raku++ and stty everywhere else",
   "license": "Artistic-2.0",
   "meta-version": 0,
-  "name": "Password::Native",
+  "name": "Prompt::Hidden",
   "provides": {
-    "Password::Native": "lib/Password/Native.rakumod",
-    "Password::Native::Win32": "lib/Password/Native/Win32.rakumod"
+    "Prompt::Hidden": "lib/Prompt/Hidden.rakumod",
+    "Prompt::Hidden::Win32": "lib/Prompt/Hidden/Win32.rakumod"
   },
   "raku": "6.d",
-  "source-url": "https://github.com/ash/raku-modules/tree/main/Password-Native",
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Prompt-Hidden",
   "support": {
-    "source": "https://github.com/ash/raku-modules/tree/main/Password-Native"
+    "source": "https://github.com/ash/raku-modules/tree/main/Prompt-Hidden"
   },
   "tags": [
     "password",

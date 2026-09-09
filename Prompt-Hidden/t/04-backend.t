@@ -4,9 +4,9 @@ use Child;
 
 plan 5;
 
-my ($out, $err, $rc) = child('use Password::Native; say password-backend()', "");
+my ($out, $err, $rc) = child('use Prompt::Hidden; say prompt-backend()', "");
 my $backend = $out.chomp;
-ok $backend ∈ <core stty msvcrt>, "password-backend is one of the three (got '$backend')";
+ok $backend ∈ <core stty msvcrt>, "prompt-backend is one of the three (got '$backend')";
 
 # Which one is not a free choice: the engine primitive decides it. On a box
 # that is not Windows, no primitive means stty.
@@ -15,11 +15,11 @@ my $has-primitive =
 is $backend, ($has-primitive ?? 'core' !! 'stty'),
    'the engine primitive decides between core and stty';
 
-# Forcing the Windows branch loads Password::Native::Win32 and routes to it —
+# Forcing the Windows branch loads Prompt::Hidden::Win32 and routes to it —
 # on any OS, which is the only way to exercise the dispatch off Windows. The
 # branch is asserted, not the syscall.
-($out, $err, $rc) = child('use Password::Native; say password-backend()', "",
-                          RAKU_PASSWORD_FORCE_WIN => '1');
+($out, $err, $rc) = child('use Prompt::Hidden; say prompt-backend()', "",
+                          RAKU_PROMPT_HIDDEN_FORCE_WIN => '1');
 is $out.chomp, ($has-primitive ?? 'core' !! 'msvcrt'),
    'the Windows branch routes to msvcrt — unless the engine has its own';
 
@@ -32,7 +32,7 @@ isnt $backend, 'msvcrt', 'the Windows half is not loaded when it is not needed';
 # only Windows ever calls into it — a syntax error there would otherwise reach
 # nobody until a Windows user hit it.
 ($out, $err, $rc) = child(
-    'use Password::Native::Win32; say &getch-line.defined', "");
-is $out.chomp, 'True', 'Password::Native::Win32 compiles and defines getch-line';
+    'use Prompt::Hidden::Win32; say &getch-line.defined', "");
+is $out.chomp, 'True', 'Prompt::Hidden::Win32 compiles and defines getch-line';
 
 done-testing;
