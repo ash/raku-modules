@@ -44,7 +44,7 @@ ones, not an imitation. Only `:hidden` is new.
 
 ## What it exports
 
-| | |
+| export | what it does |
 |---|---|
 | `prompt($message?, :hidden)` | the core `prompt`, plus the adverb |
 | `password-backend()` | `'core'`, `'stty'` or `'msvcrt'` — which one is live |
