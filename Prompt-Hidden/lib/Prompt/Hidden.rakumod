@@ -26,10 +26,12 @@ C<:hidden> is new.
 
 =head2 What it runs on
 
+The same program runs everywhere. What differs is who suppresses the echo.
+
 =item On B<Raku++>, the engine can read a line without echoing it and the
 module finds that by probing for the C<rakupp-prompt-hidden> primitive. The
-B<adverb> is still this module's — core C<prompt> takes no named arguments on
-any engine, so C<prompt("pw: ", :hidden)> without this module is an error
+B<adverb> is still this module's element. Core C<prompt> takes no named arguments
+on any engine, so C<prompt("pw: ", :hidden)> without this module is an error
 everywhere, which is what keeps the spelling portable. The terminal is put back
 by a C<SIGINT> handler as well as by scope exit, so B<^C at the password prompt
 leaves the shell working>.
@@ -37,11 +39,9 @@ leaves the shell working>.
 C<stty -echo> for the duration, and the saved settings restored in a C<LEAVE>.
 =item On B<Windows> without the engine primitive, C<_getch> from C<msvcrt>,
 which reads a key without echoing it. That half lives in
-C<Prompt::Hidden::Win32> and is loaded B<only on Windows> — C<use NativeCall>
+C<Prompt::Hidden::Win32> and is loaded B<only on Windows>; C<use NativeCall>
 costs about 70 ms on Rakudo, and no Unix program should pay it for a branch it
 cannot take.
-
-The same program runs everywhere. What differs is who suppresses the echo.
 
 =head2 A secret comes back a Str, and that is deliberate
 
@@ -63,16 +63,17 @@ line is read plainly and returned. That is what makes C<:hidden> testable, and
 it is why this distribution's own suite can assert the return type without a
 pseudo-terminal.
 
-=head2 prompt-backend
+=head2 Prompt::Hidden::prompt-backend
 
 Says which of the three is live — C<'core'>, C<'stty'> or C<'msvcrt'> — so a
 program (or a bug report) can tell them apart:
 
-    say prompt-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
+    say Prompt::Hidden::prompt-backend;   # 'core' on Raku++, 'stty' elsewhere
 
 =head2 Exports
 
-C<&prompt> and C<&prompt-backend>. Either alone with an import list:
+C<&prompt>, and only that. C<Prompt::Hidden::prompt-backend> is spelled in
+full rather than exported. The import list is accepted for the one name:
 
     use Prompt::Hidden <prompt>;
 
@@ -278,21 +279,44 @@ sub password-prompt(|c) {
     read-hidden($message)
 }
 
-sub prompt-backend(--> Str) {
-    return 'core'   if &core-hidden.defined;
-    return 'msvcrt' if &win-hidden.defined;
-    'stty'
+# ===========================================================================
+# The one name that is NOT exported.
+#
+# `prompt-backend` answers which of the three did the reading, and that is
+# introspection — worth having, not worth a name in every importer's scope. So
+# it lives in a package of its own and is spelled in full:
+#
+#     say Prompt::Hidden::prompt-backend;   # 'core' | 'stty' | 'msvcrt'
+#
+# A PACKAGE BLOCK, not `unit module`, because the two cannot be swapped here:
+# `sub EXPORT` has to stay at file scope (inside a package declaration Rakudo
+# never runs it at all), and this block is the only way to have both.
+#
+# And the block is not decoration. The obvious spelling — `unit module` with
+# `sub prompt(|c) is export` and a plain `our sub prompt-backend` — leaves
+# Raku++ publishing that `our` sub to its importer anyway: measured, a bare
+# `prompt-backend()` answers there after a mere `use`, where Rakudo refuses to
+# compile it. Only this shape keeps the name out of the caller on BOTH engines,
+# which is the whole point of not exporting it.
+# ===========================================================================
+
+module Prompt::Hidden {
+    our sub prompt-backend(--> Str) {
+        return 'core'   if &core-hidden.defined;
+        return 'msvcrt' if &win-hidden.defined;
+        'stty'
+    }
 }
 
 # ===========================================================================
-# Export.
+# Export: one name.
 #
 # `sub EXPORT` at FILE scope with no `unit module` line above it, and that is
 # load-bearing: inside a package declaration Rakudo never runs EXPORT at all,
 # exports nothing, and reports no error.
 # ===========================================================================
 
-my %IMPL = 'prompt' => &password-prompt, 'prompt-backend' => &prompt-backend;
+my %IMPL = 'prompt' => &password-prompt;
 my $KNOWN = %IMPL.keys.Set;
 
 sub EXPORT(*@names) {
@@ -300,6 +324,8 @@ sub EXPORT(*@names) {
     my @unknown = @want.grep({ !$KNOWN{$_} });
     die "Prompt::Hidden: no such name" ~ (@unknown > 1 ?? 's' !! '') ~ " "
       ~ @unknown.map({ "'$_'" }).join(', ')
+      ~ " (this module exports only 'prompt';"
+      ~ " prompt-backend is Prompt::Hidden::prompt-backend)"
         if @unknown;
 
     # Built through a hash, not `Map.new(@pairs)`: on Raku++ 3.26.0 a Map

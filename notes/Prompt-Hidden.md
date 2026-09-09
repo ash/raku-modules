@@ -182,12 +182,37 @@ not here: it is a property of the engine, and pinning it in this suite would onl
 turn a version floor into a test failure. `t/03-export.t` asserts the message,
 which every engine agrees on.
 
+## Why the export surface is one name, and why that needed a package block
+
+`prompt-backend` is not exported. It answers which of the three backends did
+the reading — introspection, worth having and not worth a bare name in every
+importer's scope — so it is `Prompt::Hidden::prompt-backend`, spelled in full.
+
+Getting that took more than deleting it from the export map, and the reason is
+an engine divergence. The obvious spelling is `unit module Prompt::Hidden` with
+`sub prompt(|c) is export` and a plain `our sub prompt-backend`. Measured, that
+does not do what it says on Raku++:
+
+| shape | Raku++: bare `prompt-backend()` after `use` | Rakudo |
+|---|---|---|
+| `unit module` + `is export` | **answers** — the `our` sub was published to the importer | compile error |
+| `sub EXPORT` + package block | `Undefined routine` | compile error |
+
+Same root cause as [[rakupp-module-use-leak]]: `loadModule` republishes a
+module's symbols into one process-wide global scope, so an `our` sub reaches
+its importer whether or not it was exported. Only the second shape keeps the
+name out of the caller on both engines, which is the entire point of not
+exporting it — hence a `module Prompt::Hidden { … }` BLOCK, with `sub EXPORT`
+still at file scope where Rakudo will actually run it. `t/03-export.t` asserts
+`leaked=False`, which is the row that would catch a regression back into the
+obvious shape; Rakudo alone would not.
+
 ## What a pipe cannot test
 
 Echo suppression is invisible on a pipe: there is nothing to suppress, so a
 hidden read and a plain one produce identical bytes. The whole `t/` suite runs
 on pipes — that is what makes it portable — so **it cannot catch the thing the
-module is for**, and it did not: all 32 assertions passed on Raku++ 3.25.0,
+module is for**, and it did not: all 33 assertions passed on Raku++ 3.25.0,
 where a hidden read on a real terminal echoes the password and then hangs.
 
 A pseudo-terminal is the only harness that answers. Under one, against

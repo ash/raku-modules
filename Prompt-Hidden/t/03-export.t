@@ -2,7 +2,7 @@ use Test;
 use lib $?FILE.IO.parent.Str;
 use Child;
 
-plan 10;
+plan 11;
 
 # The exported `&prompt` must actually be THIS module's. Identity is not the
 # test — Raku++ resolves a bare `prompt` call to the built-in unless the import
@@ -24,18 +24,21 @@ like $out, /'at most one message'/, 'two messages is an error';
     'use Prompt::Hidden <prompt>; my $x = prompt("q: ", :hidden); say "[$x]"', "picked-2f9e\n");
 is $out, "q: [picked-2f9e]\n", 'use Prompt::Hidden <prompt> exports prompt';
 
-($out, $err, $rc) = child(
-    'use Prompt::Hidden <prompt-backend>; say prompt-backend()', "");
-like $out, /^ ['core' | 'stty' | 'msvcrt'] $$/,
-     'use Prompt::Hidden <prompt-backend> exports it alone';
+# `prompt-backend` is deliberately NOT exported — it is introspection, not a
+# name every importer needs. Asking for it is an error, and the message says
+# where it went instead.
+($out, $err, $rc) = child('use Prompt::Hidden <prompt-backend>; say "loaded"', "");
+like $err, /'prompt-backend'/, 'prompt-backend is not an importable name';
+like $err, /'Prompt::Hidden::prompt-backend'/, 'and the refusal says where it lives';
 
-# …and only that one: asking for just prompt-backend must NOT put prompt in
-# scope as ours. Whatever answers `prompt` then, it is not this module — so the
-# error, if any, must not carry this module's name.
+# It answers in full, and it does NOT land in the caller's scope. Raku++
+# publishes an `our` sub to its importer when a module is written the obvious
+# way (`unit module` + `is export`), so this row is what would catch a
+# regression back into that shape — Rakudo would not.
 ($out, $err, $rc) = child(
-    'use Prompt::Hidden <prompt-backend>; try prompt("a: ", :hidden, :bogus); say ($! ?? $!.message.lines[0] !! "no error")',
-    "x\n");
-unlike $out, /'Prompt::Hidden'/, 'an import list of one does not export the other';
+    'use Prompt::Hidden; say Prompt::Hidden::prompt-backend(), " leaked=", (::("&prompt-backend") ~~ Callable)', "");
+like $out, /^ ['core' | 'stty' | 'msvcrt'] ' leaked=False'/,
+     'it answers in full and leaks no bare name';
 
 # An unknown import name is refused, and the MESSAGE is what every engine
 # agrees on — so that is what is asserted here.

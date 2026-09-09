@@ -3,7 +3,7 @@
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
 
-> **0.0.1.** The interface below is implemented and tested on both engines: 32
+> **0.0.1.** The interface below is implemented and tested on both engines: 33
 > assertions across four files, green on Rakudo 2026.08 and Raku++ 3.26.0. The
 > echo suppression itself is verified separately under a pseudo-terminal, since
 > a pipe has no echo to suppress — see [Compatibility](#compatibility). What is
@@ -16,7 +16,7 @@ my $user = prompt "Username: ";
 my $pass = prompt "Password: ", :hidden;
 
 say "Hello, $user ({$pass.chars} characters)";
-say prompt-backend;    # 'core' on Raku++, 'stty' on Rakudo/Unix
+say Prompt::Hidden::prompt-backend;   # 'core' on Raku++, 'stty' on Rakudo/Unix
 ```
 
 ```bash
@@ -53,10 +53,15 @@ module's, so the same source means the same thing everywhere.
 
 ## What it exports
 
+One name, and it is the one you came for:
+
 | export | what it does |
 |---|---|
 | `prompt($message?, :hidden)` | the core `prompt`, plus the adverb |
-| `prompt-backend()` | `'core'`, `'stty'` or `'msvcrt'` — which one is live |
+
+`Prompt::Hidden::prompt-backend` — `'core'`, `'stty'` or `'msvcrt'`, whichever
+did the reading — is **not** exported. It is introspection, worth having and
+not worth a bare name in every importer's scope, so it is spelled in full.
 
 An import list is spelled `<name>`, not `:name`: Rakudo routes `:tag` through
 the `is export(:tag)` machinery, which a `sub EXPORT` module has no part in.
@@ -133,9 +138,9 @@ answer and the whole export surface without a pseudo-terminal.
 
 | engine | version | `t/` | backend | hidden read on a terminal |
 |---|---|---|---|---|
-| Rakudo | 2026.08 | 32/32 | `stty` | verified under a pty |
-| Raku++ | 3.26.0 (`v3.26.0-10-gf18b71c`) | 32/32 | `core` | verified under a pty |
-| Raku++ | 3.25.0 | 32/32 | `stty` | **broken — see below** |
+| Rakudo | 2026.08 | 33/33 | `stty` | verified under a pty |
+| Raku++ | 3.26.0 | 33/33 | `core` | verified under a pty |
+| Raku++ | 3.25.0 | 33/33 | `stty` | **broken — see below** |
 
 Neither Rakudo version is a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:

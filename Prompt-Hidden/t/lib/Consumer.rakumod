@@ -6,5 +6,5 @@
 unit module Consumer;
 use Prompt::Hidden;
 
-sub consumer-backend(--> Str) is export { prompt-backend() }
+sub consumer-backend(--> Str) is export { Prompt::Hidden::prompt-backend() }
 sub consumer-prompt(|c) is export { prompt(|c) }

@@ -4,7 +4,7 @@ use Child;
 
 plan 5;
 
-my ($out, $err, $rc) = child('use Prompt::Hidden; say prompt-backend()', "");
+my ($out, $err, $rc) = child('use Prompt::Hidden; say Prompt::Hidden::prompt-backend()', "");
 my $backend = $out.chomp;
 ok $backend ∈ <core stty msvcrt>, "prompt-backend is one of the three (got '$backend')";
 
@@ -18,7 +18,7 @@ is $backend, ($has-primitive ?? 'core' !! 'stty'),
 # Forcing the Windows branch loads Prompt::Hidden::Win32 and routes to it —
 # on any OS, which is the only way to exercise the dispatch off Windows. The
 # branch is asserted, not the syscall.
-($out, $err, $rc) = child('use Prompt::Hidden; say prompt-backend()', "",
+($out, $err, $rc) = child('use Prompt::Hidden; say Prompt::Hidden::prompt-backend()', "",
                           RAKU_PROMPT_HIDDEN_FORCE_WIN => '1');
 is $out.chomp, ($has-primitive ?? 'core' !! 'msvcrt'),
    'the Windows branch routes to msvcrt — unless the engine has its own';
