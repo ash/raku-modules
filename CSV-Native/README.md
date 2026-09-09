@@ -265,4 +265,4 @@ Artistic-2.0.
 ---
 
 Why the module is shaped this way, and what running it under two engines
-turned up, is in [notes/CSV-Native.md](../notes/CSV-Native.md).
+turned up, is in [notes/CSV-Native.md](https://github.com/ash/raku-modules/blob/main/notes/CSV-Native.md).

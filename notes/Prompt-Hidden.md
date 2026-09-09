@@ -198,7 +198,7 @@ does not do what it says on Raku++:
 | `unit module` + `is export` | **answers** — the `our` sub was published to the importer | compile error |
 | `sub EXPORT` + package block | `Undefined routine` | compile error |
 
-Same root cause as [[rakupp-module-use-leak]]: `loadModule` republishes a
+Same root cause as the known module-import leak: `loadModule` republishes a
 module's symbols into one process-wide global scope, so an `our` sub reaches
 its importer whether or not it was exported. Only the second shape keeps the
 name out of the caller on both engines, which is the entire point of not
@@ -206,6 +206,39 @@ exporting it — hence a `module Prompt::Hidden { … }` BLOCK, with `sub EXPORT
 still at file scope where Rakudo will actually run it. `t/03-export.t` asserts
 `leaked=False`, which is the row that would catch a regression back into the
 obvious shape; Rakudo alone would not.
+
+## mutsu: the failure mode this design was supposed to prevent, arriving anyway
+
+The split that keeps `:hidden` out of the engine (bug 1 above) rests on one
+assumption: that a module exporting `&prompt` actually shadows the builtin. On
+Rakudo and Raku++ it does. On **mutsu 0.23.0 it does not** — mutsu runs the
+`sub EXPORT`, takes the map, and then resolves a bare `prompt` call to its own
+builtin anyway. So `:hidden` reaches a `prompt` that has never heard of it, is
+ignored, and the password is echoed.
+
+Under a pseudo-terminal, the same program on all three:
+
+| engine | terminal showed | return value |
+|---|---|---|
+| Rakudo 2026.08 | `pw: ` | correct |
+| Raku++ 3.26.0 | `pw: ` | correct |
+| mutsu 0.23.0 | `pw: mutsu-secret-7c1e` | correct |
+
+The return value is right everywhere, which is what makes it dangerous: there
+is no symptom. And this module cannot defend itself — it is never called, so
+it has no hook. The `stty` backend's "did the terminal actually obey" guard
+only runs once the module has been reached at all.
+
+Worth noting against the argument for the split: the reasoning was that an
+engine-only `:hidden` would be silently ignored elsewhere. That is exactly what
+happens here in spite of the split, because the shadowing itself is what fails.
+The split still buys the Rakudo case and it is still right, but "the module
+makes this portable" is a claim with a named exception now.
+
+Its 20 of 30 assertions are mostly unrelated: mutsu's `prompt` returns `Str`
+where Rakudo returns `IntStr`, and `Any` where Rakudo returns `Nil` at end of
+input, so the rows asserting core `prompt` semantics fail before this module is
+involved; `$!` is also unset after a failed `try`, which the export tests use.
 
 ## What a pipe cannot test
 

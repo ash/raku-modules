@@ -54,7 +54,13 @@ the first, a maintainer the second.
    `LICENSE` file the distribution ships.
 
 10. **A footer after `---`**, only when `notes/<Dist>.md` exists: one sentence
-    saying the design log lives there, with the link.
+    saying the design log lives there, with the link — as an **absolute**
+    `https://github.com/ash/raku-modules/blob/main/notes/<Dist>.md`, never a
+    relative `../notes/...`. The README is read from inside the packaged
+    distribution far more often than from a checkout — raku.land renders it
+    from the tarball, and the tarball contains the distribution directory and
+    nothing above it — so a relative path up and out is a broken link
+    everywhere it actually matters.
 
 ## The habits
 

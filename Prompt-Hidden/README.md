@@ -3,7 +3,7 @@
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
 
-> **0.0.1.** The interface below is implemented and tested on both engines: 30
+> **0.0.2.** The interface below is implemented and tested on both engines: 30
 > assertions across four files, green on Rakudo 2026.08 and Raku++ 3.26.0. The
 > echo suppression itself is verified separately under a pseudo-terminal, since
 > a pipe has no echo to suppress — see [Compatibility](#compatibility). What is
@@ -20,11 +20,21 @@ say Prompt::Hidden::prompt-backend;   # 'core' on Raku++, 'stty' on Rakudo/Unix
 ```
 
 ```bash
-raku -I lib example.raku
+rakupp example.raku
 ```
 
 ```bash
-rakupp -I lib example.raku
+rakudo example.raku
+```
+
+Or:
+
+```bash
+rakupp -MPrompt::Hidden -e'say "[{prompt ">_", :hidden}]"'
+```
+
+```bash
+raku -MPrompt::Hidden -e'say "[{prompt ">_", :hidden}]"'
 ```
 
 The same file runs on every Raku. What differs is who suppresses the echo.
@@ -134,13 +144,12 @@ answer and the whole export surface without a pseudo-terminal.
 
 ## Compatibility
 
-| engine | version | `t/` | backend | hidden read on a terminal |
+| engine | version | tests | backend | hidden read on a terminal |
 |---|---|---|---|---|
 | Rakudo | 2026.08 | 30/30 | `stty` | verified under a pty |
 | Raku++ | 3.26.0 | 30/30 | `core` | verified under a pty |
-| Raku++ | 3.25.0 | 30/30 | `stty` | **broken — see below** |
 
-Neither Rakudo version is a floor; no older one has been tried. The Raku++
+The Rakudo version is not a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:
 
 - **The engine primitive landed in 3.26.0.** Below that there is no
@@ -166,4 +175,4 @@ Artistic-2.0.
 ---
 
 The design log — what running this on two engines turned up, and the four
-engine bugs it found — is in [notes/Prompt-Hidden.md](../notes/Prompt-Hidden.md).
+engine bugs it found — is in [notes/Prompt-Hidden.md](https://github.com/ash/raku-modules/blob/main/notes/Prompt-Hidden.md).
