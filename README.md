@@ -179,6 +179,31 @@ distribution's **own directory** here (`.../raku-modules/tree/main/<Dist>`),
 not at the repository root, so [raku.land](https://raku.land) lands a reader
 on the module rather than on the whole collection.
 
+**Clear `.precomp/` and `sdist/` first, every time.** Both are gitignored, so
+`git status` says the directory is clean while they are sitting there — and
+`fez` tars the whole directory regardless of the manifest it just printed. The
+`.precomp` trees are the harmful half: they hold `.lock` files that Rakudo
+creates and removes as it goes, and a file that changes size while `tar` reads
+it produces a corrupt archive. What comes back is not a permissions error but
+
+```
+=<< FATAL: Something went wrong: Error extracting archive:
+            tar: Skipping to next header
+            ...
+            Do you need to run 'fez login' again?
+```
+
+which sends you to re-authenticate over a problem that has nothing to do with
+login. Running the test suite is what creates `.precomp`, so the order is:
+test, clean, upload.
+
+```sh
+cd <Dist> && rm -rf sdist $(find . -name .precomp -type d) && fez upload
+```
+
+Measured on Prompt::Hidden 0.0.1: 184K over 46 entries and damaged, against
+16K over 16 and clean.
+
 ## Licence
 
 Artistic-2.0, the ecosystem's convention. See [LICENSE](LICENSE).
