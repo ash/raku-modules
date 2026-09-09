@@ -73,12 +73,11 @@ program (or a bug report) can tell them apart:
 =head2 Exports
 
 C<&prompt>, and only that. C<Prompt::Hidden::prompt-backend> is spelled in
-full rather than exported. The import list is accepted for the one name:
+full rather than exported.
 
-    use Prompt::Hidden <prompt>;
-
-Spelled C<< <prompt> >>, not C<:prompt> — Rakudo routes C<:tag> through the
-C<is export(:tag)> machinery, which a C<sub EXPORT> module has no part in.
+There is no import list: with one export there is nothing to select, and a
+list is refused rather than accepted and ignored — the one thing an import
+list must never do is swallow a typo written beside it.
 
 =head1 AUTHOR
 
@@ -309,33 +308,30 @@ module Prompt::Hidden {
 }
 
 # ===========================================================================
-# Export: one name.
+# Export: one name, and no import list.
 #
 # `sub EXPORT` at FILE scope with no `unit module` line above it, and that is
 # load-bearing: inside a package declaration Rakudo never runs EXPORT at all,
 # exports nothing, and reports no error.
+#
+# It takes no names. With a single export there is nothing to select, and a
+# list that can only ever say `<prompt>` is a second spelling of the default —
+# so it is refused rather than accepted and ignored, because the one thing an
+# import list must never do is swallow a typo in silence.
 # ===========================================================================
 
-my %IMPL = 'prompt' => &password-prompt;
-my $KNOWN = %IMPL.keys.Set;
-
 sub EXPORT(*@names) {
-    my @want = @names ?? @names.map(*.Str) !! %IMPL.keys;
-    my @unknown = @want.grep({ !$KNOWN{$_} });
-    die "Prompt::Hidden: no such name" ~ (@unknown > 1 ?? 's' !! '') ~ " "
-      ~ @unknown.map({ "'$_'" }).join(', ')
-      ~ " (this module exports only 'prompt';"
-      ~ " prompt-backend is Prompt::Hidden::prompt-backend)"
-        if @unknown;
+    die "Prompt::Hidden takes no import list (got "
+      ~ @names.map({ "'$_'" }).join(', ')
+      ~ "); it exports only &prompt, and prompt-backend is spelled in full as "
+      ~ "Prompt::Hidden::prompt-backend"
+        if @names;
 
-    # Built through a hash, not `Map.new(@pairs)`: on Raku++ 3.26.0 a Map
-    # constructed from a LIST of pairs came back EMPTY, and an empty export map
-    # is silent — the program compiles and `prompt` resolves to the built-in.
-    # It went unnoticed because the engine briefly carried `:hidden` on its own
-    # `prompt` too, so the calls kept working; both halves are fixed now, and a
-    # bare `prompt(:hidden)` is an error again. This spelling is the one both
-    # engines have always agreed on.
+    # Built through a hash rather than a list of pairs: `Map.new(@pairs)` came
+    # back EMPTY on Raku++ 3.26.0 and an empty export map is silent — the
+    # program compiles and `prompt` resolves to the built-in. That is fixed
+    # now; this spelling is the one both engines have always agreed on.
     my %e;
-    %e{"&$_"} = %IMPL{$_} for @want;
+    %e{'&prompt'} = &password-prompt;
     Map.new(%e)
 }

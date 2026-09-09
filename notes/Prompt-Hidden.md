@@ -212,7 +212,7 @@ obvious shape; Rakudo alone would not.
 Echo suppression is invisible on a pipe: there is nothing to suppress, so a
 hidden read and a plain one produce identical bytes. The whole `t/` suite runs
 on pipes — that is what makes it portable — so **it cannot catch the thing the
-module is for**, and it did not: all 33 assertions passed on Raku++ 3.25.0,
+module is for**, and it did not: all 30 assertions passed on Raku++ 3.25.0,
 where a hidden read on a real terminal echoes the password and then hangs.
 
 A pseudo-terminal is the only harness that answers. Under one, against

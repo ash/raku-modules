@@ -3,7 +3,7 @@
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
 
-> **0.0.1.** The interface below is implemented and tested on both engines: 33
+> **0.0.1.** The interface below is implemented and tested on both engines: 30
 > assertions across four files, green on Rakudo 2026.08 and Raku++ 3.26.0. The
 > echo suppression itself is verified separately under a pseudo-terminal, since
 > a pipe has no echo to suppress — see [Compatibility](#compatibility). What is
@@ -63,12 +63,10 @@ One name, and it is the one you came for:
 did the reading — is **not** exported. It is introspection, worth having and
 not worth a bare name in every importer's scope, so it is spelled in full.
 
-An import list is spelled `<name>`, not `:name`: Rakudo routes `:tag` through
-the `is export(:tag)` machinery, which a `sub EXPORT` module has no part in.
-
-```raku
-use Prompt::Hidden <prompt>;
-```
+There is no import list. With one export there is nothing to select, and a
+list that could only ever name `prompt` would be a second spelling of the
+default — so one is refused rather than accepted and ignored, because the one
+thing an import list must never do is swallow a typo written beside it.
 
 ## The three backends
 
@@ -138,9 +136,9 @@ answer and the whole export surface without a pseudo-terminal.
 
 | engine | version | `t/` | backend | hidden read on a terminal |
 |---|---|---|---|---|
-| Rakudo | 2026.08 | 33/33 | `stty` | verified under a pty |
-| Raku++ | 3.26.0 | 33/33 | `core` | verified under a pty |
-| Raku++ | 3.25.0 | 33/33 | `stty` | **broken — see below** |
+| Rakudo | 2026.08 | 30/30 | `stty` | verified under a pty |
+| Raku++ | 3.26.0 | 30/30 | `core` | verified under a pty |
+| Raku++ | 3.25.0 | 30/30 | `stty` | **broken — see below** |
 
 Neither Rakudo version is a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:

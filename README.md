@@ -17,7 +17,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Digest::Native](Digest-Native) — MD5, SHA-1, SHA-2 and HMAC | 0.0.1 | 343/343 † | 354/354 † |
 | [Compress::Zlib::Native](Compress-Zlib-Native) — gzip and zlib without libz | 0.0.1 | 156/156 † | 154/154 † |
 | [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 68/68 † | 68/68 † |
-| [Prompt::Hidden](Prompt-Hidden) — `prompt` with a `:hidden` adverb | 0.0.1 | 33/33 ‡ | 33/33 ‡ |
+| [Prompt::Hidden](Prompt-Hidden) — `prompt` with a `:hidden` adverb | 0.0.1 | 30/30 ‡ | 30/30 ‡ |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -37,7 +37,7 @@ nothing here depends on a recent one.
 `3.26.0` is its floor for two reasons at once: `prompt(:hidden)` is an engine
 primitive that landed there, and below it the module's `stty` fallback cannot
 work on a terminal anyway — every child `run` spawned was put in its own process
-group, so `stty -echo` took `SIGTTOU` and stopped. Its 33 assertions all run on
+group, so `stty -echo` took `SIGTTOU` and stopped. Its 30 assertions all run on
 pipes, where there is no echo to suppress, so **the suite passes on an engine
 where the module does not actually work**; the terminal behaviour is verified
 separately under a pseudo-terminal and the matrix is in the notes.
