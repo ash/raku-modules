@@ -85,6 +85,13 @@ sub LoadCursorW(Pointer, Pointer --> Pointer) is native(U32) { * }
 # control paints itself a white box and keeps yesterday's glyphs when its text
 # gets shorter.
 sub GetSysColorBrush(int32 --> Pointer) is native(U32) { * }
+# Owner-draw: a coloured push button does not exist on Win32, so :tint means
+# painting the control ourselves — fill, title, pressed state and all.
+sub CreateSolidBrush(uint32 --> Pointer)                is native(G32) { * }
+sub FillRect(Pointer, Pointer, Pointer --> int32)       is native(U32) { * }
+sub SetTextColor(Pointer, uint32 --> uint32)            is native(G32) { * }
+sub SelectObject(Pointer, Pointer --> Pointer)          is native(G32) { * }
+sub DrawTextW(Pointer, CArray[uint16], int32, Pointer, uint32 --> int32) is native(U32) { * }
 sub InvalidateRect(Pointer, Pointer, int32 --> int32) is native(U32) { * }
 sub SetBkMode(Pointer, int32 --> int32) is native(G32) { * }
 
@@ -114,6 +121,12 @@ my constant IDC_ARROW       = 32512;
 my constant COLOR_BTNFACE   = 15;
 my constant BTNFACE_BRUSH   = COLOR_BTNFACE + 1;   # the pseudo-handle form
 my constant WM_CTLCOLORSTATIC = 0x0138;
+my constant WM_DRAWITEM     = 0x002B;
+my constant BS_OWNERDRAW    = 0x0000000B;
+my constant ODS_SELECTED    = 0x0001;
+my constant DT_CENTER       = 0x0001;
+my constant DT_VCENTER      = 0x0004;
+my constant DT_SINGLELINE   = 0x0020;
 my constant TRANSPARENT     = 1;
 my constant DEFAULT_CHARSET = 1;
 my constant FIXED_PITCH     = 1;
@@ -145,6 +158,7 @@ my $DEBUG = ?%*ENV<WINGS_DEBUG>;
 sub note-debug(Str $m) { note "wings/win32: $m" if $DEBUG }
 
 my %ALIVE;      # HWND address → True until WM_DESTROY
+my %DRAW;       # control id → what an owner-drawn button needs to paint itself
 my @KEEP;       # root every closure handed to C (Rakudo does not)
 my @FONTS;      # HFONTs live as long as the controls that use them
 my $NEXT-ID = 100;
@@ -154,7 +168,56 @@ has %!height;   # window address → client height, for the y flip
 # Our window procedure: turn a button's WM_COMMAND into the Raku closure, and
 # treat WM_DESTROY as "this window is gone" for the liveness map. Everything
 # else goes to the default handler, exactly as a C program would do it.
+# The names are NSColor's, because that is what :tint takes on Cocoa and the
+# same program has to run here. COLORREF is 0x00BBGGRR, not RGB.
+sub tint-colour(Str $name) {
+    my %rgb =
+        orange => (255, 149,   0), gray   => (142, 142, 147),
+        grey   => (142, 142, 147), blue   => (  0, 122, 255),
+        green  => ( 52, 199,  89), red    => (255,  59,  48),
+        yellow => (255, 204,   0), purple => (175,  82, 222),
+        teal   => ( 90, 200, 250), pink   => (255,  45,  85),
+        indigo => ( 88,  86, 214), brown  => (162, 132,  94);
+    my $c = %rgb{$name.lc} // return Nil;
+    my ($r, $g, $b) = @$c;
+    ($r + ($g +< 8) + ($b +< 16), ($r * 299 + $g * 587 + $b * 114) / 1000);
+}
+
+# DRAWITEMSTRUCT on x64: CtlType 0, CtlID 4, itemID 8, itemAction 12,
+# itemState 16, hwndItem 24, hDC 32, rcItem 40 (four LONGs), itemData 56.
+sub draw-button(int64 $lp) {
+    my $u32 = nativecast(CArray[uint32], Pointer.new($lp));
+    my $u64 = nativecast(CArray[uint64], Pointer.new($lp));
+    my $id  = $u32[1];
+    my %d = %DRAW{$id} // return;
+    my $state = $u32[4];
+    my $hdc   = Pointer.new($u64[4]);
+    my $rect  = Pointer.new($lp + 40);          # rcItem, in place
+
+    # A pressed button is the same colour, darker — no second colour to name.
+    my ($col, $lum) = %d<colour>, %d<lum>;
+    if $state +& ODS_SELECTED {
+        my ($r, $g, $b) = $col +& 0xFF, ($col +> 8) +& 0xFF, ($col +> 16) +& 0xFF;
+        $col = ($r * 4 div 5) + (($g * 4 div 5) +< 8) + (($b * 4 div 5) +< 16);
+    }
+    my $brush = CreateSolidBrush($col);
+    FillRect($hdc, $rect, $brush);
+    DeleteObject($brush);
+
+    SelectObject($hdc, %d<font>) if %d<font>;
+    SetBkMode($hdc, TRANSPARENT);
+    # Dark text on a light fill, light text on a dark one — one rule, so a new
+    # colour never needs a second decision.
+    SetTextColor($hdc, $lum > 140 ?? 0x000000 !! 0xFFFFFF);
+    my $t = wstr(%d<title>);
+    DrawTextW($hdc, $t, -1, $rect, DT_CENTER +| DT_VCENTER +| DT_SINGLELINE);
+}
+
 sub wndproc(Pointer $hwnd, uint32 $msg, uint64 $wp, int64 $lp --> int64) {
+    if $msg == WM_DRAWITEM {
+        draw-button($lp);
+        return 1;                                # TRUE: it is drawn
+    }
     if $msg == WM_COMMAND {
         my $id = $wp +& 0xFFFF;                  # LOWORD(wParam) is the control id
         note-debug("WM_COMMAND id=$id" ~ (%ACTIONS{$id}:exists ?? '' !! ' (NO HANDLER)'));
@@ -317,12 +380,21 @@ method set-label-text(Pointer $l, Str() $t) {
 method make-button(Pointer :$win!, Str() :$title!, :$font, Str :$tint = '',
                    :$x!, :$y!, :$w!, :$h!, :&clicked! --> Pointer) {
     my $id = $NEXT-ID++;
-    my $b = self!child($win, 'BUTTON', $title, BS_PUSHBUTTON, $x, $y, $w, $h, $id);
-    SendMessageW($b, WM_SETFONT, +nativecast(Pointer, font-for($font // 13, False)), 1)
-        if $font;
-    # :tint is deliberately ignored: a coloured push button means owner-draw on
-    # Win32, which is a lot of machinery for decoration. The option stays legal
-    # so the same program runs everywhere — it simply looks native here.
+    # A tinted button is drawn by us (BS_OWNERDRAW); an untinted one stays a
+    # native push button, so a program that asks for no colour still looks like
+    # every other Windows program. An unknown colour name is no tint rather
+    # than an error — the same program runs on a toolkit that knows the name.
+    my ($col, $lum) = $tint ?? tint-colour($tint) !! (Nil, Nil);
+    my $b = self!child($win, 'BUTTON', $title, $col.defined ?? BS_OWNERDRAW !! BS_PUSHBUTTON,
+                       $x, $y, $w, $h, $id);
+    my $hfont = $font ?? font-for($font, False) !! Pointer;
+    SendMessageW($b, WM_SETFONT, +nativecast(Pointer, $hfont), 1) if $font;
+    # `%( )`, not `{ }`: a statement whose last line ends in a closing curly is
+    # terminated there under Rakudo, so a trailing `if` became a second
+    # statement and the parse died wanting a block. (Raku++ accepted it — a
+    # divergence worth knowing about, and not one to lean on.)
+    %DRAW{$id} = %( colour => $col, lum => $lum, title => $title.Str, font => $hfont )
+        if $col.defined;
     %ACTIONS{$id} = &clicked;
     @KEEP.push: &clicked;
     $b;

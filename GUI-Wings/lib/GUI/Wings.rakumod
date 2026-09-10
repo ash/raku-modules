@@ -205,6 +205,10 @@ sub app(Str $name, &body) is export {
       !! $bn eq 'Win32' ?? GUI::Wings::Backend::Win32.new
       !! die "unknown WINGS_BACKEND '$bn' (Cocoa, Gtk or Win32)";
     debug "backend: $bn";
+    # Which copy of this module is running: the installed one and a checkout
+    # behave differently the moment either is edited, and telling them apart
+    # from the outside cost two rounds of chasing a fixed bug.
+    debug "GUI::Wings from {$?FILE}";
     $B.init();
 
     my $done = start body();
