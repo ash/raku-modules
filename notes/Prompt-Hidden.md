@@ -275,7 +275,7 @@ harness nobody runs.
   not, rather than accepting a password in the clear. On Raku++ 3.25.0 that
   guard never gets to run — the process is already stopped.
 - **The Windows path is HALF tested, and it is worth being exact about which
-  half.** Verified 2026-09-10 on Windows 10: `prompt "Enter pwd: > ", :hidden`
+  half.** Verified 2026-09-10 on Windows: `prompt "Enter pwd: > ", :hidden`
   read a password and the terminal showed nothing. That exercised the ENGINE's
   `_getch` branch in `Builtins.cpp` — `rakupp-prompt-hidden` is registered
   unconditionally, so rakupp on Windows takes the `core` backend and never

@@ -3,11 +3,12 @@
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
 
-> **0.0.3.** The interface below is implemented and tested on both engines: 31
-> assertions across four files, green on Rakudo 2026.08 and Raku++ 3.26.0. The
-> echo suppression itself is verified separately under a pseudo-terminal, since
-> a pipe has no echo to suppress — see [Compatibility](#compatibility). What is
-> deliberately left out is in [Scope](#scope).
+> **0.0.3.** 31 assertions across four files, green on Rakudo 2026.08 and
+> Raku++ 3.26.0, on **macOS, Linux and Windows**. The echo suppression itself is
+> verified separately — a pipe has no echo to suppress, so the suite cannot see
+> it: under a pseudo-terminal on Unix, and by hand on Windows 10. See
+> [Compatibility](#compatibility); what is deliberately left out is in
+> [Scope](#scope).
 
 ```raku
 use Prompt::Hidden;
@@ -16,15 +17,7 @@ my $user = prompt "Username: ";
 my $pass = prompt "Password: ", :hidden;
 
 say "Hello, $user ({$pass.chars} characters)";
-say Prompt::Hidden::prompt-backend;   # 'core' on Raku++, 'stty' on Rakudo/Unix
-```
-
-```bash
-rakupp example.raku
-```
-
-```bash
-rakudo example.raku
+say Prompt::Hidden::prompt-backend;   # 'core' on Raku++ (any OS), 'stty' on Rakudo/Unix
 ```
 
 Or:
@@ -34,7 +27,7 @@ rakupp -MPrompt::Hidden -e'say "[{prompt ">_", :hidden}]"'
 ```
 
 ```bash
-raku -MPrompt::Hidden -e'say "[{prompt ">_", :hidden}]"'
+rakudo -MPrompt::Hidden -e'say "[{prompt ">_", :hidden}]"'
 ```
 
 The same file runs on every Raku. What differs is who suppresses the echo.
@@ -82,23 +75,29 @@ thing an import list must never do is swallow a typo written beside it.
 
 | backend | when | how |
 |---|---|---|
-| `core` | Raku++ with `rakupp-prompt-hidden` | the engine's own unechoed read |
-| `stty` | any other Unix Raku | `stty -g` to save, `stty -echo`, restored in a `LEAVE` |
-| `msvcrt` | Windows without the primitive | `_getch`, which returns a key unechoed |
+| `core` | Raku++, **any OS** — it has `rakupp-prompt-hidden` | the engine's own unechoed read: `termios` on Unix, `_getch` on Windows |
+| `stty` | any other **Unix** Raku | `stty -g` to save, `stty -echo`, restored in a `LEAVE` |
+| `msvcrt` | any other **Windows** Raku | `_getch`, which returns a key unechoed |
 
-The module picks by probing, in that order. The Windows half lives in
-`Prompt::Hidden::Win32` and is loaded **only** on Windows: `use NativeCall`
-costs about 70 ms on Rakudo, and no Unix program should pay it for a branch it
-cannot take.
+The module picks by probing, in that order — so **Raku++ on Windows takes
+`core`**, not `msvcrt`; the engine already knows how to read a key without
+echoing it there, and the module does not need to. `msvcrt` is the fallback for
+a Windows Raku that has no primitive, which today means Rakudo.
+
+That half lives in `Prompt::Hidden::Win32` and is loaded **only** on Windows:
+`use NativeCall` costs about 70 ms on Rakudo, and no Unix program should pay it
+for a branch it cannot take.
 
 Two things the `core` backend does that the shell-out cannot:
 
-- **`^C` leaves the shell working.** A signal's default action kills the
-  process without unwinding, so a `LEAVE` never runs and the terminal is left
-  with echo off — the same hole `stty -echo` in a shell script has. The engine
-  installs a handler for `SIGINT`, `SIGTERM`, `SIGHUP` and `SIGQUIT` that
-  restores the settings and re-raises. Measured against `getpass(3)`: both
-  restore, naive `stty -echo` does not.
+- **`^C` leaves the shell working.** On Unix a signal's default action kills
+  the process without unwinding, so a `LEAVE` never runs and the terminal is
+  left with echo off — the same hole `stty -echo` in a shell script has. The
+  engine installs a handler for `SIGINT`, `SIGTERM`, `SIGHUP` and `SIGQUIT`
+  that restores the settings and re-raises. Measured against `getpass(3)`: both
+  restore, naive `stty -echo` does not. On Windows the question does not arise:
+  `_getch` reads a key without ever turning echo off, so there is no state left
+  to restore.
 - **No window.** Echo is off before the prompt is printed, so a fast typist
   cannot get a character in first.
 
@@ -144,10 +143,23 @@ answer and the whole export surface without a pseudo-terminal.
 
 ## Compatibility
 
-| engine | version | tests | backend | hidden read on a terminal |
-|---|---|---|---|---|
-| Rakudo | 2026.08 | 31/31 | `stty` | verified under a pty |
-| Raku++ | 3.26.0 | 31/31 | `core` | verified under a pty, and on Windows 10 |
+| engine | version | OS | tests | backend | hidden read on a terminal |
+|---|---|---|---|---|---|
+| Raku++ | 3.26.0 | macOS (arm64) | 31/31 | `core` | verified under a pty |
+| Raku++ | 3.26.0 | Windows | see below | `core` | **verified by hand** |
+| Rakudo | 2026.08 | macOS (arm64) | 31/31 | `stty` | verified under a pty |
+
+**Windows works.** `prompt "Enter pwd: > ", :hidden` reads a password there and
+the terminal shows nothing — through the `core` backend, since Raku++ carries
+the primitive on every OS. What is not yet re-run there is the suite itself:
+its last Windows run was one assertion short, on a row testing the test
+helper's own line-ending handling rather than anything in `lib/`, and the fix
+for it has not been round-tripped back to a Windows box. Nothing in `lib/` has
+changed since the hand check.
+
+Not tried at all: **Linux** (the `stty` path is generic Unix, but generic is
+not tested), and **Rakudo on Windows**, which is the only configuration that
+would exercise `Prompt::Hidden::Win32` — see [Scope](#scope).
 
 The Rakudo version is not a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:
@@ -174,5 +186,5 @@ Artistic-2.0.
 
 ---
 
-The design log — what running this on two engines turned up, and the four
-engine bugs it found — is in [notes/Prompt-Hidden.md](https://github.com/ash/raku-modules/blob/main/notes/Prompt-Hidden.md).
+The design log — what running this on three engines and two operating systems
+turned up, and the engine bugs it found — is in [notes/Prompt-Hidden.md](https://github.com/ash/raku-modules/blob/main/notes/Prompt-Hidden.md).
