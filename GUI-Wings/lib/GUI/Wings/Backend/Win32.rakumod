@@ -57,8 +57,20 @@ sub CreateFontW(int32, int32, int32, int32, int32, uint32, uint32, uint32,
                                                     is native(G32) { * }
 sub DeleteObject(Pointer --> int32)                 is native(G32) { * }
 
-# The window procedure: a Raku callback Windows itself invokes.
-sub SetWindowLongPtrW(Pointer, int32, Pointer --> Pointer) is native(U32) { * }
+# The window procedure: a Raku callback Windows itself invokes — and the one
+# thing that cannot be written into WNDCLASSEXW by hand, because there is no
+# way to take the ADDRESS of a Raku sub. Rakudo refuses `nativecast(Pointer,
+# &sub)` ("expected return type with CPointer, CStruct, CArray, or VMArray
+# representation") and Raku++ answered a null pointer for it, which would have
+# registered a class with no procedure at all. A callback becomes a C function
+# pointer only where the ABI expects one: as an ARGUMENT whose signature is
+# declared. So the class registers with the DEFAULT procedure — a real address,
+# read out of user32 — and every window is subclassed to ours the moment it
+# exists, which is a plain Win32 idiom rather than a workaround.
+sub SetWindowProc(Pointer, int32, &proc (Pointer, uint32, uint64, int64 --> int64) --> Pointer)
+    is native(U32) is symbol('SetWindowLongPtrW') { * }
+sub GetProcAddress(Pointer, Str --> Pointer) is native(K32) { * }
+sub GetModuleHandleName(CArray[uint16] --> Pointer) is native(K32) is symbol('GetModuleHandleW') { * }
 
 my constant WS_OVERLAPPED   = 0x00000000;
 my constant WS_CAPTION      = 0x00C00000;
@@ -160,7 +172,6 @@ method init() {
     my $wc = CArray[uint64].new;
     $wc[$_] = 0 for ^10;
     $wc[0] = 80;                                 # cbSize (low half) — style is the high half
-    @KEEP.push: &wndproc;
     my $name = wstr('WingsWindow');
     @KEEP.push: $name;
     # The struct is written through a byte view so the 32-bit and pointer
@@ -170,7 +181,11 @@ method init() {
     my sub put-ptr($off, $p) { $blob.write-uint64($off, $p ?? +nativecast(Pointer, $p) !! 0, LittleEndian) }
     put-u32(0, 80);                              # cbSize
     put-u32(4, 0);                               # style
-    put-ptr(8, &wndproc);                        # lpfnWndProc
+    # lpfnWndProc — DefWindowProcW's own address, out of the DLL that defines
+    # it. Every window then gets ours (see SetWindowProc above).
+    my $def = GetProcAddress(GetModuleHandleName(wstr('user32.dll')), 'DefWindowProcW');
+    die "DefWindowProcW is not where it should be, in user32" unless $def && +$def;
+    put-ptr(8, $def);                            # lpfnWndProc
     put-ptr(24, $HINST);                         # hInstance
     put-ptr(64, $name);                          # lpszClassName
     my $ptr = nativecast(Pointer, $blob);
@@ -193,6 +208,9 @@ method make-window(Str() :$title!, :$w!, :$h!, :$fixed = False --> Pointer) {
                                ($w + $fw).Int, ($h + $fh).Int,
                                Pointer, Pointer, $HINST, Pointer);
     die "CreateWindowExW failed" unless $hwnd;
+    # From here the messages are ours: WM_COMMAND for the buttons, WM_DESTROY
+    # for liveness, everything else back to the default.
+    SetWindowProc($hwnd, GWLP_WNDPROC, &wndproc);
     %!height{+$hwnd} = $h;
     %ALIVE{+$hwnd} = True;
     ShowWindow($hwnd, SW_SHOW);

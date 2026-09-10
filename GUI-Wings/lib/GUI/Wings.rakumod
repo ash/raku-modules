@@ -210,7 +210,23 @@ sub app(Str $name, &body) is export {
         }
         $B.frame-end($frame);
     }
-    note $done.cause if $done.status ~~ Broken;
+    # How the body ended decides whether the user is owed an explanation. A
+    # `start` block that dies keeps its exception to itself — and on Windows
+    # the first run of this backend ended with no window, no error and exit 0,
+    # which is the worst way for anything to end.
+    given $done.status {
+        when Broken {
+            my $why = $done.cause;
+            note $why.defined
+                ?? "wings: the app body died: $why"
+                !! "wings: the app body died, and no cause was recorded"
+                 ~ " (a foreign exception does that here) — WINGS_DEBUG=1 narrates how far it got";
+        }
+        when Kept {
+            note "wings: the app body returned without opening a window, so there was nothing to show"
+                unless @WINDOWS;
+        }
+    }
     reconcile();
     for @WINDOWS.grep(*.ns.defined) -> $win {
         $B.close($win.ns);
