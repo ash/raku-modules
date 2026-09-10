@@ -70,7 +70,16 @@ sub DeleteObject(Pointer --> int32)                 is native(G32) { * }
 sub SetWindowProc(Pointer, int32, &proc (Pointer, uint32, uint64, int64 --> int64) --> Pointer)
     is native(U32) is symbol('SetWindowLongPtrW') { * }
 sub GetProcAddress(Pointer, Str --> Pointer) is native(K32) { * }
-sub GetModuleHandleName(CArray[uint16] --> Pointer) is native(K32) is symbol('GetModuleHandleW') { * }
+# LoadLibraryW, not GetModuleHandleW: the latter finds only what the process
+# has ALREADY loaded, and nothing here had called a user32 function yet — a
+# console program has no reason to carry user32 at all. (gdi32 does not bring
+# it in; the dependency runs the other way.) Loading it is what we want anyway,
+# and the reference is never given back, which is right for the process's own
+# window layer.
+sub LoadLibraryW(CArray[uint16] --> Pointer) is native(K32) { * }
+# The arrow cursor, by its numeric resource id — a class with no cursor leaves
+# whatever the last window set, which reads as a frozen app.
+sub LoadCursorW(Pointer, Pointer --> Pointer) is native(U32) { * }
 
 my constant WS_OVERLAPPED   = 0x00000000;
 my constant WS_CAPTION      = 0x00C00000;
@@ -92,6 +101,10 @@ my constant BM_CLICK        = 0x00F5;
 my constant SW_SHOW         = 5;
 my constant PM_REMOVE       = 1;
 my constant GWLP_WNDPROC    = -4;
+my constant CS_VREDRAW      = 0x0001;        # repaint the whole client area on a resize
+my constant CS_HREDRAW      = 0x0002;
+my constant IDC_ARROW       = 32512;
+my constant COLOR_WINDOW_BRUSH = 6;          # COLOR_WINDOW + 1, the pseudo-handle form
 my constant DEFAULT_CHARSET = 1;
 my constant FIXED_PITCH     = 1;
 
@@ -180,13 +193,21 @@ method init() {
     my sub put-u32($off, $v) { $blob.write-uint32($off, $v, LittleEndian) }
     my sub put-ptr($off, $p) { $blob.write-uint64($off, $p ?? +nativecast(Pointer, $p) !! 0, LittleEndian) }
     put-u32(0, 80);                              # cbSize
-    put-u32(4, 0);                               # style
+    put-u32(4, CS_HREDRAW +| CS_VREDRAW);        # style
     # lpfnWndProc — DefWindowProcW's own address, out of the DLL that defines
-    # it. Every window then gets ours (see SetWindowProc above).
-    my $def = GetProcAddress(GetModuleHandleName(wstr('user32.dll')), 'DefWindowProcW');
-    die "DefWindowProcW is not where it should be, in user32" unless $def && +$def;
+    # it. Every window then gets ours (see SetWindowProc above). The two steps
+    # fail for different reasons, so they say which.
+    my $user32 = LoadLibraryW(wstr('user32.dll'));
+    die "user32.dll would not load" unless $user32 && +$user32;
+    my $def = GetProcAddress($user32, 'DefWindowProcW');
+    die "user32 is loaded at {+$user32}, but GetProcAddress found no DefWindowProcW in it"
+        unless $def && +$def;
     put-ptr(8, $def);                            # lpfnWndProc
     put-ptr(24, $HINST);                         # hInstance
+    # hCursor and hbrBackground were left null, which is legal and looks
+    # broken: no cursor of its own, and a client area nothing ever erases.
+    put-ptr(40, LoadCursorW(Pointer, Pointer.new(IDC_ARROW)));   # hCursor
+    $blob.write-uint64(48, COLOR_WINDOW_BRUSH, LittleEndian);    # hbrBackground
     put-ptr(64, $name);                          # lpszClassName
     my $ptr = nativecast(Pointer, $blob);
     @KEEP.push: $blob;
