@@ -30,7 +30,12 @@ sub child(Str $code, Str $input = "", *%env --> List) is export {
     # its own result, outside the try. Ending the block on a plain value is
     # what keeps the Proc from ever reaching sink context.
     try { $p.in.print($input); $p.in.close; True }
-    my $out = (try $p.out.slurp(:close)) // '';
-    my $err = (try $p.err.slurp(:close)) // '';
+    # CRLF -> LF. A child's `say` ends a line with \r\n on Windows, and every
+    # assertion in this suite is written against \n — so a passing comparison
+    # failed there with `expected` and `got` printed identically, the only
+    # difference being a carriage return neither the diff nor the eye shows.
+    # Normalising here rather than in each test keeps the assertions readable.
+    my $out = ((try $p.out.slurp(:close)) // '').subst("\r\n", "\n", :g);
+    my $err = ((try $p.err.slurp(:close)) // '').subst("\r\n", "\n", :g);
     ($out, $err, (try $p.exitcode) // -1)
 }

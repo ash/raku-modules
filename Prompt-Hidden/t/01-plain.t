@@ -4,7 +4,7 @@ use Child;
 
 # `prompt` WITHOUT :hidden must be CORE::<&prompt>, forwarded whole. Every row
 # uses a fixture of its own, so a stale or leaked answer cannot satisfy two.
-plan 8;
+plan 9;
 
 my ($out, $err, $rc) = child(
     'use Prompt::Hidden; my $x = prompt("who: "); say "[$x]"', "ada-4b1f\n");
@@ -35,5 +35,13 @@ is $out, "[no-message-9c2e]\n", 'no message prints nothing';
 ($out, $err, $rc) = child(
     'use Prompt::Hidden; say prompt("n: ", :!hidden).^name', "1234\n");
 is $out, "n: IntStr\n", ':!hidden is an ordinary prompt';
+
+# The helper normalises CRLF, and this is the row that says so. A child's `say`
+# ends a line with \r\n on Windows while every assertion here is written
+# against \n, so without it a correct result failed with `expected` and `got`
+# printed identically — the difference being a carriage return that neither the
+# diff nor the eye shows. This child emits CRLF on purpose, on any platform.
+($out, $err, $rc) = child('$*OUT.print("crlf-7a2e\r\n")', "");
+is $out, "crlf-7a2e\n", 'the helper normalises a CRLF line ending';
 
 done-testing;

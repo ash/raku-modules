@@ -235,7 +235,7 @@ happens here in spite of the split, because the shadowing itself is what fails.
 The split still buys the Rakudo case and it is still right, but "the module
 makes this portable" is a claim with a named exception now.
 
-Its 20 of 30 assertions are mostly unrelated: mutsu's `prompt` returns `Str`
+Its 20 of 30 assertions (at the time) are mostly unrelated: mutsu's `prompt` returns `Str`
 where Rakudo returns `IntStr`, and `Any` where Rakudo returns `Nil` at end of
 input, so the rows asserting core `prompt` semantics fail before this module is
 involved; `$!` is also unset after a failed `try`, which the export tests use.
@@ -245,7 +245,7 @@ involved; `$!` is also unset after a failed `try`, which the export tests use.
 Echo suppression is invisible on a pipe: there is nothing to suppress, so a
 hidden read and a plain one produce identical bytes. The whole `t/` suite runs
 on pipes — that is what makes it portable — so **it cannot catch the thing the
-module is for**, and it did not: all 30 assertions passed on Raku++ 3.25.0,
+module is for**, and it did not: all 30 assertions of the day passed on Raku++ 3.25.0,
 where a hidden read on a real terminal echoes the password and then hangs.
 
 A pseudo-terminal is the only harness that answers. Under one, against
