@@ -4,7 +4,7 @@
 terminal never shows.
 
 > **0.0.3.** 31 assertions across four files, green on Rakudo 2026.08 and
-> Raku++ 3.26.0, on **macOS, Linux and Windows**. The echo suppression itself is
+> Raku++ 3.26.0, on **macOS and Windows**. The echo suppression itself is
 > verified separately — a pipe has no echo to suppress, so the suite cannot see
 > it: under a pseudo-terminal on Unix, and by hand on Windows 10. See
 > [Compatibility](#compatibility); what is deliberately left out is in
@@ -146,7 +146,7 @@ answer and the whole export surface without a pseudo-terminal.
 | engine | version | OS | tests | backend | hidden read on a terminal |
 |---|---|---|---|---|---|
 | Raku++ | 3.26.0 | macOS (arm64) | 31/31 | `core` | verified under a pty |
-| Raku++ | 3.26.0 | Windows | see below | `core` | **verified by hand** |
+| Raku++ | 3.26.0 | Windows 10 Pro | see below | `core` | **verified by hand** |
 | Rakudo | 2026.08 | macOS (arm64) | 31/31 | `stty` | verified under a pty |
 
 **Windows works.** `prompt "Enter pwd: > ", :hidden` reads a password there and
