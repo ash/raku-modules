@@ -92,6 +92,10 @@ sub FillRect(Pointer, Pointer, Pointer --> int32)       is native(U32) { * }
 sub SetTextColor(Pointer, uint32 --> uint32)            is native(G32) { * }
 sub SelectObject(Pointer, Pointer --> Pointer)          is native(G32) { * }
 sub DrawTextW(Pointer, CArray[uint16], int32, Pointer, uint32 --> int32) is native(U32) { * }
+# The bevel an owner-draw button does not get for free — Windows draws one for
+# a push button and nothing at all for ours, which is why a tinted button came
+# out flat.
+sub DrawEdge(Pointer, Pointer, uint32, uint32 --> int32) is native(U32) { * }
 sub InvalidateRect(Pointer, Pointer, int32 --> int32) is native(U32) { * }
 sub SetBkMode(Pointer, int32 --> int32) is native(G32) { * }
 
@@ -127,6 +131,10 @@ my constant ODS_SELECTED    = 0x0001;
 my constant DT_CENTER       = 0x0001;
 my constant DT_VCENTER      = 0x0004;
 my constant DT_SINGLELINE   = 0x0020;
+my constant EDGE_RAISED     = 0x0005;        # BDR_RAISEDOUTER | BDR_RAISEDINNER
+my constant EDGE_SUNKEN     = 0x000A;        # BDR_SUNKENOUTER | BDR_SUNKENINNER
+my constant BF_RECT         = 0x000F;
+my constant BF_ADJUST       = 0x2000;        # shrink the rect to the interior
 my constant TRANSPARENT     = 1;
 my constant DEFAULT_CHARSET = 1;
 my constant FIXED_PITCH     = 1;
@@ -200,6 +208,11 @@ sub draw-button(int64 $lp) {
         my ($r, $g, $b) = $col +& 0xFF, ($col +> 8) +& 0xFF, ($col +> 16) +& 0xFF;
         $col = ($r * 4 div 5) + (($g * 4 div 5) +< 8) + (($b * 4 div 5) +< 16);
     }
+    # Bevel first, and BF_ADJUST shrinks rcItem in place so the fill and the
+    # title land inside it: raised normally, sunken while held, which is the
+    # whole of the 3D effect a push button has.
+    DrawEdge($hdc, $rect, $state +& ODS_SELECTED ?? EDGE_SUNKEN !! EDGE_RAISED,
+             BF_RECT +| BF_ADJUST);
     my $brush = CreateSolidBrush($col);
     FillRect($hdc, $rect, $brush);
     DeleteObject($brush);
