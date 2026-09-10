@@ -16,6 +16,8 @@
     "Prompt::Hidden::Win32": "lib/Prompt/Hidden/Win32.rakumod"
   },
   "raku": "6.d",
+  "resources": [
+  ],
   "source-url": "https://github.com/ash/raku-modules/tree/main/Prompt-Hidden",
   "support": {
     "source": "https://github.com/ash/raku-modules/tree/main/Prompt-Hidden"
