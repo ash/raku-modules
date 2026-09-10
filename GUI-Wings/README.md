@@ -5,11 +5,14 @@ windows and widgets, every event a `Supply`, `react`/`whenever` as the event
 loop. The Cocoa backend reaches AppKit through `objc_msgSend` over NativeCall —
 no C glue, no bindings distribution to install.
 
-> **Status: v0.0.3 — a proof of concept with three backends, two of them
-> proven.** The same examples run unchanged on **Cocoa** (macOS: Raku++ arm64
-> with `RAKUPP_MAIN_THREAD=1`, Rakudo as-is) and on **Gtk** (GTK3, the Linux
-> default — so far exercised through a Rosetta Rakudo against Homebrew GTK).
-> **Win32** is written but **never run**: no Windows machine has touched it.
+> **Status: v0.0.4 — a proof of concept with three backends, all three run.**
+> The same examples run unchanged on **Cocoa** (macOS: Raku++ arm64 with
+> `RAKUPP_MAIN_THREAD=1`, Rakudo as-is), on **Gtk** (GTK3, the Linux default —
+> so far exercised through a Rosetta Rakudo against Homebrew GTK), and now on
+> **Win32**: `examples/counter.raku` ran on Windows 11 on 2026-09-10, the first
+> time that backend had executed at all. It needs a Raku++ newer than 3.26.0
+> (see [Requirements](#requirements)) — four engine faults stood between it and
+> a window.
 > `WINGS_BACKEND=Cocoa|Gtk|Win32` overrides the default choice by OS. Widgets
 > so far: `window`, `label`, `button`. See [Scope](#scope).
 
@@ -88,12 +91,14 @@ Close the window or Ctrl+C to quit. Two environment knobs:
   throughout so `÷ × −` survive) is the Windows default; Win32 is thread-
   affine like Cocoa but has no first-thread rule, so it needs no env var
   either.
-- **Proof status**: Cocoa and Gtk are both run-verified here (macOS 15.7,
-  GTK 3.24 via Rosetta); **Win32 has never been executed** — it parses on both
-  engines and follows the same contract, but every behavioural claim about it
-  is intent until someone runs it. `:tint` is a deliberate no-op there
-  (coloured push buttons mean owner-draw), and `signal(SIGINT)` does not fire
-  on Windows, so the counter would exit by its window close rather than Ctrl+C.
+- **Proof status**: all three are run-verified. Cocoa and Gtk here (macOS 15.7,
+  GTK 3.24 via Rosetta); Win32 on Windows 11 with Raku++ `v3.26.0-g03454ac`,
+  where `examples/counter.raku` opens, ticks its title and counts its clicks.
+  What has been exercised there is the counter; the calculator and the
+  autodrive paths have not been through a Windows run yet. `:tint` is a
+  deliberate no-op on Win32 (coloured push buttons mean owner-draw), and
+  `signal(SIGINT)` does not fire on Windows, so the counter exits by its window
+  close rather than Ctrl+C.
   A genuine Linux run of the Gtk backend is likewise still pending.
 - **Raku++**: a build from current `main` — the main-thread hook and the
   declared-Str/word-list marshalling fixes are newer than the v3.6.x release
