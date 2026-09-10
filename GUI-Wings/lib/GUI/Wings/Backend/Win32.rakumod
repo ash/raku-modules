@@ -116,7 +116,12 @@ my constant STYLE_SIZED = STYLE_FIXED +| WS_THICKFRAME +| WS_MAXIMIZEBOX;
 sub wstr(Str $s --> CArray[uint16]) {
     my $a = CArray[uint16].new;
     my $i = 0;
-    $a[$i++] = $_ for $s.encode('utf16').list;
+    # `.Str` first: a word list yields allomorphs, so the calculator's `<7 8 9>`
+    # keys arrive as IntStr. That is a Str under Rakudo and encodes fine, and it
+    # is a Str under Raku++ too — but `.encode` there was gated to plain strings
+    # until 3.26, and three of the four buttons in a row threw "No such method
+    # 'encode' for invocant of type 'IntStr'". On a Str this costs nothing.
+    $a[$i++] = $_ for $s.Str.encode('utf16').list;
     $a[$i] = 0;                                  # the NUL every …W call expects
     $a;
 }
