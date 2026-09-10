@@ -120,6 +120,18 @@ program inline on the main thread instead. Under Rakudo the mainline already
 is the main thread. `app` checks with `pthread_main_np` and says so if the
 requirement is not met.
 
+On **Windows** the engine's FFI decides whether this backend can run at all.
+Windows ships no libffi, so Raku++ calls through a fixed prototype instead —
+one that held eight integer arguments in 3.26 and earlier, and passed them as
+32-bit words. `CreateWindowExW` takes twelve arguments and a window handle is a
+64-bit address, so on an older engine the backend cannot work; `init` says so,
+with the two ways out: put a libffi where the engine can find it
+(`set RAKUPP_FFI=C:\path\to\libffi-8.dll` — GTK, MSYS2 and Python each ship
+one), or use a newer Raku++. Rakudo has no such limit. The backend is chosen
+without asking `$*DISTRO.is-win`, which Raku++ answered False on every host up
+to 3.26 — that alone sent a Windows box to the GTK backend, looking for
+`libgtk-3.so.0`.
+
 ## Scope
 
 What v0.0.1 deliberately leaves out: any widget beyond label and button, real

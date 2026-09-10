@@ -148,10 +148,23 @@ sub reconcile() {
     }
 }
 
+# Is this a Windows host? `$*DISTRO.is-win` is the question Raku offers, and
+# Rakudo answers it correctly — but rakupp hard-codes it to False (3.26 and
+# earlier), so a Windows box fell through to the GTK backend and asked its
+# loader for libgtk-3.so.0. `$*KERNEL.name` is 'win32' on both engines, and the
+# distro names Rakudo itself counts as Windows are checked too, so this answers
+# on any engine, old or new. The same rule guards the backend itself.
+sub windows-host(--> Bool) {
+    return True if ($*KERNEL.name // '').lc eq 'win32';
+    my $d = ($*DISTRO.name // '').lc;
+    return True if $d eq 'mswin32' | 'mingw' | 'msys' | 'cygwin';
+    so (try $*DISTRO.is-win);
+}
+
 sub app(Str $name, &body) is export {
     my $bn = %*ENV<WINGS_BACKEND>
              // ($*KERNEL.name eq 'darwin' ?? 'Cocoa'
-                 !! $*DISTRO.is-win    ?? 'Win32'
+                 !! windows-host()     ?? 'Win32'
                  !!                       'Gtk');
     $B = $bn eq 'Cocoa' ?? GUI::Wings::Backend::Cocoa.new
       !! $bn eq 'Gtk'   ?? GUI::Wings::Backend::Gtk.new

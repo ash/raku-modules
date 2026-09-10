@@ -123,8 +123,36 @@ sub wndproc(Pointer $hwnd, uint32 $msg, uint64 $wp, int64 $lp --> int64) {
 my $CLASS;
 my $HINST;
 
+# The host test, in the spelling that also works under an engine whose
+# `$*DISTRO.is-win` is hard-coded False — see the note in GUI::Wings.
+sub win-host(--> Bool) {
+    return True if ($*KERNEL.name // '').lc eq 'win32';
+    my $d = ($*DISTRO.name // '').lc;
+    return True if $d eq 'mswin32' | 'mingw' | 'msys' | 'cygwin';
+    so (try $*DISTRO.is-win);
+}
+
 method init() {
-    die "the Win32 backend needs Windows" unless $*DISTRO.is-win;
+    die "the Win32 backend needs Windows" unless win-host();
+    # A Win32 GUI needs an FFI that can place a wide argument list:
+    # CreateWindowExW takes twelve arguments, CreateFontW fourteen. Rakudo
+    # always can. Raku++ without libffi calls through a fixed prototype that
+    # held eight until 3.26, and one clear sentence here beats the exception
+    # that lands in the middle of building a window.
+    {
+        CATCH {
+            when X::NYI {
+                die "GUI::Wings: this engine's FFI cannot place the Win32 API's wider calls\n"
+                  ~ "  ({.message})\n"
+                  ~ "  Point it at a libffi (libffi-8.dll ships with GTK, MSYS2 and Python):\n"
+                  ~ "    set RAKUPP_FFI=C:\\path\\to\\libffi-8.dll\n"
+                  ~ "  or use a Raku++ newer than 3.26, whose fallback path is wide enough.";
+            }
+        }
+        my $probe = CreateFontW(-12, 0, 0, 0, 400, 0, 0, 0,
+                                DEFAULT_CHARSET, 0, 0, 0, 0, wstr('Segoe UI'));
+        DeleteObject($probe) if $probe;
+    }
     $HINST = GetModuleHandleW(Pointer);
     # WNDCLASSEXW, laid out by hand: cbSize, style, lpfnWndProc, cbClsExtra,
     # cbWndExtra, hInstance, hIcon, hCursor, hbrBackground, lpszMenuName,
