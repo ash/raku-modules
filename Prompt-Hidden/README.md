@@ -3,7 +3,7 @@
 `prompt` with a `:hidden` adverb — a password typed at a terminal that the
 terminal never shows.
 
-> **0.0.2.** The interface below is implemented and tested on both engines: 30
+> **0.0.3.** The interface below is implemented and tested on both engines: 30
 > assertions across four files, green on Rakudo 2026.08 and Raku++ 3.26.0. The
 > echo suppression itself is verified separately under a pseudo-terminal, since
 > a pipe has no echo to suppress — see [Compatibility](#compatibility). What is
