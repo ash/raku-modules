@@ -53,6 +53,20 @@ class Window is export {
 
 my $UI       = Channel.new;     # closures the pump thread must run
 my @WINDOWS;
+# @WINDOWS and every $win.widgets are written by the BODY thread as it builds
+# and read by the PUMP thread as it reconciles — an array growing under a walk
+# on another thread, which is not safe in Raku and is not safe in either
+# engine's guts either: a reallocation frees the storage the walker is holding.
+# On Windows that showed as a calculator with a random prefix of its sixteen
+# buttons, sometimes a bogus "No such method 'title'" on a real Window, and
+# sometimes no message at all. macOS never showed it, which is what a race
+# looks like.
+#
+# The rule here: mutate under $LISTS, and read by taking a SNAPSHOT under
+# $LISTS and then working outside it. Never hold it across `on-main`, which
+# waits for the pump thread — that would be the two threads waiting for each
+# other.
+my $LISTS = Lock.new;
 my $CURRENT-WINDOW;
 my $B;                          # the active backend
 
@@ -85,10 +99,14 @@ multi sub window(&body, *%opts) is export {
                                  fixed => ?%opts<fixed>);
         $win.applied-title = $win.title;
     }
-    @WINDOWS.push: $win;
+    $LISTS.protect: { @WINDOWS.push: $win };
     $CURRENT-WINDOW = $win;
     debug "window '$win.title()' up";
     body();
+    # How many widgets the BODY thread believes it built. If a window shows
+    # fewer than this, they were lost between here and the toolkit; if this
+    # number is short too, the body stopped early.
+    debug "window '$win.title()' built {widgets-now($win).elems} widgets";
     $win;
 }
 
@@ -119,7 +137,7 @@ sub label(Str $text, *%opts) is export {
                               mono => ?%opts<mono>, align => (%opts<align> // 'center'),
                               :$x, :$y, :$w, :$h);
     }
-    $win.widgets.push: $l;
+    $LISTS.protect: { $win.widgets.push: $l };
     $l;
 }
 
@@ -133,21 +151,27 @@ sub button(Str $title, *%opts) is export {
                                tint => (%opts<tint> // ''), :$x, :$y, :$w, :$h,
                                clicked => &fire);
     }
-    $win.widgets.push: $b;
+    $LISTS.protect: { $win.widgets.push: $b };
     $b;
 }
 
 # ---------- the pump (one thread owns the toolkit) ----------
 
+# Snapshots, not the live arrays: the toolkit calls below take long enough for
+# the body thread to add three more widgets, and a `for` over an array that
+# grows underneath it is what broke Windows.
+sub windows-now()      { $LISTS.protect: { @WINDOWS.List } }
+sub widgets-now($win)  { $LISTS.protect: { $win.widgets.List } }
+
 sub reconcile() {
-    for @WINDOWS -> $win {
+    for windows-now() -> $win {
         next without $win.ns;
         if $win.title ne $win.applied-title {
             $B.set-window-title($win.ns, $win.title);
             $win.applied-title = $win.title;
             debug "title -> '$win.title()'";
         }
-        for $win.widgets.grep(Label) -> $l {
+        for widgets-now($win).grep(Label) -> $l {
             next without $l.ns;
             if $l.text ne $l.applied {
                 $B.set-label-text($l.ns, $l.text);
@@ -202,8 +226,8 @@ sub app(Str $name, &body) is export {
         $B.pump();
         if @auto-at && now > @auto-at[0] {
             @auto-at.shift;
-            for @WINDOWS -> $win {
-                $B.click(.ns) for $win.widgets.grep(Button).grep(*.ns.defined);
+            for windows-now() -> $win {
+                $B.click(.ns) for widgets-now($win).grep(Button).grep(*.ns.defined);
             }
         }
         if $sigint-at && now > $sigint-at {
@@ -212,9 +236,10 @@ sub app(Str $name, &body) is export {
         }
         if $close-at && now > $close-at {
             $close-at = Nil;
-            $B.press-close(.ns) for @WINDOWS.grep(*.ns.defined);
+            $B.press-close(.ns) for windows-now().grep(*.ns.defined);
         }
-        if @WINDOWS && !@WINDOWS.grep({ .ns.defined && $B.visible(.ns) }) {
+        my @live = windows-now();
+        if @live && !@live.grep({ .ns.defined && $B.visible(.ns) }) {
             debug 'all windows closed';
             exit 0;
         }
@@ -234,12 +259,12 @@ sub app(Str $name, &body) is export {
         }
         when Kept {
             note "wings: the app body returned without opening a window, so there was nothing to show"
-                unless @WINDOWS;
+                unless windows-now();
         }
         default { note "wings: the app body ended in state $_" }
     }
     reconcile();
-    for @WINDOWS.grep(*.ns.defined) -> $win {
+    for windows-now().grep(*.ns.defined) -> $win {
         $B.close($win.ns);
     }
     debug "app '$name' finished";
