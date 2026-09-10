@@ -274,7 +274,16 @@ harness nobody runs.
   module confirms the terminal actually obeyed and refuses to read if it did
   not, rather than accepting a password in the clear. On Raku++ 3.25.0 that
   guard never gets to run — the process is already stopped.
-- **The Windows path is untested.** `Prompt::Hidden::Win32` compiles on macOS
+- **The Windows path is HALF tested, and it is worth being exact about which
+  half.** Verified 2026-09-10 on Windows 10: `prompt "Enter pwd: > ", :hidden`
+  read a password and the terminal showed nothing. That exercised the ENGINE's
+  `_getch` branch in `Builtins.cpp` — `rakupp-prompt-hidden` is registered
+  unconditionally, so rakupp on Windows takes the `core` backend and never
+  reaches this distribution's own Windows half.
+
+  So `Prompt::Hidden::Win32` — the NativeCall `msvcrt` fallback — is STILL
+  unexercised: it is only reached by Rakudo on Windows, which nobody has run.
+  `Prompt::Hidden::Win32` compiles on macOS
   and its `getch-line` is present, and the dispatch to it is exercised on any
   OS through `RAKU_PROMPT_HIDDEN_FORCE_WIN`; the `_getch` call itself has never run.
   Said plainly in the README rather than implied by silence.

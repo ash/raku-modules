@@ -147,7 +147,7 @@ answer and the whole export surface without a pseudo-terminal.
 | engine | version | tests | backend | hidden read on a terminal |
 |---|---|---|---|---|
 | Rakudo | 2026.08 | 31/31 | `stty` | verified under a pty |
-| Raku++ | 3.26.0 | 31/31 | `core` | verified under a pty |
+| Raku++ | 3.26.0 | 31/31 | `core` | verified under a pty, and on Windows 10 |
 
 The Rakudo version is not a floor; no older one has been tried. The Raku++
 figure **is** a floor, and it is the engine's story rather than the module's:
