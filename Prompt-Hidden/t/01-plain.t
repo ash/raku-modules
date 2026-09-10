@@ -36,11 +36,16 @@ is $out, "[no-message-9c2e]\n", 'no message prints nothing';
     'use Prompt::Hidden; say prompt("n: ", :!hidden).^name', "1234\n");
 is $out, "n: IntStr\n", ':!hidden is an ordinary prompt';
 
-# The helper normalises CRLF, and this is the row that says so. A child's `say`
-# ends a line with \r\n on Windows while every assertion here is written
-# against \n, so without it a correct result failed with `expected` and `got`
-# printed identically — the difference being a carriage return that neither the
-# diff nor the eye shows. This child emits CRLF on purpose, on any platform.
+# The helper normalises line endings, and this is the row that says so. A
+# child's `say` ends a line with \r\n on Windows while every assertion here is
+# written against \n, so without it a correct result failed with `expected` and
+# `got` printed identically — the difference being a carriage return that
+# neither the diff nor the eye shows.
+#
+# This child emits \r\n ITSELF, which is the sharper case: on Windows the \n is
+# then translated on top, so "\r\r\n" arrives and a single \r\n -> \n pass
+# leaves one \r behind. Off Windows it is a plain CRLF. Either way the row
+# holds the helper to \n.
 ($out, $err, $rc) = child('$*OUT.print("crlf-7a2e\r\n")', "");
 is $out, "crlf-7a2e\n", 'the helper normalises a CRLF line ending';
 

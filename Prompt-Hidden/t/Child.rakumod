@@ -30,12 +30,18 @@ sub child(Str $code, Str $input = "", *%env --> List) is export {
     # its own result, outside the try. Ending the block on a plain value is
     # what keeps the Proc from ever reaching sink context.
     try { $p.in.print($input); $p.in.close; True }
-    # CRLF -> LF. A child's `say` ends a line with \r\n on Windows, and every
-    # assertion in this suite is written against \n — so a passing comparison
-    # failed there with `expected` and `got` printed identically, the only
-    # difference being a carriage return neither the diff nor the eye shows.
-    # Normalising here rather than in each test keeps the assertions readable.
-    my $out = ((try $p.out.slurp(:close)) // '').subst("\r\n", "\n", :g);
-    my $err = ((try $p.err.slurp(:close)) // '').subst("\r\n", "\n", :g);
+    # Line endings, normalised to \n. Every assertion in this suite is written
+    # against \n; a child's `say` ends a line with \r\n on Windows, so a correct
+    # result failed there with `expected` and `got` printed IDENTICALLY, the
+    # whole difference being a carriage return that neither the diff nor the eye
+    # shows.
+    #
+    # `\r+ \n`, not `\r\n`, and that is not belt-and-braces: a child that emits
+    # "\r\n" itself has its \n translated on top, so what arrives is "\r\r\n" and
+    # a single-pass \r\n -> \n leaves one \r behind — failing exactly as
+    # invisibly as before. Doing it here, once, keeps the assertions readable.
+    my &nl = -> $t { $t.subst(/\r+\n/, "\n", :g) };
+    my $out = nl((try $p.out.slurp(:close)) // '');
+    my $err = nl((try $p.err.slurp(:close)) // '');
     ($out, $err, (try $p.exitcode) // -1)
 }
