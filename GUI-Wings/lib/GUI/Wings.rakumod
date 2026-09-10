@@ -60,8 +60,18 @@ my $B;                          # the active backend
 # Promise: Channel.receive parks reliably on every thread.
 sub on-main(&code) {
     my $ack = Channel.new;
-    $UI.send: { $ack.send(code() // True) };
-    $ack.receive;
+    # The toolkit's failures belong to the CALLER, not to the pump. Letting the
+    # closure throw on the pump thread lost twice over: the ack was never sent,
+    # so the builder waited for it forever, and the exception left the pump loop
+    # by a door nobody was watching. Caught here, it crosses the channel like
+    # any other answer and is re-thrown where the builder can be blamed for it.
+    $UI.send: {
+        my $r = try code();
+        $ack.send($!.defined ?? $! !! ($r // True));
+    };
+    my $got = $ack.receive;
+    die $got if $got ~~ Exception;
+    $got;
 }
 
 # ---------- builders (called from the worker; toolkit work marshalled) ----------
@@ -226,6 +236,7 @@ sub app(Str $name, &body) is export {
             note "wings: the app body returned without opening a window, so there was nothing to show"
                 unless @WINDOWS;
         }
+        default { note "wings: the app body ended in state $_" }
     }
     reconcile();
     for @WINDOWS.grep(*.ns.defined) -> $win {
