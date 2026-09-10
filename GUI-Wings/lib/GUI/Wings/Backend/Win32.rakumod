@@ -80,6 +80,13 @@ sub LoadLibraryW(CArray[uint16] --> Pointer) is native(K32) { * }
 # The arrow cursor, by its numeric resource id — a class with no cursor leaves
 # whatever the last window set, which reads as a frozen app.
 sub LoadCursorW(Pointer, Pointer --> Pointer) is native(U32) { * }
+# A label sits on the window's own face: the parent answers WM_CTLCOLORSTATIC
+# with the face brush and turns off background erasing behind the text, or the
+# control paints itself a white box and keeps yesterday's glyphs when its text
+# gets shorter.
+sub GetSysColorBrush(int32 --> Pointer) is native(U32) { * }
+sub InvalidateRect(Pointer, Pointer, int32 --> int32) is native(U32) { * }
+sub SetBkMode(Pointer, int32 --> int32) is native(G32) { * }
 
 my constant WS_OVERLAPPED   = 0x00000000;
 my constant WS_CAPTION      = 0x00C00000;
@@ -104,7 +111,10 @@ my constant GWLP_WNDPROC    = -4;
 my constant CS_VREDRAW      = 0x0001;        # repaint the whole client area on a resize
 my constant CS_HREDRAW      = 0x0002;
 my constant IDC_ARROW       = 32512;
-my constant COLOR_WINDOW_BRUSH = 6;          # COLOR_WINDOW + 1, the pseudo-handle form
+my constant COLOR_BTNFACE   = 15;
+my constant BTNFACE_BRUSH   = COLOR_BTNFACE + 1;   # the pseudo-handle form
+my constant WM_CTLCOLORSTATIC = 0x0138;
+my constant TRANSPARENT     = 1;
 my constant DEFAULT_CHARSET = 1;
 my constant FIXED_PITCH     = 1;
 
@@ -127,6 +137,13 @@ sub wstr(Str $s --> CArray[uint16]) {
 }
 
 my %ACTIONS;    # control id → click closure
+# WINGS_DEBUG=1 narrates here too: the frontend's `debug` is not visible from a
+# backend, and the one thing worth watching from inside is whether a click
+# reaches Raku at all. That is the difference between Windows losing a message
+# and the Supply losing an emit, and it cannot be told apart from outside.
+my $DEBUG = ?%*ENV<WINGS_DEBUG>;
+sub note-debug(Str $m) { note "wings/win32: $m" if $DEBUG }
+
 my %ALIVE;      # HWND address → True until WM_DESTROY
 my @KEEP;       # root every closure handed to C (Rakudo does not)
 my @FONTS;      # HFONTs live as long as the controls that use them
@@ -140,8 +157,16 @@ has %!height;   # window address → client height, for the y flip
 sub wndproc(Pointer $hwnd, uint32 $msg, uint64 $wp, int64 $lp --> int64) {
     if $msg == WM_COMMAND {
         my $id = $wp +& 0xFFFF;                  # LOWORD(wParam) is the control id
+        note-debug("WM_COMMAND id=$id" ~ (%ACTIONS{$id}:exists ?? '' !! ' (NO HANDLER)'));
         .() with %ACTIONS{$id};
         return 0;
+    }
+    if $msg == WM_CTLCOLORSTATIC {
+        # wParam is the control's HDC. Transparent background mode leaves our
+        # own face showing through the text; the brush we return is what
+        # Windows erases the control's rectangle with.
+        SetBkMode(Pointer.new($wp), TRANSPARENT);
+        return +GetSysColorBrush(COLOR_BTNFACE);
     }
     if $msg == WM_DESTROY {
         %ALIVE{+$hwnd}:delete;
@@ -212,7 +237,7 @@ method init() {
     # hCursor and hbrBackground were left null, which is legal and looks
     # broken: no cursor of its own, and a client area nothing ever erases.
     put-ptr(40, LoadCursorW(Pointer, Pointer.new(IDC_ARROW)));   # hCursor
-    $blob.write-uint64(48, COLOR_WINDOW_BRUSH, LittleEndian);    # hbrBackground
+    $blob.write-uint64(48, BTNFACE_BRUSH, LittleEndian);         # hbrBackground
     put-ptr(64, $name);                          # lpszClassName
     my $ptr = nativecast(Pointer, $blob);
     @KEEP.push: $blob;
@@ -283,6 +308,10 @@ method make-label(Pointer :$win!, Str() :$text!, :$font = 13, :$mono = False,
 method set-label-text(Pointer $l, Str() $t) {
     my $w = wstr($t);
     SetWindowTextW($l, $w);
+    # With a transparent background the control does not erase what was there,
+    # so a shorter string leaves the tail of the longer one behind. Ask for the
+    # rectangle to be erased and repainted.
+    InvalidateRect($l, Pointer, 1);
 }
 
 method make-button(Pointer :$win!, Str() :$title!, :$font, Str :$tint = '',
