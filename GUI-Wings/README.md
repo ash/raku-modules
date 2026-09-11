@@ -34,28 +34,59 @@ app 'Counter', {
 }
 ```
 
-```sh
-RAKUPP_MAIN_THREAD=1 rakupp -I lib examples/counter.raku   # Raku++
-raku -I lib examples/counter.raku                          # Rakudo
-```
-
 The module splits into a toolkit-free front (`GUI::Wings`) and backends behind
-ten methods (`GUI::Wings::Backend::Cocoa`, `::Gtk`); `WINGS_BACKEND` picks one
-explicitly.
+ten methods (`GUI::Wings::Backend::Cocoa`, `::Gtk`, `::Win32`); `WINGS_BACKEND`
+picks one explicitly.
 
-`examples/calculator.raku` is the second example: a calculator — seventeen keys
-(digits, a decimal point, four operators, C, a full-width =) feeding one
-`react`, a big right-aligned monospaced readout, orange operator keys — whose
-arithmetic is exact `Rat`s behind a rounded display, so `1 ÷ 3 × 3` is exactly
-`1`, which is more than most desk calculators manage.
+## Examples
 
-Close the window or Ctrl+C to quit. Two environment knobs:
+Two of them, and the same two on every backend — which is the point of them.
+Neither names a toolkit, an OS or a thread.
 
-- `WINGS_AUTODRIVE=n` — the app clicks every button once a second, n times,
-  then raises SIGINT and ends through its own `whenever signal` path. The
-  whole GUI self-verifies in about n+1 seconds, no hands needed.
-- `WINGS_DEBUG=1` — narrates window creation, clicks and reconciliations on
-  stderr.
+### `examples/counter.raku`
+
+Fifteen lines, the ones above. A label, a button, and a `react` with three
+sources: the button's clicks, a one-second `Supply.interval` retitling the
+window, and `signal(SIGINT)`. It is the smallest program that uses the whole
+machine — a builder marshalling to the thread that owns the toolkit, a widget's
+Supply crossing back from it, and the pump reconciling changed state onto the
+toolkit once a frame.
+
+### `examples/calculator.raku`
+
+Seventeen keys — digits, a decimal point, four operators, `C`, a full-width `=`
+— feeding one `react`, with a big right-aligned monospaced readout and orange
+operator keys. Its arithmetic is exact `Rat`s behind a rounded display, so
+`1 ÷ 3 × 3` is exactly `1`, which is more than most desk calculators manage.
+It is also the example that exercises the awkward parts: an explicit `:at` grid
+rather than the auto-stack, per-widget fonts, non-ASCII key captions, and
+tinted buttons — which on Win32 means owner-drawn ones, Windows having no
+coloured push button of its own.
+
+### Running them
+
+Both examples take the same command; swap in `calculator.raku` for the other.
+
+| | |
+|---|---|
+| macOS, Raku++ | `RAKUPP_MAIN_THREAD=1 rakupp -I lib examples/counter.raku` |
+| macOS or Linux, Rakudo | `raku -I lib examples/counter.raku` |
+| Windows, Raku++ | `rakupp -I lib examples\counter.raku` |
+
+Close the window to quit. Ctrl+C does it wherever SIGINT exists, which is not
+Windows — there the window's close box is the way out. Windows also wants a
+Raku++ newer than 3.26.0; [Requirements](#requirements) says why.
+
+### Without hands on the mouse
+
+- `WINGS_AUTODRIVE=n` — clicks every button once a second, n times, then ends
+  the app through its own exit path (SIGINT where there is one; on Windows, by
+  closing every window). The whole GUI proves itself in about n+1 seconds,
+  which is how the examples are checked on a machine nobody is sitting at.
+- `WINGS_DEBUG=1` — narrates on stderr: the backend it picked, each window
+  going up, and every title and label the pump reconciles.
+- `WINGS_BACKEND=Cocoa|Gtk|Win32` — overrides the choice made from the OS.
+  Useful for running the GTK backend on a Mac, which is how it was written.
 
 ## The model
 
