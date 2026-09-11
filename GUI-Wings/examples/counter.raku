@@ -7,9 +7,11 @@ app 'Counter', {
         my $b = button 'Click me';
 
         react {
-            whenever $b.clicks        { $l.text = "clicked {++$n} times" }
-            whenever Supply.interval(1) { window.title = DateTime.now.hh-mm-ss }
-            whenever signal(SIGINT)   { done }
+            whenever $b.clicks { $l.text = "clicked {++$n} times" }
+            whenever Supply.interval(1) {
+                window.title = DateTime.now.hh-mm-ss
+            }
+            whenever signal(SIGINT) { done }
         }
     }
 }

@@ -16,9 +16,11 @@ app 'Counter', {
         my $b = button 'Click me';
 
         react {
-            whenever $b.clicks        { $l.text = "clicked {++$n} times" }
-            whenever Supply.interval(1) { window.title = DateTime.now.hh-mm-ss }
-            whenever signal(SIGINT)   { done }
+            whenever $b.clicks { $l.text = "clicked {++$n} times" }
+            whenever Supply.interval(1) {
+                window.title = DateTime.now.hh-mm-ss
+            }
+            whenever signal(SIGINT) { done }
         }
     }
 }
@@ -138,7 +140,7 @@ first call, so loading the module opens no window and the tests run on any OS.
 The GUI itself is tested by the examples, which `WINGS_AUTODRIVE` drives to a
 clean exit with no hands on the mouse.
 
-| engine | version | `t/` | examples |
+| engine | version | tests | examples |
 |---|---|---|---|
 | Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 8/8 | both self-drive to exit 0 |
 | Raku++ | `v3.25.0` and newer; Win32 needs `v3.26.0-g03454ac` (`RAKUPP_MAIN_THREAD=1` on macOS) | 8/8 | both self-drive to exit 0 |
