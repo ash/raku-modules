@@ -103,10 +103,6 @@ multi sub window(&body, *%opts) is export {
     $CURRENT-WINDOW = $win;
     debug "window '$win.title()' up";
     body();
-    # How many widgets the BODY thread believes it built. If a window shows
-    # fewer than this, they were lost between here and the toolkit; if this
-    # number is short too, the body stopped early.
-    debug "window '$win.title()' built {widgets-now($win).elems} widgets";
     $win;
 }
 
@@ -205,10 +201,6 @@ sub app(Str $name, &body) is export {
       !! $bn eq 'Win32' ?? GUI::Wings::Backend::Win32.new
       !! die "unknown WINGS_BACKEND '$bn' (Cocoa, Gtk or Win32)";
     debug "backend: $bn";
-    # Which copy of this module is running: the installed one and a checkout
-    # behave differently the moment either is edited, and telling them apart
-    # from the outside cost two rounds of chasing a fixed bug.
-    debug "GUI::Wings from {$?FILE}";
     $B.init();
 
     my $done = start body();

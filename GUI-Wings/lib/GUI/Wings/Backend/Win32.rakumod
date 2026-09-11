@@ -165,13 +165,6 @@ sub wstr(Str $s --> CArray[uint16]) {
 }
 
 my %ACTIONS;    # control id → click closure
-# WINGS_DEBUG=1 narrates here too: the frontend's `debug` is not visible from a
-# backend, and the one thing worth watching from inside is whether a click
-# reaches Raku at all. That is the difference between Windows losing a message
-# and the Supply losing an emit, and it cannot be told apart from outside.
-my $DEBUG = ?%*ENV<WINGS_DEBUG>;
-sub note-debug(Str $m) { note "wings/win32: $m" if $DEBUG }
-
 my %ALIVE;      # HWND address → True until WM_DESTROY
 my %DRAW;       # control id → what an owner-drawn button needs to paint itself
 my @KEEP;       # root every closure handed to C (Rakudo does not)
@@ -264,7 +257,6 @@ sub wndproc(Pointer $hwnd, uint32 $msg, uint64 $wp, int64 $lp --> int64) {
     }
     if $msg == WM_COMMAND {
         my $id = $wp +& 0xFFFF;                  # LOWORD(wParam) is the control id
-        note-debug("WM_COMMAND id=$id" ~ (%ACTIONS{$id}:exists ?? '' !! ' (NO HANDLER)'));
         .() with %ACTIONS{$id};
         return 0;
     }
