@@ -5,16 +5,11 @@ windows and widgets, every event a `Supply`, `react`/`whenever` as the event
 loop. The Cocoa backend reaches AppKit through `objc_msgSend` over NativeCall —
 no C glue, no bindings distribution to install.
 
-> **Status: v0.0.4 — a proof of concept with three backends, all three run.**
-> The same examples run unchanged on **Cocoa** (macOS: Raku++ arm64 with
-> `RAKUPP_MAIN_THREAD=1`, Rakudo as-is), on **Gtk** (GTK3, the Linux default —
-> so far exercised through a Rosetta Rakudo against Homebrew GTK), and now on
-> **Win32**: `examples/counter.raku` ran on Windows 11 on 2026-09-10, the first
-> time that backend had executed at all. It needs a Raku++ newer than 3.26.0
-> (see [Requirements](#requirements)) — four engine faults stood between it and
-> a window.
-> `WINGS_BACKEND=Cocoa|Gtk|Win32` overrides the default choice by OS. Widgets
-> so far: `window`, `label`, `button`. See [Scope](#scope).
+> **Status: v0.0.4, a proof of concept.** Three backends — **Cocoa** on macOS,
+> **Gtk** on Linux, **Win32** on Windows — behind one API, chosen from the OS
+> and overridable with `WINGS_BACKEND=Cocoa|Gtk|Win32`. The widgets are
+> `window`, `label` and `button`; see [Scope](#scope) for what that leaves out
+> and [Requirements](#requirements) for the engine each backend needs.
 
 ```raku
 use GUI::Wings;
@@ -96,25 +91,28 @@ Raku++ newer than 3.26.0; [Requirements](#requirements) says why.
   which is how the examples are checked on a machine nobody is sitting at.
 - `WINGS_DEBUG=1` — narrates on stderr: the backend it picked, each window
   going up, and every title and label the pump reconciles.
-- `WINGS_BACKEND=Cocoa|Gtk|Win32` — overrides the choice made from the OS.
-  Useful for running the GTK backend on a Mac, which is how it was written.
+- `WINGS_BACKEND=Cocoa|Gtk|Win32` — overrides the choice made from the OS, so
+  the GTK backend can be run on a Mac with GTK installed.
 
 ## The model
 
-- `app NAME, { ... }` starts Cocoa on the **process main thread** and pumps
-  its event loop there; the block runs on a worker, so a `react` in it parks
-  without freezing the GUI.
+- `app NAME, { ... }` gives one thread to the toolkit and pumps its event loop
+  there; the block runs on a worker, so a `react` in it parks without freezing
+  the GUI. On Cocoa that thread must be the process's first one, which is what
+  `RAKUPP_MAIN_THREAD=1` arranges under Raku++.
 - Builders — `window :title(...), :size(w, h), { ... }`, `label`, `button` —
-  are plain subs. They marshal their AppKit work to the main thread over a
+  are plain subs. They marshal their toolkit work to the pump thread over a
   Channel and return live Raku objects. Inside a window block, `window` with
   no arguments is the current window.
 - Events flow out as Supplies (`$button.clicks`); state flows in as plain
   attribute assignment (`$label.text = ...`, `window.title = ...`). Each pump
-  turn *reconciles* changed state into Cocoa — widgets never mutate AppKit
-  from worker threads.
-- A click crosses AppKit → a runtime-minted Objective-C class
-  (`objc_allocateClassPair` + `class_addMethod`) whose action method IS a Raku
-  sub → `Supplier.emit` → your `whenever`.
+  turn *reconciles* changed state into the toolkit — no widget is touched from
+  a worker thread.
+- A click comes back the way each toolkit offers: a runtime-minted
+  Objective-C class (`objc_allocateClassPair` + `class_addMethod`) whose action
+  method is a Raku sub on Cocoa, a connected signal on GTK, `WM_COMMAND` in the
+  window procedure on Win32 — each ending in `Supplier.emit`, and in your
+  `whenever`.
 
 ## Requirements
 
@@ -133,22 +131,19 @@ Raku++ newer than 3.26.0; [Requirements](#requirements) says why.
   throughout so `÷ × −` survive) is the Windows default; Win32 is thread-
   affine like Cocoa but has no first-thread rule, so it needs no env var
   either.
-- **Proof status**: all three are run-verified. Cocoa and Gtk here (macOS 15.7,
-  GTK 3.24 via Rosetta); Win32 on Windows 11 with Raku++ `v3.26.0-g03454ac`,
-  where `examples/counter.raku` opens, ticks its title and counts its clicks.
-  What has been exercised there is the counter; the calculator and the
-  autodrive paths have not been through a Windows run yet. `:tint` is a
-  deliberate no-op on Win32 (coloured push buttons mean owner-draw), and
-  `signal(SIGINT)` does not fire on Windows, so the counter exits by its window
-  close rather than Ctrl+C.
-  A genuine Linux run of the Gtk backend is likewise still pending.
-- **Raku++**: a build from current `main` — the main-thread hook and the
-  declared-Str/word-list marshalling fixes are newer than the v3.6.x release
-  binaries. **Rakudo**: any recent release works as-is (2026.08 tested; the
-  framework-dlopen and signed-mask workarounds are already inside the module).
-- Verified matrix: arm64 rakupp natively and x86-64 Rakudo under Rosetta, both
-  on macOS 15.7. A native arm64 Rakudo is untested but each of its halves —
-  the arm64 path (via rakupp) and Rakudo itself (via Rosetta) — is.
+- **Engines**: Rakudo works as-is on all three platforms. Raku++ needs
+  `RAKUPP_MAIN_THREAD=1` for Cocoa, and a build newer than `v3.26.0` for
+  Win32 — earlier ones cannot drive the Windows API at all
+  ([Compatibility](#compatibility)).
+- **Windows without libffi**: Raku++ then calls through a fixed prototype
+  rather than libffi, which the Win32 backend needs to be wide enough for
+  `CreateWindowExW`'s twelve arguments. Builds newer than `v3.26.0` are;
+  `init` says so plainly if it is not, and either a newer engine or
+  `set RAKUPP_FFI=C:\path\to\libffi-8.dll` (GTK, MSYS2 and Python each ship
+  one) settles it. Rakudo has no such limit.
+- **`signal(SIGINT)` on Windows** does not fire, so an app there ends by its
+  window closing rather than by Ctrl+C; `WINGS_AUTODRIVE` closes the windows
+  for the same reason.
 
 ## Portability
 
@@ -168,25 +163,25 @@ program inline on the main thread instead. Under Rakudo the mainline already
 is the main thread. `app` checks with `pthread_main_np` and says so if the
 requirement is not met.
 
-On **Windows** the engine's FFI decides whether this backend can run at all.
-Windows ships no libffi, so Raku++ calls through a fixed prototype instead —
-one that held eight integer arguments in 3.26 and earlier, and passed them as
-32-bit words. `CreateWindowExW` takes twelve arguments and a window handle is a
-64-bit address, so on an older engine the backend cannot work; `init` says so,
-with the two ways out: put a libffi where the engine can find it
-(`set RAKUPP_FFI=C:\path\to\libffi-8.dll` — GTK, MSYS2 and Python each ship
-one), or use a newer Raku++. Rakudo has no such limit. The backend is chosen
-without asking `$*DISTRO.is-win`, which Raku++ answered False on every host up
-to 3.26 — that alone sent a Windows box to the GTK backend, looking for
-`libgtk-3.so.0`.
+On **Windows** the module talks to `user32` and `gdi32` in wide APIs
+throughout, so `÷ × −` survive as captions. Structures are laid out by hand as
+byte buffers (`WNDCLASSEXW`, `MSG`, `DRAWITEMSTRUCT`) rather than as CStructs,
+which keeps one layout for one ABI: x64. The window procedure is a Raku
+callback, installed by subclassing each window with `SetWindowLongPtrW` —
+a callable becomes a C function pointer only where a callback is declared, so
+it cannot be written into the class structure directly. Tinted buttons and
+labels are painted in `WM_DRAWITEM`, Win32 having no coloured push button and
+no way to hand a STATIC the window's own face that survives the crossing.
+
+The backend is chosen from `$*KERNEL.name` rather than `$*DISTRO.is-win`, which
+Raku++ answers False on every host up to 3.26.
 
 ## Scope
 
 What v0.0.4 still leaves out: any widget beyond label and button, real layout
 (children stack top-down and centred unless placed with `:at`), menus,
-dialogs, images, and multiple apps per process. Three backends now sit behind
-the same ten methods; a terminal or DOM one could join them, and neither
-exists.
+dialogs, images, and multiple apps per process. The three backends sit behind
+the same ten methods; a terminal or DOM one would too, and neither exists.
 
 ## Compatibility
 
@@ -200,7 +195,7 @@ clean exit with no hands on the mouse.
 | Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 8/8 | both self-drive to exit 0 |
 | Raku++ | built after `v3.26.0` (`RAKUPP_MAIN_THREAD=1` on macOS) | 8/8 | both self-drive to exit 0 |
 
-And where each backend has actually run:
+Backends, and the platform each is supported on:
 
 | backend | platform | engine |
 |---|---|---|
@@ -208,13 +203,10 @@ And where each backend has actually run:
 | Gtk | GTK 3.24 — Ubuntu, and macOS against Homebrew GTK | Rakudo |
 | Win32 | Windows 11 x64 | Raku++ built after `v3.26.0` |
 
-For Rakudo those are versions it happened to be run on, not floors: no older
-engine has been tried. **For Raku++ on Windows the floor is real.** 3.26.0 and
-earlier cannot run that backend at all — `$*DISTRO.is-win` answered False on
-every host, the no-libffi FFI stopped at eight integer arguments where
-`CreateWindowExW` needs twelve, every returned handle lost its top 32 bits, and
-`nativecast(Pointer, &sub)` answered a null pointer. All four are fixed after
-3.26.0; [Requirements](#requirements) has the detail.
+The Rakudo versions are ones it has been run on rather than floors; no older
+release has been tried. The Raku++ floor for Win32 is a real one: `v3.26.0` and
+earlier cannot run that backend, because the engine's platform identity and its
+libffi-free FFI are not equal to the Windows API on those builds.
 
 ## Author
 
