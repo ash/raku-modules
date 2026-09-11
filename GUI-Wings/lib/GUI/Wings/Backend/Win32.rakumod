@@ -96,6 +96,8 @@ sub DrawTextW(Pointer, CArray[uint16], int32, Pointer, uint32 --> int32) is nati
 # a push button and nothing at all for ours, which is why a tinted button came
 # out flat.
 sub DrawEdge(Pointer, Pointer, uint32, uint32 --> int32) is native(U32) { * }
+sub GetWindowTextW(Pointer, CArray[uint16], int32 --> int32) is native(U32) { * }
+sub GetSysColor(int32 --> uint32) is native(U32) { * }
 sub InvalidateRect(Pointer, Pointer, int32 --> int32) is native(U32) { * }
 sub SetBkMode(Pointer, int32 --> int32) is native(G32) { * }
 
@@ -135,6 +137,11 @@ my constant EDGE_RAISED     = 0x0005;        # BDR_RAISEDOUTER | BDR_RAISEDINNER
 my constant EDGE_SUNKEN     = 0x000A;        # BDR_SUNKENOUTER | BDR_SUNKENINNER
 my constant BF_RECT         = 0x000F;
 my constant BF_ADJUST       = 0x2000;        # shrink the rect to the interior
+my constant SS_OWNERDRAW    = 0x0000000D;
+my constant ODT_STATIC      = 5;
+my constant COLOR_BTNTEXT   = 18;
+my constant DT_LEFT         = 0x0000;
+my constant DT_RIGHT        = 0x0002;
 my constant TRANSPARENT     = 1;
 my constant DEFAULT_CHARSET = 1;
 my constant FIXED_PITCH     = 1;
@@ -193,14 +200,38 @@ sub tint-colour(Str $name) {
 
 # DRAWITEMSTRUCT on x64: CtlType 0, CtlID 4, itemID 8, itemAction 12,
 # itemState 16, hwndItem 24, hDC 32, rcItem 40 (four LONGs), itemData 56.
-sub draw-button(int64 $lp) {
+sub draw-item(int64 $lp) {
     my $u32 = nativecast(CArray[uint32], Pointer.new($lp));
     my $u64 = nativecast(CArray[uint64], Pointer.new($lp));
-    my $id  = $u32[1];
+    my $type = $u32[0];
+    my $id   = $u32[1];
     my %d = %DRAW{$id} // return;
     my $state = $u32[4];
     my $hdc   = Pointer.new($u64[4]);
+    my $item  = Pointer.new($u64[3]);           # hwndItem
     my $rect  = Pointer.new($lp + 40);          # rcItem, in place
+
+    # A label, painted rather than coloured. WM_CTLCOLORSTATIC would be the
+    # ordinary way to give a STATIC the window's face, but it works by the
+    # RETURN value of the window procedure, and a brush returned from a Raku
+    # callback never took: the display kept its white box while everything we
+    # PAINTED (the tinted buttons) arrived. Painting is the mechanism that
+    # demonstrably crosses, so labels use it too. The text comes from the
+    # control itself, so set-label-text stays one SetWindowTextW.
+    if $type == ODT_STATIC {
+        my $face = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+        FillRect($hdc, $rect, $face);
+        DeleteObject($face);
+        SelectObject($hdc, %d<font>) if %d<font>;
+        SetBkMode($hdc, TRANSPARENT);
+        SetTextColor($hdc, GetSysColor(COLOR_BTNTEXT));
+        my $buf = CArray[uint16].new;
+        $buf[$_] = 0 for ^512;
+        GetWindowTextW($item, $buf, 512);
+        DrawTextW($hdc, $buf, -1, $rect,
+                  (%d<align> // DT_CENTER) +| DT_VCENTER +| DT_SINGLELINE);
+        return;
+    }
 
     # A pressed button is the same colour, darker — no second colour to name.
     my ($col, $lum) = %d<colour>, %d<lum>;
@@ -228,7 +259,7 @@ sub draw-button(int64 $lp) {
 
 sub wndproc(Pointer $hwnd, uint32 $msg, uint64 $wp, int64 $lp --> int64) {
     if $msg == WM_DRAWITEM {
-        draw-button($lp);
+        draw-item($lp);
         return 1;                                # TRUE: it is drawn
     }
     if $msg == WM_COMMAND {
@@ -375,9 +406,14 @@ sub font-for($size, $mono) {
 
 method make-label(Pointer :$win!, Str() :$text!, :$font = 13, :$mono = False,
                   Str :$align = 'center', :$x!, :$y!, :$w!, :$h! --> Pointer) {
-    my $st = $align eq 'left' ?? SS_LEFT !! $align eq 'right' ?? SS_RIGHT !! SS_CENTER;
-    my $l = self!child($win, 'STATIC', $text, $st, $x, $y, $w, $h, $NEXT-ID++);
-    SendMessageW($l, WM_SETFONT, +nativecast(Pointer, font-for($font, $mono)), 1);
+    my $id = $NEXT-ID++;
+    my $l = self!child($win, 'STATIC', $text, SS_OWNERDRAW, $x, $y, $w, $h, $id);
+    my $hfont = font-for($font, $mono);
+    SendMessageW($l, WM_SETFONT, +nativecast(Pointer, $hfont), 1);
+    %DRAW{$id} = %( font  => $hfont,
+                    align => $align eq 'left'  ?? DT_LEFT
+                          !! $align eq 'right' ?? DT_RIGHT
+                          !!                      DT_CENTER );
     $l;
 }
 
