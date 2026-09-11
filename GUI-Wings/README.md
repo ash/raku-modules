@@ -5,7 +5,7 @@ windows and widgets, every event a `Supply`, `react`/`whenever` as the event
 loop. The Cocoa backend reaches AppKit through `objc_msgSend` over NativeCall —
 no C glue, no bindings distribution to install.
 
-> **Status: v0.0.4, a proof of concept.** Three backends — **Cocoa** on macOS,
+> **Status: v0.1.0, a proof of concept.** Three backends — **Cocoa** on macOS,
 > **Gtk** on Linux, **Win32** on Windows — behind one API, chosen from the OS
 > and overridable with `WINGS_BACKEND=Cocoa|Gtk|Win32`. The widgets are
 > `window`, `label` and `button`; see [Scope](#scope) for what that leaves out
@@ -178,7 +178,7 @@ Raku++ answers False on every host up to 3.26.
 
 ## Scope
 
-What v0.0.4 still leaves out: any widget beyond label and button, real layout
+What v0.1.0 still leaves out: any widget beyond label and button, real layout
 (children stack top-down and centred unless placed with `:at`), menus,
 dialogs, images, and multiple apps per process. The three backends sit behind
 the same ten methods; a terminal or DOM one would too, and neither exists.
