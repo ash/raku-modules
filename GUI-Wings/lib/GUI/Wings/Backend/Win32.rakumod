@@ -204,13 +204,20 @@ sub draw-item(int64 $lp) {
     my $item  = Pointer.new($u64[3]);           # hwndItem
     my $rect  = Pointer.new($lp + 40);          # rcItem, in place
 
-    # A label, painted rather than coloured. WM_CTLCOLORSTATIC would be the
-    # ordinary way to give a STATIC the window's face, but it works by the
-    # RETURN value of the window procedure, and a brush returned from a Raku
-    # callback never took: the display kept its white box while everything we
-    # PAINTED (the tinted buttons) arrived. Painting is the mechanism that
-    # demonstrably crosses, so labels use it too. The text comes from the
-    # control itself, so set-label-text stays one SetWindowTextW.
+    # A label, painted rather than coloured. WM_CTLCOLORSTATIC is the ordinary
+    # way to give a STATIC the window's face, and it answers by the window
+    # procedure's RETURN value — which did not take here: the display kept its
+    # white box on a run that certainly had the handler in it.
+    #
+    # WHY is still unknown, and it is NOT that return values are lost. That was
+    # the first theory and the engine's own Windows gate disproved it:
+    # EnumSystemLocalesW stops the moment its callback answers false, and 259
+    # locales come back on both Windows legs under both FFI paths. So the
+    # return crosses; something about this particular message does not.
+    #
+    # Painting is what demonstrably arrives — the tinted buttons prove it — so
+    # labels use it too. The text comes from the control itself, so
+    # set-label-text stays one SetWindowTextW.
     if $type == ODT_STATIC {
         my $face = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
         FillRect($hdc, $rect, $face);
