@@ -28,7 +28,7 @@ app 'Counter', {
 
 ## Status
 
-**v0.1.1, a proof of concept.**
+**v0.1.2, a proof of concept.**
 
 Three backends:
 
