@@ -26,7 +26,7 @@ app 'Counter', {
 
 ## Status
 
-**v0.1.0, a proof of concept.**
+**v0.1.1, a proof of concept.**
 
 Three backends:
 
@@ -52,7 +52,7 @@ picks one of them explicitly.
 
 The code shown above in the Synopsis section. 
 
-![The counter app on macOS](examples/img/counter-macos.png)
+![The counter app on macOS](https://raw.githubusercontent.com/ash/raku-modules/main/GUI-Wings/examples/img/counter-macos.png)
 
 ### `examples/calculator.raku` — a four-function desk calculator
 
@@ -63,7 +63,7 @@ One program, three backends, no conditionals in it:
 
 | macOS — Cocoa | Ubuntu — Gtk | Windows 10 — Win32 |
 |---|---|---|
-| ![The calculator on macOS](examples/img/calculator-macos.png) | ![The calculator on Ubuntu](examples/img/calculator-ubuntu.png) | ![The calculator on Windows 10](examples/img/calculator-windows.png) |
+| ![The calculator on macOS](https://raw.githubusercontent.com/ash/raku-modules/main/GUI-Wings/examples/img/calculator-macos.png) | ![The calculator on Ubuntu](https://raw.githubusercontent.com/ash/raku-modules/main/GUI-Wings/examples/img/calculator-ubuntu.png) | ![The calculator on Windows 10](https://raw.githubusercontent.com/ash/raku-modules/main/GUI-Wings/examples/img/calculator-windows.png) |
 
 Each takes its look from the toolkit it is standing on: rounded keys and a
 system orange on macOS, GTK's flatter ones on Ubuntu, and on Windows the
@@ -126,7 +126,7 @@ Both examples take the same command; swap in `calculator.raku` for the other.
 
 ## Scope
 
-What v0.1.0 still leaves out: any widget beyond label and button, real layout
+What v0.1.1 still leaves out: any widget beyond label and button, real layout
 (children stack top-down and centred unless placed with `:at`), menus,
 dialogs, images, and multiple apps per process. The three backends sit behind
 the same ten methods; a terminal or DOM one would too, and neither exists.
