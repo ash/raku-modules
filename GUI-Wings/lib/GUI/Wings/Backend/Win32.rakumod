@@ -406,13 +406,19 @@ sub font-for($size, $mono) {
 method make-label(Pointer :$win!, Str() :$text!, :$font = 13, :$mono = False,
                   Str :$align = 'center', :$x!, :$y!, :$w!, :$h! --> Pointer) {
     my $id = $NEXT-ID++;
-    my $l = self!child($win, 'STATIC', $text, SS_OWNERDRAW, $x, $y, $w, $h, $id);
     my $hfont = font-for($font, $mono);
-    SendMessageW($l, WM_SETFONT, +nativecast(Pointer, $hfont), 1);
+    # Registered BEFORE the control exists. WM_DRAWITEM can arrive during
+    # CreateWindowExW itself, and a paint that finds no entry here draws
+    # nothing at all — the label then stays blank until something invalidates
+    # it, which is the first click. Whether that first paint beats the
+    # registration is a matter of timing, so it differs by engine and looks
+    # like an engine bug; it is an ordering one.
     %DRAW{$id} = %( font  => $hfont,
                     align => $align eq 'left'  ?? DT_LEFT
                           !! $align eq 'right' ?? DT_RIGHT
                           !!                      DT_CENTER );
+    my $l = self!child($win, 'STATIC', $text, SS_OWNERDRAW, $x, $y, $w, $h, $id);
+    SendMessageW($l, WM_SETFONT, +nativecast(Pointer, $hfont), 1);
     $l;
 }
 
@@ -433,10 +439,9 @@ method make-button(Pointer :$win!, Str() :$title!, :$font, Str :$tint = '',
     # every other Windows program. An unknown colour name is no tint rather
     # than an error — the same program runs on a toolkit that knows the name.
     my ($col, $lum) = $tint ?? tint-colour($tint) !! (Nil, Nil);
-    my $b = self!child($win, 'BUTTON', $title, $col.defined ?? BS_OWNERDRAW !! BS_PUSHBUTTON,
-                       $x, $y, $w, $h, $id);
     my $hfont = $font ?? font-for($font, False) !! Pointer;
-    SendMessageW($b, WM_SETFONT, +nativecast(Pointer, $hfont), 1) if $font;
+    # Before the control, for the reason make-label gives: its first paint can
+    # come out of CreateWindowExW.
     # `%( )`, not `{ }`: a statement whose last line ends in a closing curly is
     # terminated there under Rakudo, so a trailing `if` became a second
     # statement and the parse died wanting a block. (Raku++ accepted it — a
@@ -444,6 +449,9 @@ method make-button(Pointer :$win!, Str() :$title!, :$font, Str :$tint = '',
     %DRAW{$id} = %( colour => $col, lum => $lum, title => $title.Str, font => $hfont )
         if $col.defined;
     %ACTIONS{$id} = &clicked;
+    my $b = self!child($win, 'BUTTON', $title, $col.defined ?? BS_OWNERDRAW !! BS_PUSHBUTTON,
+                       $x, $y, $w, $h, $id);
+    SendMessageW($b, WM_SETFONT, +nativecast(Pointer, $hfont), 1) if $font;
     @KEEP.push: &clicked;
     $b;
 }
