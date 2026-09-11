@@ -63,6 +63,17 @@ rather than the auto-stack, per-widget fonts, non-ASCII key captions, and
 tinted buttons — which on Win32 means owner-drawn ones, Windows having no
 coloured push button of its own.
 
+One program, three backends, no conditionals in it:
+
+| macOS — Cocoa | Ubuntu — Gtk | Windows 11 — Win32 |
+|---|---|---|
+| ![The calculator on macOS](examples/img/calculator-macos.png) | ![The calculator on Ubuntu](examples/img/calculator-ubuntu.png) | ![The calculator on Windows 11](examples/img/calculator-windows.png) |
+
+Each takes its look from the toolkit it is standing on: rounded keys and a
+system orange on macOS, GTK's flatter ones on Ubuntu, and on Windows the
+digits are ordinary push buttons while the tinted keys are painted by the
+backend, bevel and all, because Win32 has no coloured button to ask for.
+
 ### Running them
 
 Both examples take the same command; swap in `calculator.raku` for the other.
@@ -141,8 +152,9 @@ Raku++ newer than 3.26.0; [Requirements](#requirements) says why.
 
 ## Portability
 
-macOS only — the one backend is Cocoa. Both Mac ABIs are served by the same
-module: **no NSRect ever crosses the FFI.** An NSPoint/NSSize is two doubles,
+Three backends, of which Cocoa is the one with an ABI to be careful about.
+Both Mac ABIs are served by the same module: **no NSRect ever crosses the
+FFI.** An NSPoint/NSSize is two doubles,
 which arm64 (as an HFA) and x86-64 (as two SSE words) both pass exactly like
 two `num64` arguments, so window geometry goes through `setStyleMask:` +
 `setContentSize:` and widget geometry through `setFrameOrigin:` +
@@ -170,10 +182,11 @@ to 3.26 — that alone sent a Windows box to the GTK backend, looking for
 
 ## Scope
 
-What v0.0.1 deliberately leaves out: any widget beyond label and button, real
-layout (children stack top-down, centered), menus, dialogs, images, multiple
-apps per process, and non-macOS backends. The architecture has room for GTK
-and terminal backends behind the same builder API, but none exists yet.
+What v0.0.4 still leaves out: any widget beyond label and button, real layout
+(children stack top-down and centred unless placed with `:at`), menus,
+dialogs, images, and multiple apps per process. Three backends now sit behind
+the same ten methods; a terminal or DOM one could join them, and neither
+exists.
 
 ## Compatibility
 
@@ -185,10 +198,23 @@ clean exit with no hands on the mouse.
 | engine | version | `t/` | examples |
 |---|---|---|---|
 | Rakudo | `v2026.08` (MoarVM `2026.08`, Raku `v6.d`) | 8/8 | both self-drive to exit 0 |
-| Raku++ | `v3.7.0` (with `RAKUPP_MAIN_THREAD=1`) | 8/8 | both self-drive to exit 0 |
+| Raku++ | built after `v3.26.0` (`RAKUPP_MAIN_THREAD=1` on macOS) | 8/8 | both self-drive to exit 0 |
 
-These are the versions it was run on, not established floors — no older engine
-has been tried.
+And where each backend has actually run:
+
+| backend | platform | engine |
+|---|---|---|
+| Cocoa | macOS 15.7, arm64 and x86-64 | Raku++ (`RAKUPP_MAIN_THREAD=1`) and Rakudo |
+| Gtk | GTK 3.24 — Ubuntu, and macOS against Homebrew GTK | Rakudo |
+| Win32 | Windows 11 x64 | Raku++ built after `v3.26.0` |
+
+For Rakudo those are versions it happened to be run on, not floors: no older
+engine has been tried. **For Raku++ on Windows the floor is real.** 3.26.0 and
+earlier cannot run that backend at all — `$*DISTRO.is-win` answered False on
+every host, the no-libffi FFI stopped at eight integer arguments where
+`CreateWindowExW` needs twelve, every returned handle lost its top 32 bits, and
+`nativecast(Pointer, &sub)` answered a null pointer. All four are fixed after
+3.26.0; [Requirements](#requirements) has the detail.
 
 ## Author
 
