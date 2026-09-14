@@ -160,7 +160,9 @@ finding `.new` is the same mechanism seen from the useful side.
 
 `RU.l10n` is the source and `lib/` is output. That file lists all 645 keys,
 the untranslated ones commented out, and carries the instructions at its top.
-To change a word, edit it and run, from this directory:
+To change a word, edit it and run `regen`, which sits beside it in the
+distribution root — `L10N-RU/` in a checkout of this repository, not the
+repository root:
 
 ```bash
 ./regen
