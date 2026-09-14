@@ -204,11 +204,14 @@ Parked, and worth doing: **the other forms of `my`**. L10N's tables already
 have the notation for it — a `|`-separated translation means the slang accepts
 every spelling and the deparser prints the first, so `мій|моя|мої|моє` is how
 it would be written, and a variable of any gender would then read correctly.
-Two things block it today. L10N's own generator dies on such a translation,
-handing a `Seq` to `RakuAST::Regex::Alternation.new`, which takes slurpy
-positionals; and Raku++ matches nothing for a token holding an alternation,
-not even its first spelling, so turning them on would cost that engine `my`
-altogether. No localization in the family uses the notation, which is why
+One engine blocks each half of that. BUILDING such a table is Rakudo's job,
+since it is the only engine that can run the generator, and L10N dies there on
+the first `|` it meets: it hands a `Seq` to `RakuAST::Regex::Alternation.new`,
+which takes slurpy positionals, and generation fails with `You cannot deparse
+a Seq instance`. RUNNING what it would have built is both engines' job, and
+Raku++ matches nothing for a token holding an alternation, not even its first
+spelling — so a table built despite the first problem would cost that engine
+`my` altogether. No localization in the family uses the notation, which is why
 neither has been run into before.
 
 ## Compatibility
