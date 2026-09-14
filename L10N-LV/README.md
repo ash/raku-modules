@@ -48,6 +48,11 @@ say $ast.DEPARSE;          # my $x = 1
 The last line is the point: there is no Latvian Raku. `.AST("LV")` builds the
 same AST the English would have built, and the English is what runs.
 
+The second line needs Rakudo. Raku++ `3.28.0` takes the localization and
+ignores it, answering `my $x = 1` to both: its deparsing role loads there and
+is correct, it is simply never reached. That is the second `todo` in `t/`, and
+Compatibility has the rest.
+
 `use L10N::LV 'no-slangification'` loads the two roles without touching the
 grammar — what a tool that wants to *inspect* the localization needs, and what
 this distribution's own test file uses so that it can stay in English.
