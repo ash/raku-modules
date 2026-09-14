@@ -268,6 +268,13 @@ call on a `Range` inside code compiled through `.AST` returns a `Range`
 instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
 `26`.
 
+## Links
+
+- [`L10N::UK` on raku.land](https://raku.land/zef:ash/L10N::UK) — the
+  distribution page, and `zef install L10N::UK`.
+- [`L10N-UK` on GitHub](https://github.com/ash/raku-modules/tree/main/L10N-UK)
+  — the source, in the repository this README ships from.
+
 ## Author
 
 Andrew Shitov (`zef:ash`).
