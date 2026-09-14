@@ -1,7 +1,7 @@
 # This file contains the Russian Slang of the Raku Programming Language
 
 #- start of generated part of localization ------------------------------------
-#- Generated on 2026-09-14T15:14:29+02:00 by regen
+#- Generated on 2026-09-14T15:21:21+02:00 by regen
 #- PLEASE DON'T CHANGE ANYTHING BELOW THIS LINE
 
 role L10N::RU {

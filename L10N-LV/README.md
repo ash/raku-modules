@@ -37,7 +37,7 @@ The distribution is two modules generated from one translation table:
 Because both come from that one table they agree by construction: **anything
 the slang accepts, the deparser can write back**. The round trip is the
 clearest way to see what a localization is, and it needs no `use` at all,
-because Rakudo takes the localization by name:
+because the localization can be named:
 
 ```raku
 my $ast := Q[mans $x = 1].AST("LV");
@@ -48,14 +48,13 @@ say $ast.DEPARSE;          # my $x = 1
 The last line is the point: there is no Latvian Raku. `.AST("LV")` builds the
 same AST the English would have built, and the English is what runs.
 
-The second line needs Rakudo. Raku++ takes the localization and
-ignores it, answering `my $x = 1` to both: its deparsing role loads there and
-is correct, it is simply never reached. That is the second `todo` in `t/`, and
-Compatibility has the rest.
-
 `use L10N::LV 'no-slangification'` loads the two roles without touching the
 grammar — what a tool that wants to *inspect* the localization needs, and what
 this distribution's own test file uses so that it can stay in English.
+
+Both Raku engines run all of this. The handful of places where they differ
+are collected under Compatibility, and nothing between here and there
+mentions them.
 
 ## Running a localized program
 
@@ -65,9 +64,7 @@ latku programma.raku
 
 `latku` is the executor this distribution installs. It re-runs the interpreter
 that invoked it with `-ML10N::LV`, so the slang is in place before the file
-is parsed and a program needs no `use` line of its own. (The family's template
-passes that through `RAKUDO_OPT`, which only Rakudo reads; this one puts it on
-the command line, which both engines do.)
+is parsed and a program needs no `use` line of its own.
 
 **The two ways of running a localized program are exclusive.** Under `latku`
 the file is Latvian from its first character, `use` included — it is spelled
@@ -75,37 +72,17 @@ the file is Latvian from its first character, `use` included — it is spelled
 synopsis above will not compile. Such a file is run directly instead:
 
 ```bash
-RAKUDO_RAKUAST=1 rakudo programma.raku
-rakupp programma.raku
+raku programma.raku
 ```
 
-`RAKUDO_RAKUAST=1` is what a Rakudo up to `v2026.08` needs. Without it the
-file goes to the legacy grammar, which has no slang to mix into, and the
-synopsis above stops at `Variable '@saraksts' is not declared`. RakuAST
-becomes the default in `v2026.09`, where the switch is redundant — it is
-written above because it is harmless on the newer one and required on the
-older. Raku++ needs it at no version.
-
 At a REPL, `latku` with no arguments — `-M` and a prompt — opens a localized
-session under either engine. It needs no `use` line, having supplied one; the
-prompt it draws is whichever engine its shebang found, Rakudo's here:
+session, which needs no `use` line for the same reason:
 
     $ latku
-    [0] > saki 5;
+    > saki 5;
     5
-    [0] > mans $x = 41; saki $x + 1;
+    > mans $x = 41; saki $x + 1;
     42
-
-Typing the `use` yourself at a plain prompt is the other way in, and only
-Raku++ can do it. Rakudo puts the slang into the compilation unit the `use`
-ran in, and every line a prompt reads is its own unit, so the line after it is
-English again — as it is for every module in the family. Raku++ carries the
-language across a session instead:
-
-    $ rakupp
-    > use L10N::LV;
-    > saki 5
-    5
 
 ## What is translated
 
@@ -148,15 +125,12 @@ word, so the table names the citation form first and keeps the rest behind it:
 (`our` needs no such list: `mūsu` is a genitive and does not decline.) That is
 L10N's own notation — a `|`-separated translation means the slang accepts
 every spelling and the deparser prints the first — and any token translation
-may use it, not just this one. **What ships uses the first spelling only**,
-because Raku++ matches nothing for a token holding an alternation,
-which would cost that engine `my` altogether while the rest of the slang went
-on working: a quiet failure rather than a loud one. `rakudo regen --synonyms`
-turns the rest on and gives up that engine:
+may use it, not just this one. **What ships uses the first spelling only.**
+`./regen --synonyms` turns the rest on, at a cost Compatibility sets out:
 
 ```raku
 mans $skaitītājs = 0;      # what ships accepts
-mana $virkne = "x";        # needs `rakudo regen --synonyms`
+mana $virkne = "x";        # needs `./regen --synonyms`
 mani @atlikumi = 1, 2, 3;  # likewise
 ```
 
@@ -193,24 +167,14 @@ the untranslated ones commented out, and carries the instructions at its top.
 To change a word, edit it and run, from this directory:
 
 ```bash
-rakudo regen
+./regen
 ```
 
 `regen` is `update-localization` — the script the
 [L10N](https://raku.land/zef:l10n/L10N) distribution installs — plus the
 `|`-handling described above, and like that script it precompiles the slang
-afterwards to check that what it wrote works. It is named
-with `rakudo` above because it has to be: Raku++ runs the modules it
-generates but cannot load `L10N` itself, stopping at `use L10N` with `the
-module registered no slang`.
-
-Stock `update-localization` would do everything `regen` does, but dies on a
-`|` translation: it hands a `Seq` to `RakuAST::Regex::Alternation.new`, which
-takes slurpy positionals, so the `Seq` lands as one malformed alternative and
-generation fails with `You cannot deparse a Seq instance`. `regen` flattens
-the table before the generator sees it and puts it back afterwards — that
-one-character upstream fix, `|@parts.map(...)`, is all that stands between
-this and the stock script.
+afterwards to check that what it wrote works. Compatibility says which engine
+it needs, and why the `|`-handling is not stock.
 
 ## Examples
 
@@ -221,12 +185,11 @@ this and the stock script.
   regex and a named argument, which is where a localization stops being a
   novelty and starts being ordinary code.
 
-Both run under either engine. They carry their own `use` line, so they are
-run directly rather than through `latku` — see Running a localized program:
+Both carry their own `use` line, so they are run directly rather than through
+`latku` — see Running a localized program:
 
 ```bash
-RAKUDO_RAKUAST=1 rakudo -I lib examples/fizzbuzz.raku
-rakupp -I lib examples/fizzbuzz.raku
+raku -I lib examples/fizzbuzz.raku
 ```
 
 ## Scope
@@ -242,7 +205,7 @@ one and regenerating is all it takes to change that judgement.
 Not attempted in this version: **registration upstream**. `L10N` keeps its own
 table of which executor names and file extensions belong to which
 localization, so `latku` is unknown to `L10N.binaries-for-localization` and
-there is no `.lat` extension that Rakudo would pick a localization from. Both
+there is no `.lat` extension a localization would be picked from. Both
 are one-line additions to the upstream distribution, not to this one.
 
 Not attempted either: Latvian **error messages** or a Latvian **`.gist`**. The
@@ -257,37 +220,56 @@ different table.
 | Rakudo | `v2026.08` | 16/16 |
 | Raku++ | `3.28.0` | 15/16, 1 `todo` |
 
-Neither version is an established floor — no older engine has been tried. On
-Rakudo the real floor is whatever version `Str.AST` and `RAKUDO_RAKUAST`
-landed in, which is well before `v2026.08`.
+Neither version is an established floor — no older engine has been tried.
 
-**Raku++ runs the slang**, which is the surprise here: `Str.AST`, the
-grammar mixin and a plain `use L10N::LV;` at the top of a file all work, with
-no environment switch, and both examples produce the same output under both
-engines. Latvian gets off lighter than its Cyrillic siblings, because the one
-Raku++ gap that bites them is about script rather than about slangs: a private
-attribute named outside the Latin script is unreachable there, so `$!знач`
-fails where `$!vērt` — diacritics and all — is fine. Three differences do
-remain, all of them the engine's, none about this module:
+Both engines run the slang: `Str.AST`, the grammar mixin, a plain
+`use L10N::LV;` at the top of a file, the executor, and the examples. What
+follows is every place the two part company, keyed to the section above that
+runs into it.
 
-- **`DEPARSE($localization)` ignores its argument**, returning the AST in
-  English. The deparsing role loads there and is correct; it is not reached.
-  That is the one `todo` in `t/`.
-- **`subst` checks its adverbs against the engine's own regex-adverb names**
-  before any localization is applied, so `"a.b.c".aizvieto(".", "-",
-  :globāli)` is rejected with `Unrecognized regex adverb`. An English
-  `:global` is what it wants. This is why `examples/wordcount.raku` reaches
-  for `izķemmē` (`comb`) rather than a global `aizvieto`.
-- **An alternation inside a slang token matches nothing.** A token built from
-  several spellings, which is what `rakudo regen --synonyms` writes, silently
-  matches none of them — not even the first — while the rest of the slang goes
-  on working. See One keyword, several spellings.
+**Synopsis, Running a localized program, Examples.** A Rakudo up to `v2026.08`
+needs `RAKUDO_RAKUAST=1` in the environment. Without it the file goes to the
+legacy grammar, which has no slang to mix into, and the synopsis stops at
+`Variable '@saraksts' is not declared`. RakuAST is the default from
+`v2026.09`, and Raku++ needs no such switch at any version. `latku` sets it
+either way, which is why the sections above never mention it.
 
-One more, recorded because it is easy to trip over even though nothing in `t/`
-depends on it: under Raku++, a method call on a `Range` inside code compiled
-through `.AST` returns a `Range` instead of dispatching —
-`Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than `26`. There is no
-localization in that line at all.
+**Description — the round trip.** `DEPARSE($localization)` is Rakudo's.
+Raku++ takes the localization and ignores it, answering `my $x = 1` to both
+lines: its deparsing role loads there and is correct, it is simply never
+reached.
+
+**Running a localized program — the REPL.** Raku++ carries a session's
+language across its lines, so `use L10N::LV;` typed at a prompt works there
+and goes on working. Rakudo puts the slang into the compilation unit the `use`
+ran in, and every line a prompt reads is its own unit, so there the typed form
+is forgotten by the next prompt — as it is for every module in the family, and
+why the section above reaches for the executor instead.
+
+**`my` cannot agree — the synonyms.** `./regen --synonyms` is Rakudo's. A
+token holding an alternation matches nothing under Raku++, not even its first
+spelling, so turning the synonyms on there costs `my` altogether while the
+rest of the slang goes on working: a quiet failure rather than a loud one.
+That is why one spelling is what ships.
+
+**Regenerating.** `./regen` needs Rakudo. Raku++ runs the modules it generates
+but cannot load `L10N` itself, stopping at `use L10N` with `the module
+registered no slang`. Stock `update-localization` would do everything `regen`
+does but dies on a `|` translation: it hands a `Seq` to
+`RakuAST::Regex::Alternation.new`, which takes slurpy positionals, so the
+`Seq` lands as one malformed alternative and generation fails with `You cannot
+deparse a Seq instance`. `regen` flattens the table before the generator sees
+it and puts it back afterwards — that one-character upstream fix,
+`|@parts.map(...)`, is all that stands between this and the stock script.
+
+Two more that nothing above runs into. Under Raku++, `subst` checks its
+adverbs against the engine's own regex-adverb names before any localization is
+applied, so `"a.b.c".aizvieto(".", "-", :globāli)` is rejected with
+`Unrecognized regex adverb` — an English `:global` is what it wants, and why
+`examples/wordcount.raku` reaches for `izķemmē` (`comb`) instead. And a method
+call on a `Range` inside code compiled through `.AST` returns a `Range`
+instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
+`26`.
 
 ## Author
 
