@@ -28,7 +28,7 @@ app 'Counter', {
 
 ## Status
 
-**v0.1.2, a proof of concept.**
+**v0.1.3, a proof of concept.**
 
 Three backends:
 
@@ -122,13 +122,45 @@ Both examples take the same command; swap in `calculator.raku` for the other.
   `init` says so plainly if it is not, and either a newer engine or
   `set RAKUPP_FFI=C:\path\to\libffi-8.dll` (GTK, MSYS2 and Python each ship
   one) settles it. Rakudo has no such limit.
+- **NixOS** keeps every library in the store and nothing on the loader's
+  default search path, so the first GTK call there is
+
+  ```
+  Cannot locate native library 'libgtk-3.so.0': libgtk-3.so.0: cannot open shared object file: No such file or directory
+  ```
+
+  until the store path is on `LD_LIBRARY_PATH`.
+  [`nix/shell.nix`](nix/shell.nix) is a shell which arranges that:
+
+  ```nix
+  { pkgs ? import <nixpkgs> {} }:
+
+  pkgs.mkShellNoCC {
+    packages = [ pkgs.gtk3 ];
+
+    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gtk3 ];
+  }
+  ```
+
+  ```sh
+  nix-shell nix/shell.nix --run 'raku -I lib examples/counter.raku'
+  ```
+
+  GTK alone is enough, although the backend names `libgobject-2.0.so.0` and
+  `libc.so.6` besides: by the time it asks for those they are already in the
+  process, arriving as GTK's own `NEEDED` libraries through the store RPATH
+  nix baked into `libgtk-3.so.0`, and a `dlopen` by soname matches a library
+  which is already loaded. A bare `nix-shell -p gtk3` will not do — it puts
+  GTK's own `gtk3-demo` on `PATH` and leaves `LD_LIBRARY_PATH` unset, so the
+  message above comes back with GTK plainly installed.
+
 - **`signal(SIGINT)` on Windows** does not fire, so an app there ends by its
   window closing rather than by Ctrl+C; `WINGS_AUTODRIVE` closes the windows
   for the same reason.
 
 ## Scope
 
-What v0.1.1 still leaves out: any widget beyond label and button, real layout
+What v0.1.3 still leaves out: any widget beyond label and button, real layout
 (children stack top-down and centred unless placed with `:at`), menus,
 dialogs, images, and multiple apps per process. The three backends sit behind
 the same ten methods; a terminal or DOM one would too, and neither exists.
@@ -150,10 +182,21 @@ Backends, and the platform each is supported on:
 | backend | platform | engine |
 |---|---|---|
 | Cocoa | macOS 15.7, arm64 and x86-64 | Raku++ (`RAKUPP_MAIN_THREAD=1`) and Rakudo |
-| Gtk | GTK 3.24 — Ubuntu, and macOS against Homebrew GTK (Quartz) | Raku++ and Rakudo |
+| Gtk | GTK 3.24 — Ubuntu, NixOS, and macOS against Homebrew GTK (Quartz) | Raku++ and Rakudo |
 | Win32 | Windows 10 x64 | Raku++ and Rakudo |
 
 Tested with Raku++ `v3.26.0-g03454ac` and Rakudo 2026.07/2026.08.
+
+**NixOS is tested by its library situation rather than on a NixOS machine.**
+The `nixos/nix` container has the same one — a store, and not one `.so` on the
+loader's default path — and there, against nixpkgs Rakudo `2026.07` and GTK
+`3.24.52`, `t/` is 8/8 and `counter.raku` self-drives to exit 0 under Xvfb
+inside [`nix/shell.nix`](nix/shell.nix). Outside that shell the same command
+cannot load `libgtk-3.so.0` at all, which is what makes the first result a
+test; inside it, the buttons answering their clicks and the app leaving
+through SIGINT are `libgobject-2.0.so.0` and `libc.so.6` being found without
+ever being named. Reported from real NixOS by @habere-et-dispertire in
+[issue #1](https://github.com/ash/raku-modules/issues/1).
 
 ## Author
 
