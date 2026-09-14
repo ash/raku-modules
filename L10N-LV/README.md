@@ -86,32 +86,31 @@ becomes the default in `v2026.09`, where the switch is redundant — it is
 written above because it is harmless on the newer one and required on the
 older. Raku++ needs it at no version.
 
-A REPL is the one place a `use` line cannot put the slang in place. Every line
-a REPL reads is its own compilation unit, and the slang was installed into the
-unit that `use` ran in, so it is gone by the next prompt. That holds on both
-engines and for every module in the family:
+At a REPL the engines differ, and `latku` with no arguments — which is `-M`
+and a prompt — is the one spelling that works on both. It re-runs whichever
+interpreter its shebang found, so the prompt below is the one that engine
+draws:
 
-    > use L10N::LV;
-    (Any)
-    > saki 5;
-    Undefined routine 'saki'
-
-Start the REPL with the slang already loaded instead:
-
-    $ rakudo -ML10N::LV
+    $ latku                 # `raku` is Rakudo here
     [0] > saki 5;
     5
     [0] > mans $x = 41; saki $x + 1;
     42
 
-`latku` with no arguments does the same thing, but it re-runs whichever
-interpreter its `#!/usr/bin/env raku` shebang found, so it gives a localized
-REPL only where `raku` is Rakudo. Under Raku++ `3.28.0` it does not: there
-`-M` reaches a script file and `-e`, but not the REPL's own lines.
+Under Rakudo that is the only spelling. Its slang goes into the compilation
+unit the `use` ran in, and every line a prompt reads is its own unit, so a
+`use L10N::LV;` typed at the prompt is forgotten by the next one — as it is
+for every module in the family. Raku++ carries the language across the lines
+of a session instead, so there the typed form works too:
 
-    $ latku                 # where `raku` is Raku++
+    $ latku                 # `raku` is Raku++ here
+    > use L10N::LV;
     > saki 5
-    Undefined routine 'saki'
+    5
+
+That is Raku++ after `770ebbe`; `3.28.0` as released has neither — `-M`
+reaches a script file and `-e` there but not the REPL's own lines, and a
+typed `use` leaves the next line in English.
 
 ## What is translated
 
@@ -273,7 +272,7 @@ no environment switch, and both examples produce the same output under both
 engines. Latvian gets off lighter than its Cyrillic siblings, because the one
 Raku++ gap that bites them is about script rather than about slangs: a private
 attribute named outside the Latin script is unreachable there, so `$!знач`
-fails where `$!vērt` — diacritics and all — is fine. Four differences do
+fails where `$!vērt` — diacritics and all — is fine. Three differences do
 remain, all of them the engine's, none about this module:
 
 - **`DEPARSE($localization)` ignores its argument**, returning the AST in
@@ -284,17 +283,10 @@ remain, all of them the engine's, none about this module:
   :globāli)` is rejected with `Unrecognized regex adverb`. An English
   `:global` is what it wants. This is why `examples/wordcount.raku` reaches
   for `izķemmē` (`comb`) rather than a global `aizvieto`.
-
 - **An alternation inside a slang token matches nothing.** A token built from
   several spellings, which is what `rakudo regen --synonyms` writes, silently
   matches none of them — not even the first — while the rest of the slang goes
   on working. See One keyword, several spellings.
-
-- **`-M` does not reach the REPL's own lines.** `rakupp -ML10N::LV -e '…'`
-  works, and so does a script run the same way, but at the REPL prompt the
-  slang is not there — so a localized REPL is Rakudo's. (Typing `use
-  L10N::LV;` at a prompt works on neither engine, but that one is the
-  family's design rather than the engine's; see Running a localized program.)
 
 One more, recorded because it is easy to trip over even though nothing in `t/`
 depends on it: under Raku++, a method call on a `Range` inside code compiled
