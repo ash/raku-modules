@@ -1,0 +1,4 @@
+#!/bin/sh
+# perl-to-raku FILE.pl > FILE.raku
+dir=$(cd "$(dirname "$0")/.." && pwd)
+exec perl -I"$dir/lib" -MO=Raku "$@"
