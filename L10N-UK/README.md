@@ -21,6 +21,15 @@ use L10N::UK;
 }
 ```
 
+## Install
+
+Either installer takes it, into the same `~/.raku` store:
+
+```bash
+rakupp install L10N::UK
+zef install L10N::UK
+```
+
 ## Description
 
 The `use` line is the one line that cannot be Ukrainian: until it has run, the
@@ -274,13 +283,6 @@ instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
   distribution page.
 - [`L10N-UK` on GitHub](https://github.com/ash/raku-modules/tree/main/L10N-UK)
   — the source, in the repository this README ships from.
-
-Either installer takes it, into the same `~/.raku` store:
-
-```bash
-zef install L10N::UK
-rakupp install L10N::UK
-```
 
 ## Author
 

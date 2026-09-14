@@ -21,6 +21,15 @@ katram @saraksts -> $s {
 }
 ```
 
+## Install
+
+Either installer takes it, into the same `~/.raku` store:
+
+```bash
+rakupp install L10N::LV
+zef install L10N::LV
+```
+
 ## Description
 
 The `use` line is the one line that cannot be Latvian: until it has run, the
@@ -266,13 +275,6 @@ instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
   distribution page.
 - [`L10N-LV` on GitHub](https://github.com/ash/raku-modules/tree/main/L10N-LV)
   — the source, in the repository this README ships from.
-
-Either installer takes it, into the same `~/.raku` store:
-
-```bash
-zef install L10N::LV
-rakupp install L10N::LV
-```
 
 ## Author
 

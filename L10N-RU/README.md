@@ -21,6 +21,15 @@ use L10N::RU;
 }
 ```
 
+## Install
+
+Either installer takes it, into the same `~/.raku` store:
+
+```bash
+rakupp install L10N::RU
+zef install L10N::RU
+```
+
 ## Description
 
 The `use` line is the one line that cannot be Russian: until it has run, the
@@ -269,13 +278,6 @@ instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
   distribution page.
 - [`L10N-RU` on GitHub](https://github.com/ash/raku-modules/tree/main/L10N-RU)
   — the source, in the repository this README ships from.
-
-Either installer takes it, into the same `~/.raku` store:
-
-```bash
-zef install L10N::RU
-rakupp install L10N::RU
-```
 
 ## Author
 

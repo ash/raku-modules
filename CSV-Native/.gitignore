@@ -1,0 +1,15 @@
+# fez bundles the upload from THIS directory's .gitignore, not the repo root's.
+# Without a file here at all, fez falls back to defaults that exclude the
+# CONTENTS of sdist/ but not the directory, and tar then recurses into the
+# tarball it is writing — the second upload from a directory corrupts.
+
+# the locally built extension: a binary tied to one machine and one rakupp
+# ABI, rebuilt per-machine at install time, which must never travel
+resources/libraries/
+
+# fez writes the upload tarball here
+sdist/
+
+# the precomp cache that -Ilib test runs leave behind
+lib/.precomp/
+.precomp/
