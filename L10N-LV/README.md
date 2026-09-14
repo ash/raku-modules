@@ -263,9 +263,16 @@ instead of dispatching: `Q[('a'..'z').elems].AST.EVAL` is `0..1` rather than
 ## Links
 
 - [`L10N::LV` on raku.land](https://raku.land/zef:ash/L10N::LV) — the
-  distribution page, and `zef install L10N::LV`.
+  distribution page.
 - [`L10N-LV` on GitHub](https://github.com/ash/raku-modules/tree/main/L10N-LV)
   — the source, in the repository this README ships from.
+
+Either installer takes it, into the same `~/.raku` store:
+
+```bash
+zef install L10N::LV
+rakupp install L10N::LV
+```
 
 ## Author
 
