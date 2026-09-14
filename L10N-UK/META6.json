@@ -1,0 +1,37 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "Ukrainian localization of Raku — a slang that lets a program be written with Ukrainian keywords",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "L10N::UK",
+  "provides": {
+    "L10N::UK": "lib/L10N/UK.rakumod",
+    "RakuAST::Deparse::L10N::UK": "lib/RakuAST/Deparse/L10N/UK.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/L10N-UK",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/L10N-UK"
+  },
+  "tags": [
+    "LOCALIZATION",
+    "Ukrainian",
+    "UK",
+    "slang",
+    "RakuAST",
+    "L10N"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

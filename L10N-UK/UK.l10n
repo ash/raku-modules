@@ -1,0 +1,818 @@
+# This file contains the Ukrainian localization of the
+# Raku Programming Language.
+#
+# CONTRIBUTORS:
+#
+# Andrew Shitov
+#
+# This file is the source the two modules are generated FROM.  After
+# changing anything below, regenerate them from the distribution root with
+#
+#     rakudo regen
+#
+# which is `update-localization` from the L10N distribution plus the handling
+# of `|`-separated spellings.  A translation naming several of them,
+#
+#     scope-my  мій|моя|мої|моє
+#
+# means the slang accepts every one and the deparser prints the first.  Only
+# the first reaches the grammar by default, because Raku++ cannot match an
+# alternation inside a slang token; `rakudo regen --synonyms` turns the rest
+# on for Rakudo.
+#
+# Either way it needs Rakudo: Raku++ 3.28.0 runs the modules generated here
+# but cannot load L10N itself, stopping at `use L10N` with "the module
+# registered no slang".
+#
+# See https://github.com/Raku-L10N/L10N/ for the localization framework.
+
+# KEY             TRANSLATION
+adverb-pc-delete  видали
+adverb-pc-exists  існує
+adverb-pc-k       к
+adverb-pc-kv      кз
+adverb-pc-p       п
+adverb-pc-v       з
+
+# KEY                TRANSLATION
+#adverb-q-a           a
+#adverb-q-array       array
+#adverb-q-b           b
+#adverb-q-backslash   backslash
+#adverb-q-c           c
+#adverb-q-closure     closure
+#adverb-q-double      double
+#adverb-q-exec        exec
+#adverb-q-f           f
+#adverb-q-format      format
+#adverb-q-function    function
+#adverb-q-h           h
+#adverb-q-hash        hash
+#adverb-q-heredoc     heredoc
+#adverb-q-o           o
+#adverb-q-q           q
+#adverb-q-qq          qq
+#adverb-q-quotewords  quotewords
+#adverb-q-s           s
+#adverb-q-scalar      scalar
+#adverb-q-single      single
+#adverb-q-to          to
+#adverb-q-v           v
+#adverb-q-val         val
+#adverb-q-w           w
+#adverb-q-words       words
+#adverb-q-ww          ww
+#adverb-q-x           x
+
+# KEY                 TRANSLATION
+#adverb-rx-c           c
+adverb-rx-continue    продовж
+adverb-rx-ex          вич
+adverb-rx-exhaustive  вичерпно
+#adverb-rx-g           g
+#adverb-rx-global      global
+#adverb-rx-i           i
+#adverb-rx-ignorecase  ignorecase
+#adverb-rx-ignoremark  ignoremark
+#adverb-rx-ii          ii
+#adverb-rx-m           m
+#adverb-rx-mm          mm
+adverb-rx-nd          й
+adverb-rx-nth         й
+adverb-rx-ov          пер
+adverb-rx-overlap     перекриття
+#adverb-rx-p           p
+#adverb-rx-pos         pos
+#adverb-rx-r           r
+adverb-rx-ratchet     храповик
+adverb-rx-rd          й
+#adverb-rx-s           s
+#adverb-rx-samecase    samecase
+#adverb-rx-samemark    samemark
+#adverb-rx-samespace   samespace
+#adverb-rx-sigspace    sigspace
+#adverb-rx-ss          ss
+adverb-rx-st          й
+adverb-rx-to          до
+adverb-rx-x           раз
+
+# KEY           TRANSLATION
+block-default   замовчування
+block-else      інакше
+block-elsif     інакшеякщо
+block-for       для
+block-given     дано
+block-if        якщо
+block-loop      цикл
+block-orwith    абопри
+block-repeat    повторюй
+block-unless    якщоне
+block-until     покине
+block-when      коли
+block-whenever  щоразу
+block-while     поки
+block-with      при
+block-without   без
+
+# KEY             TRANSLATION
+constraint-where  де
+
+# KEY                  TRANSLATION
+#core-abs               abs
+core-all               всі
+core-antipair          антипара
+core-antipairs         антипари
+core-any               будьякий
+core-append            додай
+#core-ast               ast
+#core-atomic-add-fetch  atomic-add-fetch
+#core-atomic-assign     atomic-assign
+#core-atomic-dec-fetch  atomic-dec-fetch
+#core-atomic-fetch      atomic-fetch
+#core-atomic-fetch-add  atomic-fetch-add
+#core-atomic-fetch-dec  atomic-fetch-dec
+#core-atomic-fetch-inc  atomic-fetch-inc
+#core-atomic-fetch-sub  atomic-fetch-sub
+#core-atomic-inc-fetch  atomic-inc-fetch
+#core-atomic-sub-fetch  atomic-sub-fetch
+core-await             дочекайся
+
+# KEY          TRANSLATION
+core-bag       торба
+core-bail-out  здаюся
+core-bless     благослови
+
+# KEY              TRANSLATION
+#core-callframe     callframe
+#core-callsame      callsame
+#core-callwith      callwith
+core-can-ok        вміє-ок
+#core-cas           cas
+core-categorize    категоризуй
+core-ceiling       стеля
+core-chars         символів
+core-chdir         зміни-каталог
+#core-chmod         chmod
+core-chomp         відсічи-кінець
+core-chop          відсічи
+#core-chown         chown
+core-chr           всимвол
+core-chrs          всимволи
+core-classify      класифікуй
+core-close         закрий
+core-cmp-ok        порівняй-ок
+core-codes         кодів
+core-comb          вичеши
+core-combinations  сполучення
+#core-conj          conj
+core-contains      містить
+core-cross         перехрест
+
+# KEY         TRANSLATION
+core-decode   розкодуй
+#core-deepmap  deepmap
+core-defined  визначено
+core-diag     діагностика
+core-die      помри
+core-dies-ok  помирає-ок
+core-dir      каталог
+core-does-ok  робить-ок
+core-done     готово
+#core-duckmap  duckmap
+
+# KEY               TRANSLATION
+core-elems          елементів
+core-emit           випусти
+core-encode         закодуй
+core-end            кінець
+core-ends-with      закінчується-на
+core-eval-dies-ok   eval-помирає-ок
+core-eval-lives-ok  eval-живе-ок
+core-exit           вийди
+#core-exp            exp
+#core-expmod         expmod
+
+# KEY              TRANSLATION
+core-fail          завались
+core-fails-like    падає-як
+#core-fc            fc
+core-first         перший
+core-flat          плаский
+core-flip          переверни
+core-floor         підлога
+core-flunk         незалік
+#core-fmt           fmt
+#core-full-barrier  full-barrier
+
+# KEY      TRANSLATION
+core-get   отримай
+core-getc  отримай-символ
+core-gist  суть
+core-grep  відбери
+
+# KEY      TRANSLATION
+core-hash  хеш
+core-head  голова
+
+# KEY           TRANSLATION
+core-indent     відступ
+core-index      індекс
+core-indices    індекси
+#core-indir      indir
+core-invert     оберни
+core-is         це
+core-is-approx  це-приблизно
+core-is-deeply  це-точно
+core-is-prime   просте
+core-isa-ok     типу-ок
+core-isnt       нете
+core-item       елемент
+
+# KEY      TRANSLATION
+core-join  єднай
+
+# KEY      TRANSLATION
+core-key   ключ
+core-keys  ключі
+core-kv    кз
+
+# KEY          TRANSLATION
+core-last      перерви
+#core-lastcall  lastcall
+core-lc        малі
+core-like      схоже
+core-lines     рядки
+core-link      посилання
+core-list      список
+core-lives-ok  живе-ок
+#core-lsb       lsb
+
+# KEY        TRANSLATION
+core-make    зроби
+core-map     відобрази
+core-match   збіг
+core-max     макс
+core-min     мін
+core-minmax  мінмакс
+core-mix     суміш
+core-mkdir   створи-каталог
+core-move    перемісти
+#core-msb     msb
+
+# KEY            TRANSLATION
+core-new         новий
+core-next        далі
+#core-nextcallee  nextcallee
+#core-nextsame    nextsame
+#core-nextwith    nextwith
+core-nok         неок
+core-none        жодний
+core-not         не
+core-note        зауваж
+
+# KEY      TRANSLATION
+#core-ok    ok
+core-one   один
+core-open  відкрий
+core-ord   вкод
+core-ords  вкоди
+
+# KEY              TRANSLATION
+core-pair          пара
+core-pairs         пари
+#core-parse-base    parse-base
+core-pass          залік
+core-permutations  перестановки
+core-pick          вибери
+core-plan          план
+core-pop           виштовхни
+core-prepend       додай-на-початок
+core-print         друкуй
+core-printf        друкуйф
+core-proceed       продовж
+core-prompt        запитай
+core-push          заштовхни
+core-put           виведи
+
+# KEY            TRANSLATION
+core-rand        випадкове
+core-redo        заново
+core-reduce      згорни
+core-repeated    повторні
+#core-repl        repl
+core-return      поверни
+core-return-rw   поверни-чз
+core-reverse     навпаки
+core-rindex      ріндекс
+core-rmdir       видали-каталог
+core-roll        кинь
+core-roots       корені
+core-rotate      прокрути
+core-round       округли
+core-roundrobin  поколу
+core-run         запусти
+
+# KEY             TRANSLATION
+#core-samecase     samecase
+#core-samemark     samemark
+#core-samewith     samewith
+core-say          кажи
+core-set          множина
+core-shell        оболонка
+core-shift        зсунь
+core-sign         знак
+#core-signal       signal
+core-skip         пропусти
+core-skip-rest    пропусти-все
+core-sleep        спи
+core-sleep-timer  будильник
+core-sleep-until  спи-до
+#core-slip         slip
+core-slurp        прочитай
+#core-snip         snip
+core-snitch       підглянь
+core-so           так
+core-sort         сортуй
+core-splice       вклей
+core-split        розділи
+core-sprintf      сформатуй
+core-spurt        запиши
+core-sqrt         корінь
+core-squish       стисни
+core-srand        зерно
+core-starts-with  починається-з
+#core-subbuf       subbuf
+#core-subbuf-rw    subbuf-rw
+core-subst        заміни
+core-substr       підрядок
+#core-substr-eq    substr-eq
+#core-substr-rw    substr-rw
+core-subtest      підтест
+core-succeed      досягни
+core-sum          сума
+core-symlink      симпосилання
+
+# KEY               TRANSLATION
+core-tail           хвіст
+core-take           візьми
+core-take-rw        візьми-чз
+#core-tc             tc
+#core-tclc           tclc
+#core-temp           temp
+core-throws-like    кидає-як
+core-todo           треба
+core-trans          переклади
+core-trim           обріж
+core-trim-leading   обріж-зліва
+core-trim-trailing  обріж-справа
+core-truncate       усічи
+
+# KEY          TRANSLATION
+core-uc        великі
+#core-unimatch  unimatch
+#core-uniname   uniname
+#core-uninames  uninames
+#core-uniparse  uniparse
+#core-uniprop   uniprop
+#core-uniprops  uniprops
+core-unique    унікальні
+#core-unival    unival
+#core-univals   univals
+core-unlike    несхоже
+core-unlink    видали
+#core-unpolar   unpolar
+core-unshift   всунь
+core-use-ok    використай-ок
+
+# KEY        TRANSLATION
+#core-val     val
+core-value   значення
+core-values  значень
+
+# KEY          TRANSLATION
+core-warn      попередь
+#core-wordcase  wordcase
+core-words     слова
+
+# KEY     TRANSLATION
+core-zip  блискавка
+
+# KEY                   TRANSLATION
+#enum-BigEndian          BigEndian
+enum-Broken             Порушено
+enum-False              Хиба
+#enum-FileChanged        FileChanged
+#enum-FileRenamed        FileRenamed
+enum-Kept               Виконано
+enum-Less               Менше
+#enum-LittleEndian       LittleEndian
+enum-More               Більше
+#enum-NativeEndian       NativeEndian
+enum-Planned            Заплановано
+enum-Same               Рівно
+#enum-SeekFromBeginning  SeekFromBeginning
+#enum-SeekFromCurrent    SeekFromCurrent
+#enum-SeekFromEnd        SeekFromEnd
+enum-True               Істина
+
+# KEY             TRANSLATION
+infix-(cont)      (містить)
+infix-(elem)      (елемент)
+#infix-^ff         ^ff
+#infix-^ff^        ^ff^
+#infix-^fff        ^fff
+#infix-^fff^       ^fff^
+infix-after       після
+infix-and         і
+infix-andthen     ітоді
+infix-before      до
+infix-but         але
+infix-cmp         порівняй
+#infix-coll        coll
+infix-div         діли
+infix-does        робить
+infix-eq          рівне
+#infix-ff          ff
+#infix-ff^         ff^
+#infix-fff         fff
+#infix-fff^        fff^
+#infix-gcd         gcd
+infix-ge          більшерівне
+infix-gt          більше
+#infix-lcm         lcm
+infix-le          меншерівне
+infix-leg         мрб
+infix-lt          менше
+infix-max         макс
+infix-min         мін
+infix-minmax      мінмакс
+infix-mod         мод
+infix-ne          нерівне
+infix-notandthen  неітоді
+#infix-o           o
+infix-or          або
+infix-orelse      абоінакше
+#infix-unicmp      unicmp
+#infix-x           x
+#infix-X           X
+#infix-xx          xx
+#infix-Z           Z
+
+# KEY   TRANSLATION
+#meta-R  R
+#meta-X  X
+#meta-Z  Z
+
+# KEY             TRANSLATION
+modifier-for      для
+modifier-given    дано
+modifier-if       якщо
+modifier-unless   якщоне
+modifier-until    покине
+modifier-when     коли
+modifier-while    поки
+modifier-with     при
+modifier-without  без
+
+# KEY        TRANSLATION
+multi-multi  мульти
+multi-only   тільки
+multi-proto  прото
+
+# KEY           TRANSLATION
+named-absolute  абсолютний
+named-actions   дії
+#named-api       api
+named-append    додати
+#named-arg0      arg0
+#named-args      args
+#named-as        as
+#named-at        at
+#named-auth      auth
+
+# KEY            TRANSLATION
+#named-basename   basename
+#named-batch      batch
+#named-bin        bin
+#named-bleed      bleed
+#named-broadcast  broadcast
+
+# KEY             TRANSLATION
+#named-catch       catch
+#named-check       check
+named-chomp       відсікти
+named-close       закрити
+#named-command     command
+#named-complement  complement
+named-completely  повністю
+named-continue    продовжити
+#named-control     control
+named-count       кількість
+named-create      створити
+#named-createonly  createonly
+#named-cwd         cwd
+#named-CWD         CWD
+
+# KEY           TRANSLATION
+#named-datagram  datagram
+named-date      дата
+named-day       день
+#named-degree    degree
+named-delete    видалити
+#named-dirname   dirname
+
+# KEY             TRANSLATION
+named-elems       елементів
+#named-emit-timed  emit-timed
+#named-enc         enc
+named-encoding    кодування
+named-end         кінець
+#named-err         err
+named-every       кожні
+#named-ex          ex
+named-exclusive   виключно
+named-exhaustive  вичерпно
+named-expires     спливає
+
+# KEY            TRANSLATION
+#named-family     family
+named-filename   назва-файлу
+#named-filter     filter
+named-formatter  форматер
+
+# KEY         TRANSLATION
+#named-g       g
+#named-gid     gid
+named-global  глобально
+
+# KEY       TRANSLATION
+named-host  хост
+named-hour  година
+
+# KEY             TRANSLATION
+#named-i           i
+#named-ignorecase  ignorecase
+#named-ignoremark  ignoremark
+#named-ii          ii
+named-in          через
+named-into        у
+
+# KEY         TRANSLATION
+named-joiner  сполучник
+
+# KEY      TRANSLATION
+named-k    к
+named-key  ключ
+named-kv   кз
+
+# KEY            TRANSLATION
+named-listen     слухати
+#named-localhost  localhost
+#named-localport  localport
+
+# KEY         TRANSLATION
+named-match   збіг
+named-merge   злити
+named-minute  хвилина
+#named-mm      mm
+named-mode    режим
+named-month   місяць
+
+# KEY               TRANSLATION
+named-name          назва
+named-nd            й
+#named-nl            nl
+#named-nl-in         nl-in
+#named-nl-out        nl-out
+#named-non-blocking  non-blocking
+named-nth           й
+
+# KEY             TRANSLATION
+named-off         вимк
+named-out         вивід
+#named-out-buffer  out-buffer
+#named-ov          ov
+#named-overlap     overlap
+
+# KEY          TRANSLATION
+#named-p        p
+named-partial  частково
+named-parts    частини
+named-port     порт
+#named-pos      pos
+#named-primary  primary
+
+# KEY             TRANSLATION
+#named-quaternary  quaternary
+
+# KEY              TRANSLATION
+#named-r            r
+named-rd           й
+named-real         реальний
+named-replacement  заміна
+#named-rule         rule
+named-rw           чз
+#named-rx           rx
+
+# KEY              TRANSLATION
+#named-samecase     samecase
+#named-samespace    samespace
+#named-scheduler    scheduler
+named-second       секунда
+#named-secondary    secondary
+named-seconds      секунди
+#named-shared       shared
+named-size         розмір
+#named-slip         slip
+#named-SPEC         SPEC
+named-squash       стиснути
+#named-ss           ss
+named-st           й
+named-status       статус
+#named-strict       strict
+named-subscript    нижній-індекс
+named-superscript  верхній-індекс
+
+# KEY               TRANSLATION
+#named-tertiary      tertiary
+#named-test          test
+named-th            й
+named-times         разів
+named-timezone      часовий-пояс
+#named-translate-nl  translate-nl
+named-truncate      усікти
+
+# KEY         TRANSLATION
+#named-uid     uid
+#named-update  update
+
+# KEY          TRANSLATION
+named-v        з
+named-value    значення
+#named-vent-at  vent-at
+#named-ver      ver
+#named-volume   volume
+
+# KEY                    TRANSLATION
+#named-w                  w
+named-where              де
+#named-win-verbatim-args  win-verbatim-args
+
+# KEY    TRANSLATION
+named-x  раз
+
+# KEY       TRANSLATION
+named-year  рік
+
+# KEY            TRANSLATION
+package-class    клас
+package-grammar  граматика
+package-module   модуль
+package-package  пакет
+package-role     роль
+
+# KEY           TRANSLATION
+#phaser-BEGIN    BEGIN
+phaser-CATCH    ЛОВИ
+#phaser-CHECK    CHECK
+phaser-CLOSE    ЗАКРИТТЯ
+phaser-CONTROL  КЕРУВАННЯ
+#phaser-DOC      DOC
+phaser-END      КІНЕЦЬ
+phaser-ENTER    ВХІД
+phaser-FIRST    ПЕРШИЙ
+#phaser-INIT     INIT
+phaser-KEEP     УСПІХ
+phaser-LAST     ОСТАННІЙ
+phaser-LEAVE    ВИХІД
+phaser-NEXT     НАСТУПНИЙ
+phaser-POST     ПІСЛЯ
+phaser-PRE      ПЕРЕД
+phaser-QUIT     ОБРИВ
+phaser-UNDO     ВІДКАТ
+
+# KEY                      TRANSLATION
+#pragma-dynamic-scope       dynamic-scope
+pragma-fatal               фатально
+#pragma-isms                isms
+pragma-lib                 бібліотека
+#pragma-MONKEY              MONKEY
+#pragma-MONKEY-GUTS         MONKEY-GUTS
+#pragma-MONKEY-SEE-NO-EVAL  MONKEY-SEE-NO-EVAL
+#pragma-MONKEY-TYPING       MONKEY-TYPING
+#pragma-nqp                 nqp
+#pragma-precompilation      precompilation
+#pragma-soft                soft
+pragma-strict              суворо
+pragma-trace               трасування
+#pragma-variables           variables
+#pragma-worries             worries
+
+# KEY       TRANSLATION
+prefix-not  не
+prefix-so   так
+
+# KEY          TRANSLATION
+#quote-lang-m   m
+#quote-lang-ms  ms
+#quote-lang-q   q
+#quote-lang-Q   Q
+#quote-lang-qq  qq
+#quote-lang-rx  rx
+#quote-lang-s   s
+#quote-lang-S   S
+#quote-lang-ss  ss
+#quote-lang-Ss  Ss
+
+# KEY              TRANSLATION
+routine-method     метод
+routine-regex      регекс
+routine-rule       правило
+routine-sub        функція
+routine-submethod  субметод
+routine-token      лексема
+
+# KEY           TRANSLATION
+scope-anon      анонім
+scope-augment   доповни
+scope-constant  стала
+scope-has       має
+scope-HAS       МАЄ
+scope-my        мій|моя|мої|моє
+scope-our       наш|наша|наші|наше
+scope-state     стан
+scope-unit      одиниця
+
+# KEY                TRANSLATION
+stmt-prefix-also     також
+stmt-prefix-do       виконай
+stmt-prefix-eager    жадібно
+stmt-prefix-gather   збери
+stmt-prefix-hyper    гіпер
+stmt-prefix-lazy     ліниво
+stmt-prefix-quietly  тихо
+stmt-prefix-race     наввипередки
+stmt-prefix-react    реагуй
+stmt-prefix-sink     внікуди
+stmt-prefix-start    почни
+stmt-prefix-supply   постачай
+stmt-prefix-try      спробуй
+
+# KEY               TRANSLATION
+#system-ACCEPTS      ACCEPTS
+#system-BUILD        BUILD
+#system-CALL-ME      CALL-ME
+#system-COERCE       COERCE
+#system-FALLBACK     FALLBACK
+#system-MAIN         MAIN
+#system-TWEAK        TWEAK
+#system-UPGRADE-RAT  UPGRADE-RAT
+
+# KEY      TRANSLATION
+#term-nano  nano
+term-now   зараз
+#term-pi    pi
+term-rand  випадково
+term-self  сам
+#term-tau   tau
+term-time  час
+
+# KEY                           TRANSLATION
+trait-is-built                  побудовано
+trait-is-copy                   копія
+trait-is-default                замовчування
+trait-is-DEPRECATED             ЗАСТАРІЛО
+trait-is-equiv                  еквів
+trait-is-export                 експорт
+trait-is-hidden-from-backtrace  схований-з-трасування
+trait-is-hidden-from-USAGE      схований-з-довідки
+trait-is-implementation-detail  деталь-реалізації
+trait-is-looser                 слабше
+trait-is-nodal                  вузловий
+trait-is-pure                   чистий
+trait-is-raw                    сирий
+trait-is-rw                     читання-запис
+trait-is-test-assertion         тестове-твердження
+trait-is-tighter                сильніше
+
+# KEY             TRANSLATION
+traitmod-does     робить
+traitmod-handles  передає
+traitmod-hides    ховає
+traitmod-is       це
+traitmod-of       типу
+traitmod-returns  повертає
+traitmod-trusts   довіряє
+
+# KEY         TRANSLATION
+typer-enum    перелік
+typer-subset  підмножина
+
+# KEY        TRANSLATION
+use-import   імпортуй
+use-need     потрібен
+use-no       вимкни
+use-require  вимагай
+use-use      використай
+
+# vim: expandtab shiftwidth=4

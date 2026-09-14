@@ -18,6 +18,9 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Compress::Zlib::Native](Compress-Zlib-Native) — gzip and zlib without libz | 0.0.1 | 156/156 † | 154/154 † |
 | [Data::Native](Data-Native) — one portable `use` line over all five families | 0.0.1 | 68/68 † | 68/68 † |
 | [Prompt::Hidden](Prompt-Hidden) — `prompt` with a `:hidden` adverb | 0.0.3 | 31/31 ‡ | 31/31 ‡ |
+| [L10N::RU](L10N-RU) — Raku written with Russian keywords | 0.0.1 | 16/16 § | 14/16 § |
+| [L10N::UK](L10N-UK) — Raku written with Ukrainian keywords | 0.0.1 | 16/16 § | 14/16 § |
+| [L10N::LV](L10N-LV) — Raku written with Latvian keywords | 0.0.1 | 16/16 § | 15/16 § |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -41,6 +44,25 @@ group, so `stty -echo` took `SIGTTOU` and stopped. Its 31 assertions all run on
 pipes, where there is no echo to suppress, so **the suite passes on an engine
 where the module does not actually work**; the terminal behaviour is verified
 separately under a pseudo-terminal and the matrix is in the notes.
+
+§ Measured on Rakudo `v2026.08` and Raku++ `3.28.0`, neither of them an
+established floor. The three are one distribution shape repeated: a generated
+slang and its matching deparser, plugged into the
+[L10N](https://raku.land/zef:l10n/L10N) family. They are the first modules
+here that need **RakuAST** — a slang is a grammar mixin, so there is nothing
+to install it into without one — and the surprise is that Raku++ `3.28.0` has
+enough of it to run them, `use L10N::RU;` at the top of a file included. What
+it still misses is `todo` in each suite and written up in each README: a
+private attribute named outside the Latin script is unreachable there (which
+is why the two Cyrillic counts are the lower ones, and Latvian's is not), and
+`DEPARSE($localization)` ignores the localization it is handed.
+
+Each of the three carries a `regen` script beside its translation table,
+which no other distribution here needs. It is the L10N generator plus the
+handling of translations naming several spellings of a keyword — Slavic and
+Baltic possessives agree in gender, so one spelling of `my` cannot be right
+for every variable name. Both halves of that are blocked on an engine, which
+is why the script exists and says so at its top.
 
 ## Layout
 

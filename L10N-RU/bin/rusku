@@ -1,0 +1,23 @@
+#!/usr/bin/env raku
+
+# Executor for the Russian localization of the Raku Programming Language: it
+# re-runs the interpreter that invoked it with the RU slang already loaded,
+# so a program needs no `use L10N::RU` line of its own.
+#
+# The family's template passes -M through RAKUDO_OPT, which only Rakudo reads;
+# this one passes it on the command line, which both engines read. The
+# Which engine you get is whichever one `raku` is: this re-runs the
+# interpreter that invoked it. That is the intent for a script or -e, where
+# both work, but a REPL started this way is localized only under Rakudo —
+# Raku++ 3.28.0 does not apply -M to the REPL's own lines.
+#
+# The RAKUDO_RAKUAST setting stays in the environment because only Rakudo
+# needs it: the slang is a RakuAST grammar mixin, so the file has to be
+# parsed by the RakuAST grammar. Raku++ has no such switch and ignores it.
+
+%*ENV<RAKUDO_RAKUAST> = 1;
+
+my $proc := run $*EXECUTABLE, '-ML10N::RU', @*ARGS;
+exit $proc.exitcode;
+
+# vim: expandtab shiftwidth=4
