@@ -10,7 +10,7 @@
 #
 #     rakudo regen --synonyms
 #         tokens get the whole alternation: Rakudo then accepts every
-#         spelling, Raku++ 3.28.0 matches none
+#         spelling, Raku++ matches none
 #
 # A translation may name several spellings,
 #

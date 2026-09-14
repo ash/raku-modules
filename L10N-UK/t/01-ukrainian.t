@@ -30,7 +30,7 @@ sub uk($code) { $code.AST("UK").EVAL }
 # smallest thing that shows it. Both are the engine's story rather than the
 # module's, so what they gate is a `todo` and not a skip.
 
-# Reaching a private attribute named outside the Latin script. Raku++ 3.28.0
+# Reaching a private attribute named outside the Latin script. Raku++
 # cannot, and fails the same way on that class written in plain English — the
 # diacritics of, say, Latvian are fine there, Cyrillic is not.
 my $non-latin-attributes = ?(try uk Q:to/КОД/);

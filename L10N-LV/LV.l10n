@@ -20,7 +20,7 @@
 # alternation inside a slang token; `rakudo regen --synonyms` turns the rest
 # on for Rakudo.
 #
-# Either way it needs Rakudo: Raku++ 3.28.0 runs the modules generated here
+# Either way it needs Rakudo: Raku++ runs the modules generated here
 # but cannot load L10N itself, stopping at `use L10N` with "the module
 # registered no slang".
 #

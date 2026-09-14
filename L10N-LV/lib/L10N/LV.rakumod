@@ -1,7 +1,7 @@
 # This file contains the Latvian Slang of the Raku Programming Language
 
 #- start of generated part of localization ------------------------------------
-#- Generated on 2026-09-14T12:58:07+02:00 by regen
+#- Generated on 2026-09-14T15:14:32+02:00 by regen
 #- PLEASE DON'T CHANGE ANYTHING BELOW THIS LINE
 
 role L10N::LV {

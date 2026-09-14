@@ -48,7 +48,7 @@ say $ast.DEPARSE;          # my $x = 1
 The last line is the point: there is no Latvian Raku. `.AST("LV")` builds the
 same AST the English would have built, and the English is what runs.
 
-The second line needs Rakudo. Raku++ `3.28.0` takes the localization and
+The second line needs Rakudo. Raku++ takes the localization and
 ignores it, answering `my $x = 1` to both: its deparsing role loads there and
 is correct, it is simply never reached. That is the second `todo` in `t/`, and
 Compatibility has the rest.
@@ -107,10 +107,6 @@ language across a session instead:
     > saki 5
     5
 
-That is Raku++ after `770ebbe`; `3.28.0` as released has neither — `-M`
-reaches a script file and `-e` there but not the REPL's own lines, and a
-typed `use` leaves the next line in English.
-
 ## What is translated
 
 | group | | what it holds |
@@ -153,7 +149,7 @@ word, so the table names the citation form first and keeps the rest behind it:
 L10N's own notation — a `|`-separated translation means the slang accepts
 every spelling and the deparser prints the first — and any token translation
 may use it, not just this one. **What ships uses the first spelling only**,
-because Raku++ `3.28.0` matches nothing for a token holding an alternation,
+because Raku++ matches nothing for a token holding an alternation,
 which would cost that engine `my` altogether while the rest of the slang went
 on working: a quiet failure rather than a loud one. `rakudo regen --synonyms`
 turns the rest on and gives up that engine:
@@ -204,7 +200,7 @@ rakudo regen
 [L10N](https://raku.land/zef:l10n/L10N) distribution installs — plus the
 `|`-handling described above, and like that script it precompiles the slang
 afterwards to check that what it wrote works. It is named
-with `rakudo` above because it has to be: Raku++ `3.28.0` runs the modules it
+with `rakudo` above because it has to be: Raku++ runs the modules it
 generates but cannot load `L10N` itself, stopping at `use L10N` with `the
 module registered no slang`.
 
@@ -265,7 +261,7 @@ Neither version is an established floor — no older engine has been tried. On
 Rakudo the real floor is whatever version `Str.AST` and `RAKUDO_RAKUAST`
 landed in, which is well before `v2026.08`.
 
-**Raku++ `3.28.0` runs the slang**, which is the surprise here: `Str.AST`, the
+**Raku++ runs the slang**, which is the surprise here: `Str.AST`, the
 grammar mixin and a plain `use L10N::LV;` at the top of a file all work, with
 no environment switch, and both examples produce the same output under both
 engines. Latvian gets off lighter than its Cyrillic siblings, because the one
