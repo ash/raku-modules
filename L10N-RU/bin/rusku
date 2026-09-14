@@ -11,9 +11,10 @@
 # both work, but a REPL started this way is localized only under Rakudo —
 # Raku++ 3.28.0 does not apply -M to the REPL's own lines.
 #
-# The RAKUDO_RAKUAST setting stays in the environment because only Rakudo
-# needs it: the slang is a RakuAST grammar mixin, so the file has to be
-# parsed by the RakuAST grammar. Raku++ has no such switch and ignores it.
+# The RAKUDO_RAKUAST setting stays in the environment because a Rakudo up to
+# v2026.08 needs it: the slang is a RakuAST grammar mixin, so the file has to
+# be parsed by the RakuAST grammar. It is the default from v2026.09, where
+# this is redundant and harmless. Raku++ has no such switch and ignores it.
 
 %*ENV<RAKUDO_RAKUAST> = 1;
 

@@ -79,9 +79,12 @@ RAKUDO_RAKUAST=1 rakudo programma.raku
 rakupp programma.raku
 ```
 
-`RAKUDO_RAKUAST=1` is not optional on Rakudo: without it the file goes to the
-legacy grammar, which has no slang to mix into, and the synopsis above stops
-at `Variable '@saraksts' is not declared`. Raku++ needs no such switch.
+`RAKUDO_RAKUAST=1` is what a Rakudo up to `v2026.08` needs. Without it the
+file goes to the legacy grammar, which has no slang to mix into, and the
+synopsis above stops at `Variable '@saraksts' is not declared`. RakuAST
+becomes the default in `v2026.09`, where the switch is redundant — it is
+written above because it is harmless on the newer one and required on the
+older. Raku++ needs it at no version.
 
 A REPL is the one place a `use` line cannot put the slang in place. Every line
 a REPL reads is its own compilation unit, and the slang was installed into the
