@@ -155,9 +155,9 @@ on working: a quiet failure rather than a loud one. `rakudo regen --synonyms`
 turns the rest on and gives up that engine:
 
 ```raku
-mans $skaitītājs = 0;     # what ships accepts
-mana $virkne = "x";       # these two need --synonyms
-mani @atlikumi = 1, 2, 3;
+mans $skaitītājs = 0;      # what ships accepts
+mana $virkne = "x";        # needs `rakudo regen --synonyms`
+mani @atlikumi = 1, 2, 3;  # likewise
 ```
 
 Every variable in this README and under `examples/` is therefore named with a

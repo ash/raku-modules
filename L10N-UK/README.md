@@ -156,8 +156,8 @@ the rest of the slang went on working: a quiet failure rather than a loud one.
 
 ```raku
 мій $лічильник = 0;       # what ships accepts
-моя $змінна = 1;          # these two need --synonyms
-мої @залишки = 1, 2, 3;
+моя $змінна = 1;          # needs `rakudo regen --synonyms`
+мої @залишки = 1, 2, 3;   # likewise
 ```
 
 Every variable in this README and under `examples/` is therefore named with a
