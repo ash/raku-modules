@@ -123,14 +123,13 @@ Both examples take the same command; swap in `calculator.raku` for the other.
   `set RAKUPP_FFI=C:\path\to\libffi-8.dll` (GTK, MSYS2 and Python each ship
   one) settles it. Rakudo has no such limit.
 - **NixOS** keeps every library in the store and nothing on the loader's
-  default search path, so the first GTK call there is
+  default search path, so GTK has to be pointed at:
 
   ```
   Cannot locate native library 'libgtk-3.so.0': libgtk-3.so.0: cannot open shared object file: No such file or directory
   ```
 
-  until the store path is on `LD_LIBRARY_PATH`.
-  [`nix/shell.nix`](nix/shell.nix) is a shell which arranges that:
+  [`nix/shell.nix`](nix/shell.nix) is the shell to run it in:
 
   ```nix
   { pkgs ? import <nixpkgs> {} }:
@@ -146,13 +145,12 @@ Both examples take the same command; swap in `calculator.raku` for the other.
   nix-shell nix/shell.nix --run 'raku -I lib examples/counter.raku'
   ```
 
-  GTK alone is enough, although the backend names `libgobject-2.0.so.0` and
-  `libc.so.6` besides: by the time it asks for those they are already in the
-  process, arriving as GTK's own `NEEDED` libraries through the store RPATH
-  nix baked into `libgtk-3.so.0`, and a `dlopen` by soname matches a library
-  which is already loaded. A bare `nix-shell -p gtk3` will not do — it puts
-  GTK's own `gtk3-demo` on `PATH` and leaves `LD_LIBRARY_PATH` unset, so the
-  message above comes back with GTK plainly installed.
+  GTK alone is enough: `libgobject-2.0.so.0` and `libc.so.6`, which the
+  backend also names, arrive with it. `nix-shell -p gtk3` is not enough — it
+  leaves `LD_LIBRARY_PATH` unset.
+
+  The shell is an external submission:
+  [issue #1](https://github.com/ash/raku-modules/issues/1).
 
 - **`signal(SIGINT)` on Windows** does not fire, so an app there ends by its
   window closing rather than by Ctrl+C; `WINGS_AUTODRIVE` closes the windows
@@ -187,16 +185,9 @@ Backends, and the platform each is supported on:
 
 Tested with Raku++ `v3.26.0-g03454ac` and Rakudo 2026.07/2026.08.
 
-**NixOS is tested by its library situation rather than on a NixOS machine.**
-The `nixos/nix` container has the same one — a store, and not one `.so` on the
-loader's default path — and there, against nixpkgs Rakudo `2026.07` and GTK
-`3.24.52`, `t/` is 8/8 and `counter.raku` self-drives to exit 0 under Xvfb
-inside [`nix/shell.nix`](nix/shell.nix). Outside that shell the same command
-cannot load `libgtk-3.so.0` at all, which is what makes the first result a
-test; inside it, the buttons answering their clicks and the app leaving
-through SIGINT are `libgobject-2.0.so.0` and `libc.so.6` being found without
-ever being named. Reported from real NixOS by @habere-et-dispertire in
-[issue #1](https://github.com/ash/raku-modules/issues/1).
+NixOS is verified against a nix store rather than on a NixOS machine: inside
+[`nix/shell.nix`](nix/shell.nix), `t/` is 8/8 and `counter.raku` self-drives
+to exit 0 on nixpkgs Rakudo `2026.07` against GTK `3.24.52`.
 
 ## Author
 
