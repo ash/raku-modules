@@ -118,27 +118,14 @@ parse them; the phasers are upper-cased as phasers are, diacritics and all.
 A Latvian possessive agrees with what it modifies — here, with whatever the
 variable happens to be called — and no single form is right for all of them:
 `mans skaitītājs`, but `mana virkne` and `mani skaitļi`. A keyword is one
-word, so the table names the citation form first and keeps the rest behind it:
+word, so the table names the citation form and that is what the slang accepts:
 
-    scope-my   mans|mana|mani|manas
-
-(`our` needs no such list: `mūsu` is a genitive and does not decline.) That is
-L10N's own notation — a `|`-separated translation means the slang accepts
-every spelling and the deparser prints the first — and any token translation
-may use it, not just this one. **What ships uses the first spelling only.**
-`./regen --synonyms` turns the rest on, at a cost Compatibility sets out:
-
-```raku
-mans $skaitītājs = 0;      # what ships accepts
-mana $virkne = "x";        # needs `./regen --synonyms`
-mani @atlikumi = 1, 2, 3;  # likewise
-```
+    scope-my   mans
 
 Every variable in this README and under `examples/` is therefore named with a
-masculine singular noun, so that the sample code reads as Latvian under what
-ships. That is a constraint on the examples rather than on the language: with
-the synonyms switched on, a variable can be called anything and the
-declaration still agrees with it.
+masculine singular noun, so that the sample code reads as Latvian. That is a
+constraint on the examples rather than on the language — a variable can be
+called anything, and only the declaration in front of it reads oddly.
 
 ## Translated names are reserved
 
@@ -164,19 +151,17 @@ finding `.new` is the same mechanism seen from the useful side.
 
 `LV.l10n` is the source and `lib/` is output. That file lists all 645 keys,
 the untranslated ones commented out, and carries the instructions at its top.
-To change a word, edit it and run `regen`, which sits beside it in the
-distribution root — `L10N-LV/` in a checkout of this repository, not the
-repository root:
+To change a word, edit it and run, from the distribution root — `L10N-LV/`
+in a checkout of this repository, not the repository root:
 
 ```bash
-./regen
+update-localization
 ```
 
-`regen` is `update-localization` — the script the
-[L10N](https://raku.land/zef:l10n/L10N) distribution installs — plus the
-`|`-handling described above, and like that script it precompiles the slang
-afterwards to check that what it wrote works. Compatibility says which engine
-it needs, and why the `|`-handling is not stock.
+That is the script the [L10N](https://raku.land/zef:l10n/L10N) distribution
+installs. It rewrites both modules from the table and then precompiles the
+slang to check that what it wrote works. Compatibility says which engine it
+needs.
 
 ## Examples
 
@@ -215,6 +200,17 @@ slang is the input side only. `saki Patiess` prints `True`, and a program that
 dies says so in English. Localizing the output is a different project with a
 different table.
 
+Parked, and worth doing: **the other forms of `my`**. L10N's tables already
+have the notation for it — a `|`-separated translation means the slang accepts
+every spelling and the deparser prints the first, so `mans|mana|mani|manas` is
+how it would be written, and a variable of any gender would then read
+correctly. Two things block it today. L10N's own generator dies on such a
+translation, handing a `Seq` to `RakuAST::Regex::Alternation.new`, which takes
+slurpy positionals; and Raku++ matches nothing for a token holding an
+alternation, not even its first spelling, so turning them on would cost that
+engine `my` altogether. No localization in the family uses the notation, which
+is why neither has been run into before.
+
 ## Compatibility
 
 | engine | version | `t/01-latvian.t` |
@@ -248,21 +244,9 @@ ran in, and every line a prompt reads is its own unit, so there the typed form
 is forgotten by the next prompt — as it is for every module in the family, and
 why the section above reaches for the executor instead.
 
-**`my` cannot agree — the synonyms.** `./regen --synonyms` is Rakudo's. A
-token holding an alternation matches nothing under Raku++, not even its first
-spelling, so turning the synonyms on there costs `my` altogether while the
-rest of the slang goes on working: a quiet failure rather than a loud one.
-That is why one spelling is what ships.
-
-**Regenerating.** `./regen` needs Rakudo. Raku++ runs the modules it generates
-but cannot load `L10N` itself, stopping at `use L10N` with `the module
-registered no slang`. Stock `update-localization` would do everything `regen`
-does but dies on a `|` translation: it hands a `Seq` to
-`RakuAST::Regex::Alternation.new`, which takes slurpy positionals, so the
-`Seq` lands as one malformed alternative and generation fails with `You cannot
-deparse a Seq instance`. `regen` flattens the table before the generator sees
-it and puts it back afterwards — that one-character upstream fix,
-`|@parts.map(...)`, is all that stands between this and the stock script.
+**Regenerating.** `update-localization` needs Rakudo. Raku++ runs the
+modules it generates but cannot load `L10N` itself, stopping at `use L10N`
+with `the module registered no slang`.
 
 Two more that nothing above runs into. Under Raku++, `subst` checks its
 adverbs against the engine's own regex-adverb names before any localization is

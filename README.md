@@ -57,12 +57,11 @@ private attribute named outside the Latin script is unreachable there (which
 is why the two Cyrillic counts are the lower ones, and Latvian's is not), and
 `DEPARSE($localization)` ignores the localization it is handed.
 
-Each of the three carries a `regen` script beside its translation table,
-which no other distribution here needs. It is the L10N generator plus the
-handling of translations naming several spellings of a keyword — Slavic and
-Baltic possessives agree in gender, so one spelling of `my` cannot be right
-for every variable name. Both halves of that are blocked on an engine, which
-is why the script exists and says so at its top.
+Each is generated from a `.l10n` table by `update-localization`, the script
+the L10N distribution installs, and each translates 405 of Raku's 645
+translatable names. `my` is the one that cannot be translated properly:
+Slavic and Baltic possessives agree in gender, so no single spelling of it is
+right in front of every variable name, and what ships is the citation form.
 
 ## Layout
 

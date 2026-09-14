@@ -1,7 +1,7 @@
 # This file contains the Ukrainian Slang of the Raku Programming Language
 
 #- start of generated part of localization ------------------------------------
-#- Generated on 2026-09-14T15:21:22+02:00 by regen
+#- Generated on 2026-09-14T15:52:11+02:00 by update-localization
 #- PLEASE DON'T CHANGE ANYTHING BELOW THIS LINE
 
 role L10N::UK {

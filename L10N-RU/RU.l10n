@@ -7,24 +7,14 @@
 #
 # This file is the source the two modules are generated FROM.  After
 # changing anything below, regenerate them from the distribution root with
+# the script the L10N distribution installs:
 #
-#     rakudo regen
+#     update-localization
 #
-# which is `update-localization` from the L10N distribution plus the handling
-# of `|`-separated spellings.  A translation naming several of them,
-#
-#     scope-my  мой|моя|мои|мое|моё
-#
-# means the slang accepts every one and the deparser prints the first.  Only
-# the first reaches the grammar by default, because Raku++ cannot match an
-# alternation inside a slang token; `rakudo regen --synonyms` turns the rest
-# on for Rakudo.
-#
-# Either way it needs Rakudo: Raku++ runs the modules generated here
-# but cannot load L10N itself, stopping at `use L10N` with "the module
-# registered no slang".
-#
-# See https://github.com/Raku-L10N/L10N/ for the localization framework.
+# It needs Rakudo: Raku++ runs the modules generated here but cannot load
+# L10N itself, stopping at `use L10N` with "the module registered no slang".
+# The script builds both modules from the lines below and then precompiles
+# the slang to check that what it wrote works.
 
 # KEY             TRANSLATION
 adverb-pc-delete  удали
@@ -738,8 +728,8 @@ scope-augment   дополни
 scope-constant  константа
 scope-has       имеет
 scope-HAS       ИМЕЕТ
-scope-my        мой|моя|мои|мое|моё
-scope-our       наш|наша|наши|наше
+scope-my        мой
+scope-our       наш
 scope-state     состояние
 scope-unit      единица
 
