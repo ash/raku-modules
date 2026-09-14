@@ -86,24 +86,23 @@ becomes the default in `v2026.09`, where the switch is redundant — it is
 written above because it is harmless on the newer one and required on the
 older. Raku++ needs it at no version.
 
-At a REPL the engines differ, and `latku` with no arguments — which is `-M`
-and a prompt — is the one spelling that works on both. It re-runs whichever
-interpreter its shebang found, so the prompt below is the one that engine
-draws:
+At a REPL, `latku` with no arguments — `-M` and a prompt — opens a localized
+session under either engine. It needs no `use` line, having supplied one; the
+prompt it draws is whichever engine its shebang found, Rakudo's here:
 
-    $ latku                 # `raku` is Rakudo here
+    $ latku
     [0] > saki 5;
     5
     [0] > mans $x = 41; saki $x + 1;
     42
 
-Under Rakudo that is the only spelling. Its slang goes into the compilation
-unit the `use` ran in, and every line a prompt reads is its own unit, so a
-`use L10N::LV;` typed at the prompt is forgotten by the next one — as it is
-for every module in the family. Raku++ carries the language across the lines
-of a session instead, so there the typed form works too:
+Typing the `use` yourself at a plain prompt is the other way in, and only
+Raku++ can do it. Rakudo puts the slang into the compilation unit the `use`
+ran in, and every line a prompt reads is its own unit, so the line after it is
+English again — as it is for every module in the family. Raku++ carries the
+language across a session instead:
 
-    $ latku                 # `raku` is Raku++ here
+    $ rakupp
     > use L10N::LV;
     > saki 5
     5
