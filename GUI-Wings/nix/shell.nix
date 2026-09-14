@@ -1,6 +1,11 @@
 # A shell in which GUI::Wings can find GTK on NixOS, where no library sits on
-# the loader's default search path and `libgtk-3.so.0` is therefore not found
-# without being pointed at.
+# the loader's default search path. Without it the first GTK call is
+#
+#   Cannot locate native library 'libgtk-3.so.0': libgtk-3.so.0: cannot open
+#   shared object file: No such file or directory
+#
+# and `nix-shell -p gtk3` does not settle it either — that leaves
+# LD_LIBRARY_PATH unset.
 #
 #   nix-shell nix/shell.nix --run 'raku -I lib examples/counter.raku'
 #

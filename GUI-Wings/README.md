@@ -122,35 +122,9 @@ Both examples take the same command; swap in `calculator.raku` for the other.
   `init` says so plainly if it is not, and either a newer engine or
   `set RAKUPP_FFI=C:\path\to\libffi-8.dll` (GTK, MSYS2 and Python each ship
   one) settles it. Rakudo has no such limit.
-- **NixOS** keeps every library in the store and nothing on the loader's
-  default search path, so GTK has to be pointed at:
-
-  ```
-  Cannot locate native library 'libgtk-3.so.0': libgtk-3.so.0: cannot open shared object file: No such file or directory
-  ```
-
-  [`nix/shell.nix`](nix/shell.nix) is the shell to run it in:
-
-  ```nix
-  { pkgs ? import <nixpkgs> {} }:
-
-  pkgs.mkShellNoCC {
-    packages = [ pkgs.gtk3 ];
-
-    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gtk3 ];
-  }
-  ```
-
-  ```sh
-  nix-shell nix/shell.nix --run 'raku -I lib examples/counter.raku'
-  ```
-
-  GTK alone is enough: `libgobject-2.0.so.0` and `libc.so.6`, which the
-  backend also names, arrive with it. `nix-shell -p gtk3` is not enough — it
-  leaves `LD_LIBRARY_PATH` unset.
-
-  The shell is an external submission:
-  [issue #1](https://github.com/ash/raku-modules/issues/1).
+- **NixOS** needs GTK's store path on `LD_LIBRARY_PATH`:
+  [`nix/shell.nix`](nix/shell.nix) is the shell to run it in, an external
+  submission from [issue #1](https://github.com/ash/raku-modules/issues/1).
 
 - **`signal(SIGINT)` on Windows** does not fire, so an app there ends by its
   window closing rather than by Ctrl+C; `WINGS_AUTODRIVE` closes the windows
