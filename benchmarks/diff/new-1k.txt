@@ -1,0 +1,1004 @@
+        .Int while shift when shift $n @a;
+die elems die Nil $x when shift;
+$s when if say my %h for;
+$s our $s $n sub map @a;
+        .new %h split;
+        grep $y push .Str keys;
+shift .Str $s values chars;
+grep $n for;
+}
+    True if;
+    grep join push;
+        for join my elems False;
+die %h given;
+shift $n push map $x;
+$i Nil sub values grep say split;
+    $s while die;
+        split self @a our $x;
+}
+lines my return $i;
+    $s Nil .Int;
+}
+
+push join $s map given say .Int;
+}
+        return sub;
+        my say False map False lines split;
+chars .Str .Int;
+sub pop sub;
+        grep $y sub;
+}
+say chars;
+    push when die;
+}
+        $n @a;
+}
+        while .new while my;
+}
+    map .new while chars;
+}
+        map $i join @a;
+    my elems push True die our push;
+}
+    say False;
+}
+
+}
+        lines $x lines shift;
+}
+    $n given our $i elems given;
+grep our grep;
+}
+    elems push;
+keys join sub %h .Int;
+    given Nil for;
+    .new self $x;
+        .Int self $i True keys .Str keys;
+    if else push pop my;
+    grep lines shift elems keys Nil for;
+    for %h $s values grep;
+    grep lines given True $i Nil False;
+        $i else .new self keys;
+    push map grep;
+}
+
+chars Nil my $n my .Str shift;
+}
+lines push;
+        chars return die .Str chars say .Int;
+        @a .Str grep pop $x;
+        given %h for join .Int;
+    False when push;
+}
+map $i else .Int;
+        given lines given Nil chars join my;
+sub values my;
+chars when sub;
+    $x $y @a $n given;
+split Nil $s %h die;
+        sub when grep return chars;
+        $i True .new else False;
+}
+    return split self $i;
+    chars .Str $x;
+    sub True $i map die;
+        $i lines .Int join $x;
+push pop keys;
+}
+        True @a;
+chars True keys join for;
+}
+    %h $x say if;
+    sub pop grep;
+}
+$n .Int;
+        @a %h $s $n my our $x;
+        grep Nil my .Str $s;
+push say keys values given;
+    sub map grep join if map $i;
+}
+    lines False .Str grep;
+        if Nil if lines $i;
+    my elems shift;
+@a join chars values my .Str False;
+}
+    pop sub $y for;
+    grep map $s values die;
+    grep Nil grep;
+    grep %h for;
+die return chars;
+        split $n keys values $s $y split;
+        if when grep lines die $n .Int;
+    shift else keys self $s;
+$x while .Int values $i;
+for $n my;
+    sub $y .new .Str .new;
+False %h grep when if;
+}
+    die self $i;
+        map False pop grep;
+for else grep;
+shift $y $s self .Int join $s;
+shift $n chars .Str given say for;
+}
+map $x;
+        keys True $x %h for;
+chars True $x;
+if $n for;
+@a when my join .new self if;
+        @a $y split;
+    chars when my;
+    .Int %h keys self chars;
+    split when $x %h .Int;
+}
+$y for;
+False Nil split True chars;
+.new .Str for say .new;
+for say my;
+.new $y $i True my True sub;
+sub self grep;
+}
+        True if lines @a;
+}
+    return $x when given;
+        keys $n my map False pop chars;
+chars pop shift when chars;
+    my $y False;
+        if .Str my our @a;
+    @a while die;
+}
+
+}
+Nil $x map my when given;
+        .new return sub map @a;
+        keys $y $x;
+for values shift return if pop push;
+        $i join $x Nil $x;
+}
+
+}
+    join die;
+    shift pop $x our for;
+for %h shift $y push;
+$i .Str shift self given;
+        @a .Str die map shift;
+}
+        while for self .Int return $x;
+.Int elems given;
+        sub our keys map die lines $x;
+    die join for;
+}
+
+    sub .Str keys pop $i;
+    .Int self sub;
+        given True chars;
+    if else $i join .new $y chars;
+chars say chars;
+if True @a True False;
+        .new values die elems .Int values $s;
+        sub join sub elems .Int return $s;
+}
+else push %h shift elems my;
+    .Int pop .new $y if else .Int;
+grep else if else grep $n split;
+    if Nil chars when grep while split;
+chars pop .new;
+        my our split else False pop die;
+}
+
+    for $n if Nil push;
+    if our for pop chars;
+        $x while given $n .new;
+push Nil die;
+.Int True .new $y given join given;
+if elems my;
+my $n chars;
+}
+    values for;
+    split while .new .Str if our my;
+$s values given True keys;
+}
+
+chars say .Int our False;
+.Int Nil $i %h push;
+my $y False say given self die;
+@a join split $y push;
+    keys self for elems my;
+}
+map sub;
+        grep True my map keys;
+    $s join my pop split return given;
+        shift say $i else $x while shift;
+        push %h False while if;
+    .Int $n $i when $i %h chars;
+False say @a join shift;
+    .new when $x else push %h grep;
+}
+        $n given;
+    given when shift else grep;
+    push %h keys map chars;
+    $x say .new $n push else $s;
+        if .Str .new;
+}
+
+$s self chars;
+    sub self .new;
+    if return False Nil sub lines .Int;
+        $x say split lines given;
+}
+    $y my;
+}
+elems shift say .Int when $x;
+        given $n $x lines split self split;
+shift lines .Int lines sub Nil for;
+split say sub;
+        split map $i;
+}
+        values grep while .Int;
+}
+    True die else split True push;
+}
+        $n keys;
+shift join $x;
+        chars say False join grep;
+}
+
+}
+True given;
+    sub .Str keys join @a Nil @a;
+@a else $i map if;
+    .Int self False;
+    if $y given True .Int;
+    if values False lines chars;
+}
+        .Str .new True .Int $y $s;
+        $x map shift our my $y False;
+}
+
+}
+        $y if;
+sub self if lines given lines chars;
+        die elems sub self split values $x;
+}
+    .Str my values my True for;
+    if say $i;
+    given join shift when keys;
+keys say die join for lines False;
+    given Nil $x else $x;
+    .new values shift self push;
+    sub values $x when shift;
+}
+    return if elems my our shift;
+}
+        our $x $n grep %h if;
+        .new Nil push;
+        shift values shift .Str split;
+}
+
+    False else False;
+        split Nil die Nil sub %h $i;
+}
+    our for self for Nil given;
+        @a values chars map $s;
+}
+        when chars;
+        given values grep;
+        keys while push say sub;
+        $i when split pop $i;
+        for values .Int;
+grep pop die pop my our $x;
+}
+
+for True die self die;
+        given $n .Int self $i return sub;
+}
+
+    die map chars elems $i;
+    $s when chars say .Int %h .Int;
+    $s our for join sub $y .Int;
+        split self @a $n $i pop chars;
+}
+values my;
+        .Int else die $n .new;
+}
+        while if Nil my;
+}
+        True grep values split pop if;
+    grep values push;
+        given .Str chars values .new when my;
+$i say grep $y chars;
+}
+
+}
+        elems grep while .new return for;
+    False .Str $s Nil $s;
+        for elems for;
+    keys elems .Int while @a;
+    .new say False;
+}
+when $x;
+if our grep;
+        split else @a $y .Int pop my;
+}
+Nil chars;
+split map $s %h given;
+        push return shift self keys values grep;
+split else push map False our @a;
+}
+    when if;
+}
+        @a $n given %h $x $n $s;
+chars values $x;
+$x $y .new %h my pop @a;
+        .new self given;
+    grep pop if pop @a elems my;
+}
+    while @a when $x $y shift;
+}
+    our my;
+}
+        when given when $i;
+split return chars while for;
+push our @a pop $x when $x;
+$x say $i say $i elems .new;
+        split elems push;
+my join $s Nil push map .new;
+sub while $i;
+for map die $n grep when .Int;
+sub True given;
+    die .Str grep;
+    push join if Nil $i map keys;
+    for values if elems .Int;
+    $s elems False;
+    $i values die;
+        $x $y for;
+    for return False values sub True chars;
+        if while chars;
+        grep our @a self chars join die;
+split lines keys;
+}
+    %h given;
+        .Int while split;
+        chars while split;
+        sub our False elems @a values False;
+    .new lines $s;
+}
+        our keys True $x .Str my;
+.Int say shift say @a;
+    $i elems $s self if;
+    $x .Str $x $n @a;
+shift $n if say shift elems my;
+$i else sub lines @a;
+    $x $y die True .new self for;
+    chars say given else keys pop $i;
+    push $y False .Str grep return $x;
+for pop grep Nil for lines .Int;
+sub while keys %h die;
+}
+    values chars join .new;
+keys lines shift lines shift elems sub;
+        $s $n for values my .Str given;
+    split values if say my elems split;
+        push return False while given True grep;
+}
+else push;
+$x self given %h for;
+.Int else split $y my True die;
+    push values if elems .new;
+}
+Nil my;
+        given say grep say grep;
+    $i $y $s;
+    .new else die elems $s;
+given $n keys when split else my;
+    grep when chars %h die elems given;
+        False True $s when for;
+$s %h @a self $s;
+sub True keys;
+        for $y chars;
+    .Int say shift else die map for;
+    .new say .Int self False values $s;
+    chars values keys;
+False self split;
+die .Str $i when False return $s;
+    shift say $i while my;
+        $i lines sub;
+        $s return @a %h my values False;
+    keys while shift;
+        sub join $i;
+    sub values keys return .new;
+}
+else $i while push;
+False our .Int $y .new .Str shift;
+}
+
+        keys $n my say push True push;
+}
+
+}
+    when .new values keys;
+        given return $x map .new;
+        shift .Str $x $y keys .Str if;
+        shift values shift;
+        split when if;
+push join keys lines keys;
+}
+        elems push .Str shift;
+}
+        when if %h .Int;
+    grep True $x $n split;
+    for join split;
+for return keys elems given;
+        given pop my lines $i;
+my elems False else $i;
+    $s Nil if join keys while $i;
+$x join $i $y split .Str .new;
+        sub .Str shift while push;
+        push join grep when @a say @a;
+    if map keys;
+        @a while for;
+push join @a elems keys return given;
+        push else .new pop push;
+}
+map grep our my;
+}
+
+    given elems my while chars else $s;
+    False join split else die;
+    chars $n shift while shift;
+        chars when False;
+split values shift lines sub;
+shift while @a;
+        shift else die $y chars;
+    chars $y .Int else $s map @a;
+    .Int $n shift %h .new else grep;
+}
+        join shift join keys;
+}
+    $n $i Nil .new;
+        $x when False lines .new;
+$s when keys values my lines keys;
+}
+    self @a self if;
+my map die;
+chars return split else given;
+False self if;
+    $x our for Nil for $y push;
+my .Str False values keys lines if;
+}
+values $x $y @a;
+$i $y push;
+        $s join False lines @a;
+}
+    else sub;
+    $x pop for;
+        for lines @a;
+    die elems $s elems given;
+    keys say my;
+.new our chars elems die True if;
+    for values grep .Str if;
+        sub when for;
+}
+
+        chars $y $i else @a our my;
+    sub $y shift else my;
+}
+
+    shift else sub %h shift;
+keys %h False;
+        chars self False pop chars;
+}
+pop given pop die;
+}
+
+}
+        while @a self shift return if;
+shift %h keys else die elems push;
+}
+
+push when if True my;
+        for lines split self if $n chars;
+        grep self push True $s self my;
+    grep $n False;
+$x return for;
+    keys True False when $s;
+    chars return .Int;
+    if map $x lines $x $y .Int;
+    push %h split return split Nil grep;
+@a else keys self $s;
+sub $y $s;
+        split join shift;
+}
+    map keys;
+    for return False elems given join .Int;
+}
+
+}
+
+False True sub Nil $i;
+        @a return for lines $x;
+$i pop shift lines chars;
+sub pop grep our if;
+    keys join $i elems die our .Int;
+push True push True $i pop push;
+    False self sub;
+}
+        elems given self $x;
+chars Nil .Int values chars pop push;
+        sub Nil grep;
+my join $i join grep;
+}
+lines if;
+.Int $n $i True chars values push;
+    chars $y given pop die Nil if;
+        for values keys;
+        chars pop .Int elems die;
+push elems shift .Str grep .Str $i;
+}
+else keys self shift $y push;
+    chars join sub;
+}
+
+        split else @a Nil my;
+}
+        elems chars;
+        given elems shift our .Int;
+        my elems for;
+        @a pop .new lines keys return push;
+    for True False;
+sub else for;
+$x elems $i elems grep say my;
+        given $n for Nil die;
+        chars join shift True @a map chars;
+        push join push Nil grep;
+        given True .Int .Str .new;
+False say .Int True given while for;
+}
+        lines .new Nil if;
+        $i values .Int True grep;
+.new elems grep $n split;
+        $i join for join die map my;
+    chars .Str split Nil die pop .new;
+grep elems keys map False lines my;
+    chars else my;
+if while @a when for when die;
+        $x say grep elems .new;
+        die True grep;
+        my while push;
+    grep else die True $x;
+    $s values given our die join .Int;
+        split pop die else .new;
+split our keys return $i elems $s;
+    @a say shift lines $x our push;
+    if self keys map $i;
+sub our given .Str split;
+    $i $n die;
+push when split $y $s say for;
+    die else if;
+        shift $y my $n given;
+        sub when split return sub elems $i;
+push else die say False;
+        .new True die .Str die;
+}
+lines $x return $s %h False;
+}
+    .Str .new values .new;
+        keys when @a;
+        die elems $x $n $x;
+    False pop for when given;
+    $x self chars;
+        if say $s lines die;
+}
+
+split values my else for $n if;
+    die Nil $x values my;
+        shift self die .Str grep;
+    push $y @a pop if;
+shift lines .new;
+}
+        return split return sub;
+    grep when if $y my;
+sub our False values $x;
+        sub map False else .new lines grep;
+}
+
+    split elems keys;
+    grep .Str $s;
+}
+
+for say split while sub map grep;
+    shift when grep;
+        .new elems False elems split $n grep;
+}
+        lines $i %h .Int pop my;
+$i join grep our sub say $s;
+    push say die our .new;
+die $y False;
+    keys map keys pop push;
+}
+
+    @a else $x elems shift say False;
+}
+
+    .new Nil $i pop grep return die;
+push $n for join $i;
+keys while $x;
+        @a pop split values grep;
+        $s return my when keys;
+        $s pop for;
+        shift say split while $x values $s;
+}
+
+        .new else push %h push our for;
+        die $y .new;
+}
+        map split else @a while @a;
+}
+        map False while for join @a;
+sub elems grep %h for say $s;
+@a return keys;
+shift while $s $y @a;
+if when sub;
+my pop push;
+    sub while push $y grep;
+    die while die when $i lines .Int;
+}
+        Nil grep else .Int values for;
+    shift else given $y $i self $s;
+        False elems for our if join .Int;
+    $i .Str shift lines my;
+    .Int map for;
+    keys values $x while my;
+if True keys $n $i;
+    @a lines $i $n push $n for;
+$i else chars .Str split return die;
+    @a %h push;
+        keys return @a;
+}
+    else push values chars %h @a;
+for return shift when my;
+my join @a;
+    sub while split;
+}
+
+    die %h @a Nil die join .Int;
+}
+.Str given %h @a True sub;
+shift else @a Nil given;
+        split .Str for;
+push when $i say my say given;
+my join keys %h @a when push;
+}
+while push when chars when .Int;
+    .Int when if say @a values for;
+$s pop split;
+}
+values for while shift;
+}
+        return $i pop $s;
+$x Nil @a map shift $y keys;
+        die values sub;
+@a while shift;
+    if say .Int;
+    $x return split %h $s $y given;
+    @a return if map $i;
+chars return $x elems $x lines for;
+    grep Nil sub;
+}
+
+    push else $i True $i;
+my join $s else sub;
+given when .Int self push;
+        grep say .Int;
+    $x else $x;
+}
+when my;
+}
+pop if;
+    my pop die;
+$x self keys;
+}
+        $y push pop $x;
+        given pop @a True die;
+grep map False pop split;
+if values for Nil .Int $n my;
+$i lines given values shift $y $i;
+}
+$y chars $n $s;
+}
+    our if;
+    $x self False;
+sub self shift else .Int join False;
+        die $n .Int;
+if $n given lines sub Nil .Int;
+}
+
+False self .new say $i True .Int;
+        split self @a %h push;
+        .new elems shift;
+    if while .new join False;
+    die True $i;
+$s Nil sub $n False elems .Int;
+        $x self my join if;
+}
+    True push $n keys;
+    return given;
+    my .Str my $n shift True given;
+    push return keys;
+}
+        elems grep;
+chars when my;
+}
+    self @a .Str grep our grep;
+    given elems $x map grep .Str @a;
+        $s when if $y if say sub;
+        my self chars else my;
+die $n $x lines $i;
+}
+pop keys map push;
+.Int lines .new;
+}
+        $n given elems .Int when @a;
+        shift .Str $i;
+}
+while die while False;
+    my our shift else given;
+}
+$y given;
+    $i $n False pop split;
+}
+
+    given say $x $y split $n grep;
+}
+        %h die else chars;
+    die %h keys;
+die join given map shift .Str @a;
+if else if Nil sub;
+}
+    $y sub;
+    sub Nil die say @a;
+}
+        values given;
+$x pop grep pop $s return chars;
+keys True @a lines sub %h False;
+    if when .new;
+}
+        pop push;
+shift $y chars while if elems if;
+my while die $n for;
+    $s %h $i True $i elems sub;
+        chars pop keys .Str split lines shift;
+}
+say @a our split;
+        die else for pop shift;
+        keys values die self push;
+    .Int Nil given our shift;
+@a True False $y if;
+if $y given pop my when die;
+    chars when if %h @a;
+        False .Str for True grep;
+my return $x values $s %h keys;
+$x lines sub Nil push;
+$s Nil shift;
+    keys else keys;
+given join sub self my .Str for;
+        $x when my join die;
+        grep return grep say .Int;
+@a Nil if self $x True my;
+    $s %h given values .Int values my;
+    my .Str if map given $y @a;
+}
+
+    $s our grep;
+        my self @a;
+}
+True given our .Int;
+    chars else $i;
+    sub join my join shift say chars;
+    $x $y @a;
+    push self chars;
+$x values chars;
+        split lines my;
+        die else sub $n $x else if;
+        grep Nil .new;
+    False pop push say shift our sub;
+        $s say given join split;
+}
+    pop chars Nil .Int elems if;
+$s while chars when die else shift;
+for %h shift;
+@a values sub;
+    $i .Str .Int map $i when $s;
+for return grep;
+    given while given $y sub self if;
+}
+        elems .Int return @a elems push;
+keys while sub;
+        grep $y shift %h keys while chars;
+my $n .Int;
+$i lines given while .new;
+    .Int self my $n given True split;
+        False Nil for else my;
+for while $s True False;
+.new return my self split else push;
+        .new self $i say @a self .new;
+}
+pop if %h shift pop split;
+}
+True for;
+}
+    join chars;
+.Int say False;
+        chars $n my else .Int;
+        @a map keys else $s when split;
+}
+return $i Nil my;
+False True .new when for pop sub;
+}
+
+$i $n for else $x True $x;
+}
+join $x;
+    push join .Int;
+    $i map keys True if;
+        split while $x $n given when if;
+        .Int True sub;
+    shift map shift self $i while chars;
+given else $x our grep when given;
+$s values False;
+    split our push $n split pop .Int;
+        given while .new;
+        False elems @a say $x;
+chars Nil False;
+    given else if .Str if;
+}
+
+        keys else keys;
+}
+        map if elems grep True chars;
+        @a else my while shift;
+    $i $y if %h shift else my;
+        push $y $i;
+        grep our shift $y push lines .new;
+}
+        Nil $x;
+.Int when my self given;
+    .new lines split pop given;
+    sub lines .Int;
+given elems split True given $n sub;
+        False else if .Str push;
+@a True $i True $i True $x;
+}
+        %h .new elems my;
+sub map False else shift when .new;
+    split else my;
+    $x Nil for lines for lines sub;
+for %h shift elems shift pop $i;
+        @a values False;
+}
+say sub return $s self given;
+    grep True keys;
+    if %h sub $n for lines given;
+$i while split;
+    for map chars else $i;
+keys values push Nil $i;
+        shift %h @a $n keys join die;
+    my lines $x .Str False while .Int;
+    if $n @a;
+sub $n if;
+        if join given;
+}
+    while shift;
+        given self chars;
+$x our for map $x while for;
+        chars return $s elems my self sub;
+grep self split join @a;
+$s %h split else $s;
+        sub return sub pop sub $n grep;
+sub .Str given self @a;
+        $s join shift else keys;
+}
+
+    keys while given;
+}
+    map .Int while $x return grep;
+}
+
+    shift .Str .Int;
+given self split .Str die while .new;
+    my while .new lines sub;
+}
+map grep;
+        shift self sub while for;
+}
+
+@a values .Int $y $i return grep;
+        split True keys lines for say split;
+}
+self given say .Int;
+        if say shift map grep;
+    False else chars say $s;
+}
+        elems $i;
+}
+        join shift;
+.Int while keys when $x say keys;
+        .new elems if $y False;
+}
+
+    @a $y shift elems keys;
+}
+    .Str $i self if Nil False;
+$x Nil keys our keys;
+die else .new while $x;
+}
+    True if join grep say grep;
+split when push;
+        push %h push;
+    $i elems chars;
+    my elems shift when .new when if;
+.new when split elems if;
+if say keys $y @a say if;
+    chars while push;
+    grep %h keys map False $n sub;
+}
+    %h False while keys $n split;
+}
+    our $i;
+    False Nil keys while $x;
+keys Nil .new map split;
+        .Int when chars join False;
+        .Int %h $s pop @a;
+    $s when die values split else push;
+keys else $x our if;
+    $s our if;
+        my True False say given;
+given return False join @a;
+}
+    join shift return @a self $x;
+    False .Str if;
+        $x .Str $i .Str False;
+keys else $s while $i;
+.new map @a;
+        shift our False Nil False map die;
+push else $s our given say False;
+    $s lines given $y .Int while for;
+}
+        $y sub Nil False;
+        .new .Str grep True sub map for;
+        $x Nil shift;
+    given .Str False values if;
+}
+        elems given;
+$i elems given pop if;
+        .Int elems if join keys elems $s;
+    shift join .new lines $s True die;
+        $i self given $y chars pop grep;
+given values .Int $y $i;
+        grep pop keys;
+sub True $x when if True grep;
+    die pop die %h split;
+sub Nil $x;
+for values split;
+shift elems my pop shift self my;
+        $i return chars;
+        split Nil .Int Nil $s while grep;
+chars .Str sub;
+}
+        values keys;
+    grep map shift;
+}
+    %h .new say given return for;
+        for when @a;
+        for join $s say $x $y sub;
+if elems .Int when my join push;
+    .new elems if join .new;
+    die %h False;
+        $x %h for our $i;
+}
+return if;
+        split while grep;
+        $s map die;
+        push True my say $x True $s;
+}
+    while $i;

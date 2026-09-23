@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "Line diffs and unified diffs (Myers O(ND)) with a native fast path on Raku++, and pure Raku everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Text::Diff::Native",
+  "provides": {
+    "Text::Diff::Native": "lib/Text/Diff/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/textdiff"
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Text-Diff-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Text-Diff-Native"
+  },
+  "tags": [
+    "diff",
+    "text",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
