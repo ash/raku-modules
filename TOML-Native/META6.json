@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "TOML v1.0.0 parsing and writing with a native fast path on Raku++, and pure Raku everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "TOML::Native",
+  "provides": {
+    "TOML::Native": "lib/TOML/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/toml"
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/TOML-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/TOML-Native"
+  },
+  "tags": [
+    "TOML",
+    "config",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

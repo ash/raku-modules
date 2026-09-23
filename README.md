@@ -22,6 +22,8 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [L10N::UK](L10N-UK) — Raku written with Ukrainian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::LV](L10N-LV) — Raku written with Latvian keywords | 0.0.1 | 16/16 § | 15/16 § |
 | [Math::Wavelet](Math-Wavelet) — discrete wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.1 | 2157/2157 ¶ | 2157/2157 ¶ |
+| [TOML::Native](TOML-Native) — TOML v1.0.0 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 250/250 | 432/432 |
+| [Text::Diff::Native](Text-Diff-Native) — line and unified diffs (Myers O(ND)), native on Raku++, pure Raku elsewhere | 0.0.1 | 643/643 | 1265/1265 |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -68,6 +70,10 @@ right in front of every variable name, and what ships is the citation form.
 neither of them an established floor. Every expected value in its suite comes
 from PyWavelets 1.8.0, and so does its table of 106 wavelets.
 
+TOML::Native and Text::Diff::Native were tried on Rakudo v2026.08 and Raku++
+4.0.1, and those are the versions their counts come from — not established
+floors, since no older engine has been tried.
+
 ## Layout
 
 One directory per distribution, each a complete distribution root:
@@ -88,6 +94,8 @@ the timing scripts — so a reader can re-run the numbers from the repository
 while an install from the ecosystem carries none of it:
 
 - [benchmarks/csv](benchmarks/csv) — the CSV::Native corpora (1k to 100k rows)
+- [benchmarks/toml](benchmarks/toml) — the TOML::Native conformance suite (toml-test 1.0.0) and corpora
+- [benchmarks/diff](benchmarks/diff) — the Text::Diff::Native corpora and the comparison against GNU diff
 
 Each distribution's README documents the module, and follows the one shape
 written down in [notes/README-shape.md](notes/README-shape.md). **Why** it is
@@ -104,6 +112,8 @@ installing the module has to read past:
 - [notes/Data-Native.md](notes/Data-Native.md)
 - [notes/Prompt-Hidden.md](notes/Prompt-Hidden.md)
 - [notes/Math-Wavelet.md](notes/Math-Wavelet.md)
+- [notes/TOML-Native.md](notes/TOML-Native.md)
+- [notes/Text-Diff-Native.md](notes/Text-Diff-Native.md)
 
 The two `**::Native` distributions added for the `Data::Native` campaign each
 carry their conformance vectors INSIDE `t/vectors/`, together with the
