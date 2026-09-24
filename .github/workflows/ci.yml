@@ -100,6 +100,9 @@ jobs:
           if [ "${{ matrix.dist }}" = "TOML-Native" ]; then
             export TOML_NATIVE_REQUIRE_BACKEND=raku
           fi
+          if [ "${{ matrix.dist }}" = "YAML-Native" ]; then
+            export YAML_NATIVE_REQUIRE_BACKEND=raku
+          fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; raku -Ilib "$t" || exit 1
           done
@@ -119,6 +122,9 @@ jobs:
           fi
           if [ "${{ matrix.dist }}" = "TOML-Native" ]; then
             export TOML_NATIVE_REQUIRE_BACKEND=native
+          fi
+          if [ "${{ matrix.dist }}" = "YAML-Native" ]; then
+            export YAML_NATIVE_REQUIRE_BACKEND=native
           fi
           for t in $(find t -name '*.t' -o -name '*.rakutest' | sort); do
             echo "# $t"; rakupp -Ilib "$t" || exit 1

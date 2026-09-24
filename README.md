@@ -24,6 +24,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Math::Wavelet](Math-Wavelet) — discrete wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.1 | 2157/2157 ¶ | 2157/2157 ¶ |
 | [TOML::Native](TOML-Native) — TOML v1.0.0 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 250/250 | 432/432 |
 | [Text::Diff::Native](Text-Diff-Native) — line and unified diffs (Myers O(ND)), native on Raku++, pure Raku elsewhere | 0.0.1 | 643/643 | 1265/1265 |
+| [YAML::Native](YAML-Native) — YAML 1.2 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 237/237 | 461/461 |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -71,8 +72,9 @@ neither of them an established floor. Every expected value in its suite comes
 from PyWavelets 1.8.0, and so does its table of 106 wavelets.
 
 TOML::Native and Text::Diff::Native were tried on Rakudo v2026.08 and Raku++
-4.0.1, and those are the versions their counts come from — not established
-floors, since no older engine has been tried.
+4.0.1, and YAML::Native on Rakudo v2026.08 and Raku++ 4.0.1-160; those are the
+versions their counts come from — not established floors, since no older
+engine has been tried.
 
 ## Layout
 
@@ -96,6 +98,7 @@ while an install from the ecosystem carries none of it:
 - [benchmarks/csv](benchmarks/csv) — the CSV::Native corpora (1k to 100k rows)
 - [benchmarks/toml](benchmarks/toml) — the TOML::Native conformance suite (toml-test 1.0.0) and corpora
 - [benchmarks/diff](benchmarks/diff) — the Text::Diff::Native corpora and the comparison against GNU diff
+- [benchmarks/yaml](benchmarks/yaml) — the YAML::Native conformance suite (yaml-test-suite) and corpora
 
 Each distribution's README documents the module, and follows the one shape
 written down in [notes/README-shape.md](notes/README-shape.md). **Why** it is

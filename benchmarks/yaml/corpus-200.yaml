@@ -1,0 +1,7360 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00000-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 0
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 120
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00000 --config /etc/service-00000.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00001
+  namespace: team-1
+  labels:
+    app: service-00001
+    tier: backend
+    version: "1.1.1"
+  annotations:
+    description: >
+      Service number 1, generated for the YAML::Native
+      benchmark; it listens on port 8001.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00001
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00001:1.1.1"
+          ports:
+            - containerPort: 8001
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "11s"}
+            - name: RATIO
+              value: '0.1'
+          resources: {limits: {cpu: 101m, memory: 128Mi}}
+          args: ["--port", "8001", '--verbose']
+      weight: 0.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00002
+  namespace: team-2
+  labels:
+    app: service-00002
+    tier: worker
+    version: "1.2.2"
+  annotations:
+    description: >
+      Service number 2, generated for the YAML::Native
+      benchmark; it listens on port 8002.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00002
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00002:1.2.2"
+          ports:
+            - containerPort: 8002
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "12s"}
+            - name: RATIO
+              value: '0.2'
+          resources: {limits: {cpu: 102m, memory: 192Mi}}
+          args: ["--port", "8002", '--verbose']
+      weight: 0.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00003
+  namespace: team-3
+  labels:
+    app: service-00003
+    tier: frontend
+    version: "1.3.3"
+  annotations:
+    description: >
+      Service number 3, generated for the YAML::Native
+      benchmark; it listens on port 8003.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00003
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00003:1.3.3"
+          ports:
+            - containerPort: 8003
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "13s"}
+            - name: RATIO
+              value: '0.3'
+          resources: {limits: {cpu: 103m, memory: 256Mi}}
+          args: ["--port", "8003", '--verbose']
+      weight: 0.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00004
+  namespace: team-4
+  labels:
+    app: service-00004
+    tier: backend
+    version: "1.4.4"
+  annotations:
+    description: >
+      Service number 4, generated for the YAML::Native
+      benchmark; it listens on port 8004.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00004
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00004:1.4.4"
+          ports:
+            - containerPort: 8004
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "14s"}
+            - name: RATIO
+              value: '0.4'
+          resources: {limits: {cpu: 104m, memory: 320Mi}}
+          args: ["--port", "8004", '--verbose']
+      weight: 0.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00005
+  namespace: team-5
+  labels:
+    app: service-00005
+    tier: worker
+    version: "1.5.5"
+  annotations:
+    description: >
+      Service number 5, generated for the YAML::Native
+      benchmark; it listens on port 8005.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00005
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00005:1.5.5"
+          ports:
+            - containerPort: 8005
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "15s"}
+            - name: RATIO
+              value: '0.5'
+          resources: {limits: {cpu: 105m, memory: 384Mi}}
+          args: ["--port", "8005", '--verbose']
+      weight: 0.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00006
+  namespace: team-6
+  labels:
+    app: service-00006
+    tier: frontend
+    version: "1.6.6"
+  annotations:
+    description: >
+      Service number 6, generated for the YAML::Native
+      benchmark; it listens on port 8006.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00006
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00006:1.6.6"
+          ports:
+            - containerPort: 8006
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "16s"}
+            - name: RATIO
+              value: '0.6'
+          resources: {limits: {cpu: 106m, memory: 448Mi}}
+          args: ["--port", "8006", '--verbose']
+      weight: 0.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00007
+  namespace: team-7
+  labels:
+    app: service-00007
+    tier: backend
+    version: "1.0.7"
+  annotations:
+    description: >
+      Service number 7, generated for the YAML::Native
+      benchmark; it listens on port 8007.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00007
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00007:1.0.7"
+          ports:
+            - containerPort: 8007
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "17s"}
+            - name: RATIO
+              value: '0.7'
+          resources: {limits: {cpu: 107m, memory: 512Mi}}
+          args: ["--port", "8007", '--verbose']
+      weight: 0.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00008
+  namespace: team-8
+  labels:
+    app: service-00008
+    tier: worker
+    version: "1.1.8"
+  annotations:
+    description: >
+      Service number 8, generated for the YAML::Native
+      benchmark; it listens on port 8008.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00008
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00008:1.1.8"
+          ports:
+            - containerPort: 8008
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "18s"}
+            - name: RATIO
+              value: '0.8'
+          resources: {limits: {cpu: 108m, memory: 64Mi}}
+          args: ["--port", "8008", '--verbose']
+      weight: 0.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00009
+  namespace: team-9
+  labels:
+    app: service-00009
+    tier: frontend
+    version: "1.2.9"
+  annotations:
+    description: >
+      Service number 9, generated for the YAML::Native
+      benchmark; it listens on port 8009.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00009
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00009:1.2.9"
+          ports:
+            - containerPort: 8009
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "19s"}
+            - name: RATIO
+              value: '0.9'
+          resources: {limits: {cpu: 109m, memory: 128Mi}}
+          args: ["--port", "8009", '--verbose']
+      weight: 0.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00010-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 10
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 130
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00010 --config /etc/service-00010.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00011
+  namespace: team-11
+  labels:
+    app: service-00011
+    tier: worker
+    version: "1.4.11"
+  annotations:
+    description: >
+      Service number 11, generated for the YAML::Native
+      benchmark; it listens on port 8011.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00011
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00011:1.4.11"
+          ports:
+            - containerPort: 8011
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "21s"}
+            - name: RATIO
+              value: '0.11'
+          resources: {limits: {cpu: 111m, memory: 256Mi}}
+          args: ["--port", "8011", '--verbose']
+      weight: 1.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00012
+  namespace: team-0
+  labels:
+    app: service-00012
+    tier: frontend
+    version: "1.5.12"
+  annotations:
+    description: >
+      Service number 12, generated for the YAML::Native
+      benchmark; it listens on port 8012.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00012
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00012:1.5.12"
+          ports:
+            - containerPort: 8012
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "22s"}
+            - name: RATIO
+              value: '0.12'
+          resources: {limits: {cpu: 112m, memory: 320Mi}}
+          args: ["--port", "8012", '--verbose']
+      weight: 1.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00013
+  namespace: team-1
+  labels:
+    app: service-00013
+    tier: backend
+    version: "1.6.0"
+  annotations:
+    description: >
+      Service number 13, generated for the YAML::Native
+      benchmark; it listens on port 8013.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00013
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00013:1.6.0"
+          ports:
+            - containerPort: 8013
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "23s"}
+            - name: RATIO
+              value: '0.13'
+          resources: {limits: {cpu: 113m, memory: 384Mi}}
+          args: ["--port", "8013", '--verbose']
+      weight: 1.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00014
+  namespace: team-2
+  labels:
+    app: service-00014
+    tier: worker
+    version: "1.0.1"
+  annotations:
+    description: >
+      Service number 14, generated for the YAML::Native
+      benchmark; it listens on port 8014.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00014
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00014:1.0.1"
+          ports:
+            - containerPort: 8014
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "24s"}
+            - name: RATIO
+              value: '0.14'
+          resources: {limits: {cpu: 114m, memory: 448Mi}}
+          args: ["--port", "8014", '--verbose']
+      weight: 1.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00015
+  namespace: team-3
+  labels:
+    app: service-00015
+    tier: frontend
+    version: "1.1.2"
+  annotations:
+    description: >
+      Service number 15, generated for the YAML::Native
+      benchmark; it listens on port 8015.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00015
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00015:1.1.2"
+          ports:
+            - containerPort: 8015
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "25s"}
+            - name: RATIO
+              value: '0.15'
+          resources: {limits: {cpu: 115m, memory: 512Mi}}
+          args: ["--port", "8015", '--verbose']
+      weight: 1.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00016
+  namespace: team-4
+  labels:
+    app: service-00016
+    tier: backend
+    version: "1.2.3"
+  annotations:
+    description: >
+      Service number 16, generated for the YAML::Native
+      benchmark; it listens on port 8016.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00016
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00016:1.2.3"
+          ports:
+            - containerPort: 8016
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "26s"}
+            - name: RATIO
+              value: '0.16'
+          resources: {limits: {cpu: 116m, memory: 64Mi}}
+          args: ["--port", "8016", '--verbose']
+      weight: 1.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00017
+  namespace: team-5
+  labels:
+    app: service-00017
+    tier: worker
+    version: "1.3.4"
+  annotations:
+    description: >
+      Service number 17, generated for the YAML::Native
+      benchmark; it listens on port 8017.
+spec:
+  replicas: 3
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00017
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00017:1.3.4"
+          ports:
+            - containerPort: 8017
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "27s"}
+            - name: RATIO
+              value: '0.17'
+          resources: {limits: {cpu: 117m, memory: 128Mi}}
+          args: ["--port", "8017", '--verbose']
+      weight: 1.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00018
+  namespace: team-6
+  labels:
+    app: service-00018
+    tier: frontend
+    version: "1.4.5"
+  annotations:
+    description: >
+      Service number 18, generated for the YAML::Native
+      benchmark; it listens on port 8018.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00018
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00018:1.4.5"
+          ports:
+            - containerPort: 8018
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "28s"}
+            - name: RATIO
+              value: '0.18'
+          resources: {limits: {cpu: 118m, memory: 192Mi}}
+          args: ["--port", "8018", '--verbose']
+      weight: 1.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00019
+  namespace: team-7
+  labels:
+    app: service-00019
+    tier: backend
+    version: "1.5.6"
+  annotations:
+    description: >
+      Service number 19, generated for the YAML::Native
+      benchmark; it listens on port 8019.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00019
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00019:1.5.6"
+          ports:
+            - containerPort: 8019
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "29s"}
+            - name: RATIO
+              value: '0.19'
+          resources: {limits: {cpu: 119m, memory: 256Mi}}
+          args: ["--port", "8019", '--verbose']
+      weight: 1.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00020-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 20
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 140
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00020 --config /etc/service-00020.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00021
+  namespace: team-9
+  labels:
+    app: service-00021
+    tier: frontend
+    version: "1.0.8"
+  annotations:
+    description: >
+      Service number 21, generated for the YAML::Native
+      benchmark; it listens on port 8021.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00021
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00021:1.0.8"
+          ports:
+            - containerPort: 8021
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "31s"}
+            - name: RATIO
+              value: '0.21'
+          resources: {limits: {cpu: 121m, memory: 384Mi}}
+          args: ["--port", "8021", '--verbose']
+      weight: 2.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00022
+  namespace: team-10
+  labels:
+    app: service-00022
+    tier: backend
+    version: "1.1.9"
+  annotations:
+    description: >
+      Service number 22, generated for the YAML::Native
+      benchmark; it listens on port 8022.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00022
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00022:1.1.9"
+          ports:
+            - containerPort: 8022
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "32s"}
+            - name: RATIO
+              value: '0.22'
+          resources: {limits: {cpu: 122m, memory: 448Mi}}
+          args: ["--port", "8022", '--verbose']
+      weight: 2.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00023
+  namespace: team-11
+  labels:
+    app: service-00023
+    tier: worker
+    version: "1.2.10"
+  annotations:
+    description: >
+      Service number 23, generated for the YAML::Native
+      benchmark; it listens on port 8023.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00023
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00023:1.2.10"
+          ports:
+            - containerPort: 8023
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "33s"}
+            - name: RATIO
+              value: '0.23'
+          resources: {limits: {cpu: 123m, memory: 512Mi}}
+          args: ["--port", "8023", '--verbose']
+      weight: 2.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00024
+  namespace: team-0
+  labels:
+    app: service-00024
+    tier: frontend
+    version: "1.3.11"
+  annotations:
+    description: >
+      Service number 24, generated for the YAML::Native
+      benchmark; it listens on port 8024.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00024
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00024:1.3.11"
+          ports:
+            - containerPort: 8024
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "34s"}
+            - name: RATIO
+              value: '0.24'
+          resources: {limits: {cpu: 124m, memory: 64Mi}}
+          args: ["--port", "8024", '--verbose']
+      weight: 2.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00025
+  namespace: team-1
+  labels:
+    app: service-00025
+    tier: backend
+    version: "1.4.12"
+  annotations:
+    description: >
+      Service number 25, generated for the YAML::Native
+      benchmark; it listens on port 8025.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00025
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00025:1.4.12"
+          ports:
+            - containerPort: 8025
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "35s"}
+            - name: RATIO
+              value: '0.25'
+          resources: {limits: {cpu: 125m, memory: 128Mi}}
+          args: ["--port", "8025", '--verbose']
+      weight: 2.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00026
+  namespace: team-2
+  labels:
+    app: service-00026
+    tier: worker
+    version: "1.5.0"
+  annotations:
+    description: >
+      Service number 26, generated for the YAML::Native
+      benchmark; it listens on port 8026.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00026
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00026:1.5.0"
+          ports:
+            - containerPort: 8026
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "36s"}
+            - name: RATIO
+              value: '0.26'
+          resources: {limits: {cpu: 126m, memory: 192Mi}}
+          args: ["--port", "8026", '--verbose']
+      weight: 2.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00027
+  namespace: team-3
+  labels:
+    app: service-00027
+    tier: frontend
+    version: "1.6.1"
+  annotations:
+    description: >
+      Service number 27, generated for the YAML::Native
+      benchmark; it listens on port 8027.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00027
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00027:1.6.1"
+          ports:
+            - containerPort: 8027
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "37s"}
+            - name: RATIO
+              value: '0.27'
+          resources: {limits: {cpu: 127m, memory: 256Mi}}
+          args: ["--port", "8027", '--verbose']
+      weight: 2.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00028
+  namespace: team-4
+  labels:
+    app: service-00028
+    tier: backend
+    version: "1.0.2"
+  annotations:
+    description: >
+      Service number 28, generated for the YAML::Native
+      benchmark; it listens on port 8028.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00028
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00028:1.0.2"
+          ports:
+            - containerPort: 8028
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "38s"}
+            - name: RATIO
+              value: '0.28'
+          resources: {limits: {cpu: 128m, memory: 320Mi}}
+          args: ["--port", "8028", '--verbose']
+      weight: 2.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00029
+  namespace: team-5
+  labels:
+    app: service-00029
+    tier: worker
+    version: "1.1.3"
+  annotations:
+    description: >
+      Service number 29, generated for the YAML::Native
+      benchmark; it listens on port 8029.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00029
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00029:1.1.3"
+          ports:
+            - containerPort: 8029
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "39s"}
+            - name: RATIO
+              value: '0.29'
+          resources: {limits: {cpu: 129m, memory: 384Mi}}
+          args: ["--port", "8029", '--verbose']
+      weight: 2.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00030-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 30
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 150
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00030 --config /etc/service-00030.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00031
+  namespace: team-7
+  labels:
+    app: service-00031
+    tier: backend
+    version: "1.3.5"
+  annotations:
+    description: >
+      Service number 31, generated for the YAML::Native
+      benchmark; it listens on port 8031.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00031
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00031:1.3.5"
+          ports:
+            - containerPort: 8031
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "41s"}
+            - name: RATIO
+              value: '0.31'
+          resources: {limits: {cpu: 131m, memory: 512Mi}}
+          args: ["--port", "8031", '--verbose']
+      weight: 3.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00032
+  namespace: team-8
+  labels:
+    app: service-00032
+    tier: worker
+    version: "1.4.6"
+  annotations:
+    description: >
+      Service number 32, generated for the YAML::Native
+      benchmark; it listens on port 8032.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00032
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00032:1.4.6"
+          ports:
+            - containerPort: 8032
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "42s"}
+            - name: RATIO
+              value: '0.32'
+          resources: {limits: {cpu: 132m, memory: 64Mi}}
+          args: ["--port", "8032", '--verbose']
+      weight: 3.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00033
+  namespace: team-9
+  labels:
+    app: service-00033
+    tier: frontend
+    version: "1.5.7"
+  annotations:
+    description: >
+      Service number 33, generated for the YAML::Native
+      benchmark; it listens on port 8033.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00033
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00033:1.5.7"
+          ports:
+            - containerPort: 8033
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "43s"}
+            - name: RATIO
+              value: '0.33'
+          resources: {limits: {cpu: 133m, memory: 128Mi}}
+          args: ["--port", "8033", '--verbose']
+      weight: 3.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00034
+  namespace: team-10
+  labels:
+    app: service-00034
+    tier: backend
+    version: "1.6.8"
+  annotations:
+    description: >
+      Service number 34, generated for the YAML::Native
+      benchmark; it listens on port 8034.
+spec:
+  replicas: 5
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00034
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00034:1.6.8"
+          ports:
+            - containerPort: 8034
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "44s"}
+            - name: RATIO
+              value: '0.34'
+          resources: {limits: {cpu: 134m, memory: 192Mi}}
+          args: ["--port", "8034", '--verbose']
+      weight: 3.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00035
+  namespace: team-11
+  labels:
+    app: service-00035
+    tier: worker
+    version: "1.0.9"
+  annotations:
+    description: >
+      Service number 35, generated for the YAML::Native
+      benchmark; it listens on port 8035.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00035
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00035:1.0.9"
+          ports:
+            - containerPort: 8035
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "45s"}
+            - name: RATIO
+              value: '0.35'
+          resources: {limits: {cpu: 135m, memory: 256Mi}}
+          args: ["--port", "8035", '--verbose']
+      weight: 3.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00036
+  namespace: team-0
+  labels:
+    app: service-00036
+    tier: frontend
+    version: "1.1.10"
+  annotations:
+    description: >
+      Service number 36, generated for the YAML::Native
+      benchmark; it listens on port 8036.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00036
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00036:1.1.10"
+          ports:
+            - containerPort: 8036
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "46s"}
+            - name: RATIO
+              value: '0.36'
+          resources: {limits: {cpu: 136m, memory: 320Mi}}
+          args: ["--port", "8036", '--verbose']
+      weight: 3.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00037
+  namespace: team-1
+  labels:
+    app: service-00037
+    tier: backend
+    version: "1.2.11"
+  annotations:
+    description: >
+      Service number 37, generated for the YAML::Native
+      benchmark; it listens on port 8037.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00037
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00037:1.2.11"
+          ports:
+            - containerPort: 8037
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "47s"}
+            - name: RATIO
+              value: '0.37'
+          resources: {limits: {cpu: 137m, memory: 384Mi}}
+          args: ["--port", "8037", '--verbose']
+      weight: 3.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00038
+  namespace: team-2
+  labels:
+    app: service-00038
+    tier: worker
+    version: "1.3.12"
+  annotations:
+    description: >
+      Service number 38, generated for the YAML::Native
+      benchmark; it listens on port 8038.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00038
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00038:1.3.12"
+          ports:
+            - containerPort: 8038
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "48s"}
+            - name: RATIO
+              value: '0.38'
+          resources: {limits: {cpu: 138m, memory: 448Mi}}
+          args: ["--port", "8038", '--verbose']
+      weight: 3.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00039
+  namespace: team-3
+  labels:
+    app: service-00039
+    tier: frontend
+    version: "1.4.0"
+  annotations:
+    description: >
+      Service number 39, generated for the YAML::Native
+      benchmark; it listens on port 8039.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00039
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00039:1.4.0"
+          ports:
+            - containerPort: 8039
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "49s"}
+            - name: RATIO
+              value: '0.39'
+          resources: {limits: {cpu: 139m, memory: 512Mi}}
+          args: ["--port", "8039", '--verbose']
+      weight: 3.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00040-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 40
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 160
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00040 --config /etc/service-00040.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00041
+  namespace: team-5
+  labels:
+    app: service-00041
+    tier: worker
+    version: "1.6.2"
+  annotations:
+    description: >
+      Service number 41, generated for the YAML::Native
+      benchmark; it listens on port 8041.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00041
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00041:1.6.2"
+          ports:
+            - containerPort: 8041
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "51s"}
+            - name: RATIO
+              value: '0.41'
+          resources: {limits: {cpu: 141m, memory: 128Mi}}
+          args: ["--port", "8041", '--verbose']
+      weight: 4.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00042
+  namespace: team-6
+  labels:
+    app: service-00042
+    tier: frontend
+    version: "1.0.3"
+  annotations:
+    description: >
+      Service number 42, generated for the YAML::Native
+      benchmark; it listens on port 8042.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00042
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00042:1.0.3"
+          ports:
+            - containerPort: 8042
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "52s"}
+            - name: RATIO
+              value: '0.42'
+          resources: {limits: {cpu: 142m, memory: 192Mi}}
+          args: ["--port", "8042", '--verbose']
+      weight: 4.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00043
+  namespace: team-7
+  labels:
+    app: service-00043
+    tier: backend
+    version: "1.1.4"
+  annotations:
+    description: >
+      Service number 43, generated for the YAML::Native
+      benchmark; it listens on port 8043.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00043
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00043:1.1.4"
+          ports:
+            - containerPort: 8043
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "53s"}
+            - name: RATIO
+              value: '0.43'
+          resources: {limits: {cpu: 143m, memory: 256Mi}}
+          args: ["--port", "8043", '--verbose']
+      weight: 4.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00044
+  namespace: team-8
+  labels:
+    app: service-00044
+    tier: worker
+    version: "1.2.5"
+  annotations:
+    description: >
+      Service number 44, generated for the YAML::Native
+      benchmark; it listens on port 8044.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00044
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00044:1.2.5"
+          ports:
+            - containerPort: 8044
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "54s"}
+            - name: RATIO
+              value: '0.44'
+          resources: {limits: {cpu: 144m, memory: 320Mi}}
+          args: ["--port", "8044", '--verbose']
+      weight: 4.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00045
+  namespace: team-9
+  labels:
+    app: service-00045
+    tier: frontend
+    version: "1.3.6"
+  annotations:
+    description: >
+      Service number 45, generated for the YAML::Native
+      benchmark; it listens on port 8045.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00045
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00045:1.3.6"
+          ports:
+            - containerPort: 8045
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "55s"}
+            - name: RATIO
+              value: '0.45'
+          resources: {limits: {cpu: 145m, memory: 384Mi}}
+          args: ["--port", "8045", '--verbose']
+      weight: 4.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00046
+  namespace: team-10
+  labels:
+    app: service-00046
+    tier: backend
+    version: "1.4.7"
+  annotations:
+    description: >
+      Service number 46, generated for the YAML::Native
+      benchmark; it listens on port 8046.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00046
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00046:1.4.7"
+          ports:
+            - containerPort: 8046
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "56s"}
+            - name: RATIO
+              value: '0.46'
+          resources: {limits: {cpu: 146m, memory: 448Mi}}
+          args: ["--port", "8046", '--verbose']
+      weight: 4.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00047
+  namespace: team-11
+  labels:
+    app: service-00047
+    tier: worker
+    version: "1.5.8"
+  annotations:
+    description: >
+      Service number 47, generated for the YAML::Native
+      benchmark; it listens on port 8047.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00047
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00047:1.5.8"
+          ports:
+            - containerPort: 8047
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "57s"}
+            - name: RATIO
+              value: '0.47'
+          resources: {limits: {cpu: 147m, memory: 512Mi}}
+          args: ["--port", "8047", '--verbose']
+      weight: 4.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00048
+  namespace: team-0
+  labels:
+    app: service-00048
+    tier: frontend
+    version: "1.6.9"
+  annotations:
+    description: >
+      Service number 48, generated for the YAML::Native
+      benchmark; it listens on port 8048.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00048
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00048:1.6.9"
+          ports:
+            - containerPort: 8048
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "58s"}
+            - name: RATIO
+              value: '0.48'
+          resources: {limits: {cpu: 148m, memory: 64Mi}}
+          args: ["--port", "8048", '--verbose']
+      weight: 4.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00049
+  namespace: team-1
+  labels:
+    app: service-00049
+    tier: backend
+    version: "1.0.10"
+  annotations:
+    description: >
+      Service number 49, generated for the YAML::Native
+      benchmark; it listens on port 8049.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00049
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00049:1.0.10"
+          ports:
+            - containerPort: 8049
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "59s"}
+            - name: RATIO
+              value: '0.49'
+          resources: {limits: {cpu: 149m, memory: 128Mi}}
+          args: ["--port", "8049", '--verbose']
+      weight: 4.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00050-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 50
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 170
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00050 --config /etc/service-00050.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00051
+  namespace: team-3
+  labels:
+    app: service-00051
+    tier: frontend
+    version: "1.2.12"
+  annotations:
+    description: >
+      Service number 51, generated for the YAML::Native
+      benchmark; it listens on port 8051.
+spec:
+  replicas: 2
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00051
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00051:1.2.12"
+          ports:
+            - containerPort: 8051
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "11s"}
+            - name: RATIO
+              value: '0.51'
+          resources: {limits: {cpu: 151m, memory: 256Mi}}
+          args: ["--port", "8051", '--verbose']
+      weight: 5.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00052
+  namespace: team-4
+  labels:
+    app: service-00052
+    tier: backend
+    version: "1.3.0"
+  annotations:
+    description: >
+      Service number 52, generated for the YAML::Native
+      benchmark; it listens on port 8052.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00052
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00052:1.3.0"
+          ports:
+            - containerPort: 8052
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "12s"}
+            - name: RATIO
+              value: '0.52'
+          resources: {limits: {cpu: 152m, memory: 320Mi}}
+          args: ["--port", "8052", '--verbose']
+      weight: 5.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00053
+  namespace: team-5
+  labels:
+    app: service-00053
+    tier: worker
+    version: "1.4.1"
+  annotations:
+    description: >
+      Service number 53, generated for the YAML::Native
+      benchmark; it listens on port 8053.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00053
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00053:1.4.1"
+          ports:
+            - containerPort: 8053
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "13s"}
+            - name: RATIO
+              value: '0.53'
+          resources: {limits: {cpu: 153m, memory: 384Mi}}
+          args: ["--port", "8053", '--verbose']
+      weight: 5.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00054
+  namespace: team-6
+  labels:
+    app: service-00054
+    tier: frontend
+    version: "1.5.2"
+  annotations:
+    description: >
+      Service number 54, generated for the YAML::Native
+      benchmark; it listens on port 8054.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00054
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00054:1.5.2"
+          ports:
+            - containerPort: 8054
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "14s"}
+            - name: RATIO
+              value: '0.54'
+          resources: {limits: {cpu: 154m, memory: 448Mi}}
+          args: ["--port", "8054", '--verbose']
+      weight: 5.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00055
+  namespace: team-7
+  labels:
+    app: service-00055
+    tier: backend
+    version: "1.6.3"
+  annotations:
+    description: >
+      Service number 55, generated for the YAML::Native
+      benchmark; it listens on port 8055.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00055
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00055:1.6.3"
+          ports:
+            - containerPort: 8055
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "15s"}
+            - name: RATIO
+              value: '0.55'
+          resources: {limits: {cpu: 155m, memory: 512Mi}}
+          args: ["--port", "8055", '--verbose']
+      weight: 5.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00056
+  namespace: team-8
+  labels:
+    app: service-00056
+    tier: worker
+    version: "1.0.4"
+  annotations:
+    description: >
+      Service number 56, generated for the YAML::Native
+      benchmark; it listens on port 8056.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00056
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00056:1.0.4"
+          ports:
+            - containerPort: 8056
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "16s"}
+            - name: RATIO
+              value: '0.56'
+          resources: {limits: {cpu: 156m, memory: 64Mi}}
+          args: ["--port", "8056", '--verbose']
+      weight: 5.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00057
+  namespace: team-9
+  labels:
+    app: service-00057
+    tier: frontend
+    version: "1.1.5"
+  annotations:
+    description: >
+      Service number 57, generated for the YAML::Native
+      benchmark; it listens on port 8057.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00057
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00057:1.1.5"
+          ports:
+            - containerPort: 8057
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "17s"}
+            - name: RATIO
+              value: '0.57'
+          resources: {limits: {cpu: 157m, memory: 128Mi}}
+          args: ["--port", "8057", '--verbose']
+      weight: 5.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00058
+  namespace: team-10
+  labels:
+    app: service-00058
+    tier: backend
+    version: "1.2.6"
+  annotations:
+    description: >
+      Service number 58, generated for the YAML::Native
+      benchmark; it listens on port 8058.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00058
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00058:1.2.6"
+          ports:
+            - containerPort: 8058
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "18s"}
+            - name: RATIO
+              value: '0.58'
+          resources: {limits: {cpu: 158m, memory: 192Mi}}
+          args: ["--port", "8058", '--verbose']
+      weight: 5.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00059
+  namespace: team-11
+  labels:
+    app: service-00059
+    tier: worker
+    version: "1.3.7"
+  annotations:
+    description: >
+      Service number 59, generated for the YAML::Native
+      benchmark; it listens on port 8059.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00059
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00059:1.3.7"
+          ports:
+            - containerPort: 8059
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "19s"}
+            - name: RATIO
+              value: '0.59'
+          resources: {limits: {cpu: 159m, memory: 256Mi}}
+          args: ["--port", "8059", '--verbose']
+      weight: 5.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00060-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 0
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 120
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00060 --config /etc/service-00060.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00061
+  namespace: team-1
+  labels:
+    app: service-00061
+    tier: backend
+    version: "1.5.9"
+  annotations:
+    description: >
+      Service number 61, generated for the YAML::Native
+      benchmark; it listens on port 8061.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00061
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00061:1.5.9"
+          ports:
+            - containerPort: 8061
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "21s"}
+            - name: RATIO
+              value: '0.61'
+          resources: {limits: {cpu: 161m, memory: 384Mi}}
+          args: ["--port", "8061", '--verbose']
+      weight: 6.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00062
+  namespace: team-2
+  labels:
+    app: service-00062
+    tier: worker
+    version: "1.6.10"
+  annotations:
+    description: >
+      Service number 62, generated for the YAML::Native
+      benchmark; it listens on port 8062.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00062
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00062:1.6.10"
+          ports:
+            - containerPort: 8062
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "22s"}
+            - name: RATIO
+              value: '0.62'
+          resources: {limits: {cpu: 162m, memory: 448Mi}}
+          args: ["--port", "8062", '--verbose']
+      weight: 6.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00063
+  namespace: team-3
+  labels:
+    app: service-00063
+    tier: frontend
+    version: "1.0.11"
+  annotations:
+    description: >
+      Service number 63, generated for the YAML::Native
+      benchmark; it listens on port 8063.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00063
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00063:1.0.11"
+          ports:
+            - containerPort: 8063
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "23s"}
+            - name: RATIO
+              value: '0.63'
+          resources: {limits: {cpu: 163m, memory: 512Mi}}
+          args: ["--port", "8063", '--verbose']
+      weight: 6.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00064
+  namespace: team-4
+  labels:
+    app: service-00064
+    tier: backend
+    version: "1.1.12"
+  annotations:
+    description: >
+      Service number 64, generated for the YAML::Native
+      benchmark; it listens on port 8064.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00064
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00064:1.1.12"
+          ports:
+            - containerPort: 8064
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "24s"}
+            - name: RATIO
+              value: '0.64'
+          resources: {limits: {cpu: 164m, memory: 64Mi}}
+          args: ["--port", "8064", '--verbose']
+      weight: 6.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00065
+  namespace: team-5
+  labels:
+    app: service-00065
+    tier: worker
+    version: "1.2.0"
+  annotations:
+    description: >
+      Service number 65, generated for the YAML::Native
+      benchmark; it listens on port 8065.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00065
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00065:1.2.0"
+          ports:
+            - containerPort: 8065
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "25s"}
+            - name: RATIO
+              value: '0.65'
+          resources: {limits: {cpu: 165m, memory: 128Mi}}
+          args: ["--port", "8065", '--verbose']
+      weight: 6.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00066
+  namespace: team-6
+  labels:
+    app: service-00066
+    tier: frontend
+    version: "1.3.1"
+  annotations:
+    description: >
+      Service number 66, generated for the YAML::Native
+      benchmark; it listens on port 8066.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00066
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00066:1.3.1"
+          ports:
+            - containerPort: 8066
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "26s"}
+            - name: RATIO
+              value: '0.66'
+          resources: {limits: {cpu: 166m, memory: 192Mi}}
+          args: ["--port", "8066", '--verbose']
+      weight: 6.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00067
+  namespace: team-7
+  labels:
+    app: service-00067
+    tier: backend
+    version: "1.4.2"
+  annotations:
+    description: >
+      Service number 67, generated for the YAML::Native
+      benchmark; it listens on port 8067.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00067
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00067:1.4.2"
+          ports:
+            - containerPort: 8067
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "27s"}
+            - name: RATIO
+              value: '0.67'
+          resources: {limits: {cpu: 167m, memory: 256Mi}}
+          args: ["--port", "8067", '--verbose']
+      weight: 6.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00068
+  namespace: team-8
+  labels:
+    app: service-00068
+    tier: worker
+    version: "1.5.3"
+  annotations:
+    description: >
+      Service number 68, generated for the YAML::Native
+      benchmark; it listens on port 8068.
+spec:
+  replicas: 4
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00068
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00068:1.5.3"
+          ports:
+            - containerPort: 8068
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "28s"}
+            - name: RATIO
+              value: '0.68'
+          resources: {limits: {cpu: 168m, memory: 320Mi}}
+          args: ["--port", "8068", '--verbose']
+      weight: 6.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00069
+  namespace: team-9
+  labels:
+    app: service-00069
+    tier: frontend
+    version: "1.6.4"
+  annotations:
+    description: >
+      Service number 69, generated for the YAML::Native
+      benchmark; it listens on port 8069.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00069
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00069:1.6.4"
+          ports:
+            - containerPort: 8069
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "29s"}
+            - name: RATIO
+              value: '0.69'
+          resources: {limits: {cpu: 169m, memory: 384Mi}}
+          args: ["--port", "8069", '--verbose']
+      weight: 6.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00070-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 10
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 130
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00070 --config /etc/service-00070.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00071
+  namespace: team-11
+  labels:
+    app: service-00071
+    tier: worker
+    version: "1.1.6"
+  annotations:
+    description: >
+      Service number 71, generated for the YAML::Native
+      benchmark; it listens on port 8071.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00071
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00071:1.1.6"
+          ports:
+            - containerPort: 8071
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "31s"}
+            - name: RATIO
+              value: '0.71'
+          resources: {limits: {cpu: 171m, memory: 512Mi}}
+          args: ["--port", "8071", '--verbose']
+      weight: 7.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00072
+  namespace: team-0
+  labels:
+    app: service-00072
+    tier: frontend
+    version: "1.2.7"
+  annotations:
+    description: >
+      Service number 72, generated for the YAML::Native
+      benchmark; it listens on port 8072.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00072
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00072:1.2.7"
+          ports:
+            - containerPort: 8072
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "32s"}
+            - name: RATIO
+              value: '0.72'
+          resources: {limits: {cpu: 172m, memory: 64Mi}}
+          args: ["--port", "8072", '--verbose']
+      weight: 7.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00073
+  namespace: team-1
+  labels:
+    app: service-00073
+    tier: backend
+    version: "1.3.8"
+  annotations:
+    description: >
+      Service number 73, generated for the YAML::Native
+      benchmark; it listens on port 8073.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00073
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00073:1.3.8"
+          ports:
+            - containerPort: 8073
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "33s"}
+            - name: RATIO
+              value: '0.73'
+          resources: {limits: {cpu: 173m, memory: 128Mi}}
+          args: ["--port", "8073", '--verbose']
+      weight: 7.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00074
+  namespace: team-2
+  labels:
+    app: service-00074
+    tier: worker
+    version: "1.4.9"
+  annotations:
+    description: >
+      Service number 74, generated for the YAML::Native
+      benchmark; it listens on port 8074.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00074
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00074:1.4.9"
+          ports:
+            - containerPort: 8074
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "34s"}
+            - name: RATIO
+              value: '0.74'
+          resources: {limits: {cpu: 174m, memory: 192Mi}}
+          args: ["--port", "8074", '--verbose']
+      weight: 7.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00075
+  namespace: team-3
+  labels:
+    app: service-00075
+    tier: frontend
+    version: "1.5.10"
+  annotations:
+    description: >
+      Service number 75, generated for the YAML::Native
+      benchmark; it listens on port 8075.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00075
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00075:1.5.10"
+          ports:
+            - containerPort: 8075
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "35s"}
+            - name: RATIO
+              value: '0.75'
+          resources: {limits: {cpu: 175m, memory: 256Mi}}
+          args: ["--port", "8075", '--verbose']
+      weight: 7.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00076
+  namespace: team-4
+  labels:
+    app: service-00076
+    tier: backend
+    version: "1.6.11"
+  annotations:
+    description: >
+      Service number 76, generated for the YAML::Native
+      benchmark; it listens on port 8076.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00076
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00076:1.6.11"
+          ports:
+            - containerPort: 8076
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "36s"}
+            - name: RATIO
+              value: '0.76'
+          resources: {limits: {cpu: 176m, memory: 320Mi}}
+          args: ["--port", "8076", '--verbose']
+      weight: 7.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00077
+  namespace: team-5
+  labels:
+    app: service-00077
+    tier: worker
+    version: "1.0.12"
+  annotations:
+    description: >
+      Service number 77, generated for the YAML::Native
+      benchmark; it listens on port 8077.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00077
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00077:1.0.12"
+          ports:
+            - containerPort: 8077
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "37s"}
+            - name: RATIO
+              value: '0.77'
+          resources: {limits: {cpu: 177m, memory: 384Mi}}
+          args: ["--port", "8077", '--verbose']
+      weight: 7.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00078
+  namespace: team-6
+  labels:
+    app: service-00078
+    tier: frontend
+    version: "1.1.0"
+  annotations:
+    description: >
+      Service number 78, generated for the YAML::Native
+      benchmark; it listens on port 8078.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00078
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00078:1.1.0"
+          ports:
+            - containerPort: 8078
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "38s"}
+            - name: RATIO
+              value: '0.78'
+          resources: {limits: {cpu: 178m, memory: 448Mi}}
+          args: ["--port", "8078", '--verbose']
+      weight: 7.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00079
+  namespace: team-7
+  labels:
+    app: service-00079
+    tier: backend
+    version: "1.2.1"
+  annotations:
+    description: >
+      Service number 79, generated for the YAML::Native
+      benchmark; it listens on port 8079.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00079
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00079:1.2.1"
+          ports:
+            - containerPort: 8079
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "39s"}
+            - name: RATIO
+              value: '0.79'
+          resources: {limits: {cpu: 179m, memory: 512Mi}}
+          args: ["--port", "8079", '--verbose']
+      weight: 7.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00080-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 20
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 140
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00080 --config /etc/service-00080.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00081
+  namespace: team-9
+  labels:
+    app: service-00081
+    tier: frontend
+    version: "1.4.3"
+  annotations:
+    description: >
+      Service number 81, generated for the YAML::Native
+      benchmark; it listens on port 8081.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00081
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00081:1.4.3"
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "41s"}
+            - name: RATIO
+              value: '0.81'
+          resources: {limits: {cpu: 181m, memory: 128Mi}}
+          args: ["--port", "8081", '--verbose']
+      weight: 8.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00082
+  namespace: team-10
+  labels:
+    app: service-00082
+    tier: backend
+    version: "1.5.4"
+  annotations:
+    description: >
+      Service number 82, generated for the YAML::Native
+      benchmark; it listens on port 8082.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00082
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00082:1.5.4"
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "42s"}
+            - name: RATIO
+              value: '0.82'
+          resources: {limits: {cpu: 182m, memory: 192Mi}}
+          args: ["--port", "8082", '--verbose']
+      weight: 8.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00083
+  namespace: team-11
+  labels:
+    app: service-00083
+    tier: worker
+    version: "1.6.5"
+  annotations:
+    description: >
+      Service number 83, generated for the YAML::Native
+      benchmark; it listens on port 8083.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00083
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00083:1.6.5"
+          ports:
+            - containerPort: 8083
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "43s"}
+            - name: RATIO
+              value: '0.83'
+          resources: {limits: {cpu: 183m, memory: 256Mi}}
+          args: ["--port", "8083", '--verbose']
+      weight: 8.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00084
+  namespace: team-0
+  labels:
+    app: service-00084
+    tier: frontend
+    version: "1.0.6"
+  annotations:
+    description: >
+      Service number 84, generated for the YAML::Native
+      benchmark; it listens on port 8084.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00084
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00084:1.0.6"
+          ports:
+            - containerPort: 8084
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "44s"}
+            - name: RATIO
+              value: '0.84'
+          resources: {limits: {cpu: 184m, memory: 320Mi}}
+          args: ["--port", "8084", '--verbose']
+      weight: 8.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00085
+  namespace: team-1
+  labels:
+    app: service-00085
+    tier: backend
+    version: "1.1.7"
+  annotations:
+    description: >
+      Service number 85, generated for the YAML::Native
+      benchmark; it listens on port 8085.
+spec:
+  replicas: 1
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00085
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00085:1.1.7"
+          ports:
+            - containerPort: 8085
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "45s"}
+            - name: RATIO
+              value: '0.85'
+          resources: {limits: {cpu: 185m, memory: 384Mi}}
+          args: ["--port", "8085", '--verbose']
+      weight: 8.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00086
+  namespace: team-2
+  labels:
+    app: service-00086
+    tier: worker
+    version: "1.2.8"
+  annotations:
+    description: >
+      Service number 86, generated for the YAML::Native
+      benchmark; it listens on port 8086.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00086
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00086:1.2.8"
+          ports:
+            - containerPort: 8086
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "46s"}
+            - name: RATIO
+              value: '0.86'
+          resources: {limits: {cpu: 186m, memory: 448Mi}}
+          args: ["--port", "8086", '--verbose']
+      weight: 8.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00087
+  namespace: team-3
+  labels:
+    app: service-00087
+    tier: frontend
+    version: "1.3.9"
+  annotations:
+    description: >
+      Service number 87, generated for the YAML::Native
+      benchmark; it listens on port 8087.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00087
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00087:1.3.9"
+          ports:
+            - containerPort: 8087
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "47s"}
+            - name: RATIO
+              value: '0.87'
+          resources: {limits: {cpu: 187m, memory: 512Mi}}
+          args: ["--port", "8087", '--verbose']
+      weight: 8.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00088
+  namespace: team-4
+  labels:
+    app: service-00088
+    tier: backend
+    version: "1.4.10"
+  annotations:
+    description: >
+      Service number 88, generated for the YAML::Native
+      benchmark; it listens on port 8088.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00088
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00088:1.4.10"
+          ports:
+            - containerPort: 8088
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "48s"}
+            - name: RATIO
+              value: '0.88'
+          resources: {limits: {cpu: 188m, memory: 64Mi}}
+          args: ["--port", "8088", '--verbose']
+      weight: 8.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00089
+  namespace: team-5
+  labels:
+    app: service-00089
+    tier: worker
+    version: "1.5.11"
+  annotations:
+    description: >
+      Service number 89, generated for the YAML::Native
+      benchmark; it listens on port 8089.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00089
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00089:1.5.11"
+          ports:
+            - containerPort: 8089
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "49s"}
+            - name: RATIO
+              value: '0.89'
+          resources: {limits: {cpu: 189m, memory: 128Mi}}
+          args: ["--port", "8089", '--verbose']
+      weight: 8.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00090-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 30
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 150
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00090 --config /etc/service-00090.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00091
+  namespace: team-7
+  labels:
+    app: service-00091
+    tier: backend
+    version: "1.0.0"
+  annotations:
+    description: >
+      Service number 91, generated for the YAML::Native
+      benchmark; it listens on port 8091.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00091
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00091:1.0.0"
+          ports:
+            - containerPort: 8091
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "51s"}
+            - name: RATIO
+              value: '0.91'
+          resources: {limits: {cpu: 191m, memory: 256Mi}}
+          args: ["--port", "8091", '--verbose']
+      weight: 9.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00092
+  namespace: team-8
+  labels:
+    app: service-00092
+    tier: worker
+    version: "1.1.1"
+  annotations:
+    description: >
+      Service number 92, generated for the YAML::Native
+      benchmark; it listens on port 8092.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00092
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00092:1.1.1"
+          ports:
+            - containerPort: 8092
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "52s"}
+            - name: RATIO
+              value: '0.92'
+          resources: {limits: {cpu: 192m, memory: 320Mi}}
+          args: ["--port", "8092", '--verbose']
+      weight: 9.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00093
+  namespace: team-9
+  labels:
+    app: service-00093
+    tier: frontend
+    version: "1.2.2"
+  annotations:
+    description: >
+      Service number 93, generated for the YAML::Native
+      benchmark; it listens on port 8093.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00093
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00093:1.2.2"
+          ports:
+            - containerPort: 8093
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "53s"}
+            - name: RATIO
+              value: '0.93'
+          resources: {limits: {cpu: 193m, memory: 384Mi}}
+          args: ["--port", "8093", '--verbose']
+      weight: 9.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00094
+  namespace: team-10
+  labels:
+    app: service-00094
+    tier: backend
+    version: "1.3.3"
+  annotations:
+    description: >
+      Service number 94, generated for the YAML::Native
+      benchmark; it listens on port 8094.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00094
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00094:1.3.3"
+          ports:
+            - containerPort: 8094
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "54s"}
+            - name: RATIO
+              value: '0.94'
+          resources: {limits: {cpu: 194m, memory: 448Mi}}
+          args: ["--port", "8094", '--verbose']
+      weight: 9.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00095
+  namespace: team-11
+  labels:
+    app: service-00095
+    tier: worker
+    version: "1.4.4"
+  annotations:
+    description: >
+      Service number 95, generated for the YAML::Native
+      benchmark; it listens on port 8095.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00095
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00095:1.4.4"
+          ports:
+            - containerPort: 8095
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "55s"}
+            - name: RATIO
+              value: '0.95'
+          resources: {limits: {cpu: 195m, memory: 512Mi}}
+          args: ["--port", "8095", '--verbose']
+      weight: 9.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00096
+  namespace: team-0
+  labels:
+    app: service-00096
+    tier: frontend
+    version: "1.5.5"
+  annotations:
+    description: >
+      Service number 96, generated for the YAML::Native
+      benchmark; it listens on port 8096.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00096
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00096:1.5.5"
+          ports:
+            - containerPort: 8096
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "56s"}
+            - name: RATIO
+              value: '0.96'
+          resources: {limits: {cpu: 196m, memory: 64Mi}}
+          args: ["--port", "8096", '--verbose']
+      weight: 9.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00097
+  namespace: team-1
+  labels:
+    app: service-00097
+    tier: backend
+    version: "1.6.6"
+  annotations:
+    description: >
+      Service number 97, generated for the YAML::Native
+      benchmark; it listens on port 8097.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00097
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00097:1.6.6"
+          ports:
+            - containerPort: 8097
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "57s"}
+            - name: RATIO
+              value: '0.0'
+          resources: {limits: {cpu: 197m, memory: 128Mi}}
+          args: ["--port", "8097", '--verbose']
+      weight: 9.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00098
+  namespace: team-2
+  labels:
+    app: service-00098
+    tier: worker
+    version: "1.0.7"
+  annotations:
+    description: >
+      Service number 98, generated for the YAML::Native
+      benchmark; it listens on port 8098.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00098
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00098:1.0.7"
+          ports:
+            - containerPort: 8098
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "58s"}
+            - name: RATIO
+              value: '0.1'
+          resources: {limits: {cpu: 198m, memory: 192Mi}}
+          args: ["--port", "8098", '--verbose']
+      weight: 9.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00099
+  namespace: team-3
+  labels:
+    app: service-00099
+    tier: frontend
+    version: "1.1.8"
+  annotations:
+    description: >
+      Service number 99, generated for the YAML::Native
+      benchmark; it listens on port 8099.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00099
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00099:1.1.8"
+          ports:
+            - containerPort: 8099
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "59s"}
+            - name: RATIO
+              value: '0.2'
+          resources: {limits: {cpu: 199m, memory: 256Mi}}
+          args: ["--port", "8099", '--verbose']
+      weight: 9.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00100-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 40
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 160
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00100 --config /etc/service-00100.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00101
+  namespace: team-5
+  labels:
+    app: service-00101
+    tier: worker
+    version: "1.3.10"
+  annotations:
+    description: >
+      Service number 101, generated for the YAML::Native
+      benchmark; it listens on port 8101.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00101
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00101:1.3.10"
+          ports:
+            - containerPort: 8101
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "11s"}
+            - name: RATIO
+              value: '0.4'
+          resources: {limits: {cpu: 201m, memory: 384Mi}}
+          args: ["--port", "8101", '--verbose']
+      weight: 0.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00102
+  namespace: team-6
+  labels:
+    app: service-00102
+    tier: frontend
+    version: "1.4.11"
+  annotations:
+    description: >
+      Service number 102, generated for the YAML::Native
+      benchmark; it listens on port 8102.
+spec:
+  replicas: 3
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00102
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00102:1.4.11"
+          ports:
+            - containerPort: 8102
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "12s"}
+            - name: RATIO
+              value: '0.5'
+          resources: {limits: {cpu: 202m, memory: 448Mi}}
+          args: ["--port", "8102", '--verbose']
+      weight: 0.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00103
+  namespace: team-7
+  labels:
+    app: service-00103
+    tier: backend
+    version: "1.5.12"
+  annotations:
+    description: >
+      Service number 103, generated for the YAML::Native
+      benchmark; it listens on port 8103.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00103
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00103:1.5.12"
+          ports:
+            - containerPort: 8103
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "13s"}
+            - name: RATIO
+              value: '0.6'
+          resources: {limits: {cpu: 203m, memory: 512Mi}}
+          args: ["--port", "8103", '--verbose']
+      weight: 0.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00104
+  namespace: team-8
+  labels:
+    app: service-00104
+    tier: worker
+    version: "1.6.0"
+  annotations:
+    description: >
+      Service number 104, generated for the YAML::Native
+      benchmark; it listens on port 8104.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00104
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00104:1.6.0"
+          ports:
+            - containerPort: 8104
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "14s"}
+            - name: RATIO
+              value: '0.7'
+          resources: {limits: {cpu: 204m, memory: 64Mi}}
+          args: ["--port", "8104", '--verbose']
+      weight: 0.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00105
+  namespace: team-9
+  labels:
+    app: service-00105
+    tier: frontend
+    version: "1.0.1"
+  annotations:
+    description: >
+      Service number 105, generated for the YAML::Native
+      benchmark; it listens on port 8105.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00105
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00105:1.0.1"
+          ports:
+            - containerPort: 8105
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "15s"}
+            - name: RATIO
+              value: '0.8'
+          resources: {limits: {cpu: 205m, memory: 128Mi}}
+          args: ["--port", "8105", '--verbose']
+      weight: 0.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00106
+  namespace: team-10
+  labels:
+    app: service-00106
+    tier: backend
+    version: "1.1.2"
+  annotations:
+    description: >
+      Service number 106, generated for the YAML::Native
+      benchmark; it listens on port 8106.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00106
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00106:1.1.2"
+          ports:
+            - containerPort: 8106
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "16s"}
+            - name: RATIO
+              value: '0.9'
+          resources: {limits: {cpu: 206m, memory: 192Mi}}
+          args: ["--port", "8106", '--verbose']
+      weight: 0.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00107
+  namespace: team-11
+  labels:
+    app: service-00107
+    tier: worker
+    version: "1.2.3"
+  annotations:
+    description: >
+      Service number 107, generated for the YAML::Native
+      benchmark; it listens on port 8107.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00107
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00107:1.2.3"
+          ports:
+            - containerPort: 8107
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "17s"}
+            - name: RATIO
+              value: '0.10'
+          resources: {limits: {cpu: 207m, memory: 256Mi}}
+          args: ["--port", "8107", '--verbose']
+      weight: 0.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00108
+  namespace: team-0
+  labels:
+    app: service-00108
+    tier: frontend
+    version: "1.3.4"
+  annotations:
+    description: >
+      Service number 108, generated for the YAML::Native
+      benchmark; it listens on port 8108.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00108
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00108:1.3.4"
+          ports:
+            - containerPort: 8108
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "18s"}
+            - name: RATIO
+              value: '0.11'
+          resources: {limits: {cpu: 208m, memory: 320Mi}}
+          args: ["--port", "8108", '--verbose']
+      weight: 0.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00109
+  namespace: team-1
+  labels:
+    app: service-00109
+    tier: backend
+    version: "1.4.5"
+  annotations:
+    description: >
+      Service number 109, generated for the YAML::Native
+      benchmark; it listens on port 8109.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00109
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00109:1.4.5"
+          ports:
+            - containerPort: 8109
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "19s"}
+            - name: RATIO
+              value: '0.12'
+          resources: {limits: {cpu: 209m, memory: 384Mi}}
+          args: ["--port", "8109", '--verbose']
+      weight: 0.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00110-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 50
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 170
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00110 --config /etc/service-00110.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00111
+  namespace: team-3
+  labels:
+    app: service-00111
+    tier: frontend
+    version: "1.6.7"
+  annotations:
+    description: >
+      Service number 111, generated for the YAML::Native
+      benchmark; it listens on port 8111.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00111
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00111:1.6.7"
+          ports:
+            - containerPort: 8111
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "21s"}
+            - name: RATIO
+              value: '0.14'
+          resources: {limits: {cpu: 211m, memory: 512Mi}}
+          args: ["--port", "8111", '--verbose']
+      weight: 1.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00112
+  namespace: team-4
+  labels:
+    app: service-00112
+    tier: backend
+    version: "1.0.8"
+  annotations:
+    description: >
+      Service number 112, generated for the YAML::Native
+      benchmark; it listens on port 8112.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00112
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00112:1.0.8"
+          ports:
+            - containerPort: 8112
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "22s"}
+            - name: RATIO
+              value: '0.15'
+          resources: {limits: {cpu: 212m, memory: 64Mi}}
+          args: ["--port", "8112", '--verbose']
+      weight: 1.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00113
+  namespace: team-5
+  labels:
+    app: service-00113
+    tier: worker
+    version: "1.1.9"
+  annotations:
+    description: >
+      Service number 113, generated for the YAML::Native
+      benchmark; it listens on port 8113.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00113
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00113:1.1.9"
+          ports:
+            - containerPort: 8113
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "23s"}
+            - name: RATIO
+              value: '0.16'
+          resources: {limits: {cpu: 213m, memory: 128Mi}}
+          args: ["--port", "8113", '--verbose']
+      weight: 1.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00114
+  namespace: team-6
+  labels:
+    app: service-00114
+    tier: frontend
+    version: "1.2.10"
+  annotations:
+    description: >
+      Service number 114, generated for the YAML::Native
+      benchmark; it listens on port 8114.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00114
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00114:1.2.10"
+          ports:
+            - containerPort: 8114
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "24s"}
+            - name: RATIO
+              value: '0.17'
+          resources: {limits: {cpu: 214m, memory: 192Mi}}
+          args: ["--port", "8114", '--verbose']
+      weight: 1.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00115
+  namespace: team-7
+  labels:
+    app: service-00115
+    tier: backend
+    version: "1.3.11"
+  annotations:
+    description: >
+      Service number 115, generated for the YAML::Native
+      benchmark; it listens on port 8115.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00115
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00115:1.3.11"
+          ports:
+            - containerPort: 8115
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "25s"}
+            - name: RATIO
+              value: '0.18'
+          resources: {limits: {cpu: 215m, memory: 256Mi}}
+          args: ["--port", "8115", '--verbose']
+      weight: 1.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00116
+  namespace: team-8
+  labels:
+    app: service-00116
+    tier: worker
+    version: "1.4.12"
+  annotations:
+    description: >
+      Service number 116, generated for the YAML::Native
+      benchmark; it listens on port 8116.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00116
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00116:1.4.12"
+          ports:
+            - containerPort: 8116
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "26s"}
+            - name: RATIO
+              value: '0.19'
+          resources: {limits: {cpu: 216m, memory: 320Mi}}
+          args: ["--port", "8116", '--verbose']
+      weight: 1.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00117
+  namespace: team-9
+  labels:
+    app: service-00117
+    tier: frontend
+    version: "1.5.0"
+  annotations:
+    description: >
+      Service number 117, generated for the YAML::Native
+      benchmark; it listens on port 8117.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00117
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00117:1.5.0"
+          ports:
+            - containerPort: 8117
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "27s"}
+            - name: RATIO
+              value: '0.20'
+          resources: {limits: {cpu: 217m, memory: 384Mi}}
+          args: ["--port", "8117", '--verbose']
+      weight: 1.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00118
+  namespace: team-10
+  labels:
+    app: service-00118
+    tier: backend
+    version: "1.6.1"
+  annotations:
+    description: >
+      Service number 118, generated for the YAML::Native
+      benchmark; it listens on port 8118.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00118
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00118:1.6.1"
+          ports:
+            - containerPort: 8118
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "28s"}
+            - name: RATIO
+              value: '0.21'
+          resources: {limits: {cpu: 218m, memory: 448Mi}}
+          args: ["--port", "8118", '--verbose']
+      weight: 1.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00119
+  namespace: team-11
+  labels:
+    app: service-00119
+    tier: worker
+    version: "1.0.2"
+  annotations:
+    description: >
+      Service number 119, generated for the YAML::Native
+      benchmark; it listens on port 8119.
+spec:
+  replicas: 5
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00119
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00119:1.0.2"
+          ports:
+            - containerPort: 8119
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "29s"}
+            - name: RATIO
+              value: '0.22'
+          resources: {limits: {cpu: 219m, memory: 512Mi}}
+          args: ["--port", "8119", '--verbose']
+      weight: 1.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00120-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 0
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 120
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00120 --config /etc/service-00120.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00121
+  namespace: team-1
+  labels:
+    app: service-00121
+    tier: backend
+    version: "1.2.4"
+  annotations:
+    description: >
+      Service number 121, generated for the YAML::Native
+      benchmark; it listens on port 8121.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00121
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00121:1.2.4"
+          ports:
+            - containerPort: 8121
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "31s"}
+            - name: RATIO
+              value: '0.24'
+          resources: {limits: {cpu: 221m, memory: 128Mi}}
+          args: ["--port", "8121", '--verbose']
+      weight: 2.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00122
+  namespace: team-2
+  labels:
+    app: service-00122
+    tier: worker
+    version: "1.3.5"
+  annotations:
+    description: >
+      Service number 122, generated for the YAML::Native
+      benchmark; it listens on port 8122.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00122
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00122:1.3.5"
+          ports:
+            - containerPort: 8122
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "32s"}
+            - name: RATIO
+              value: '0.25'
+          resources: {limits: {cpu: 222m, memory: 192Mi}}
+          args: ["--port", "8122", '--verbose']
+      weight: 2.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00123
+  namespace: team-3
+  labels:
+    app: service-00123
+    tier: frontend
+    version: "1.4.6"
+  annotations:
+    description: >
+      Service number 123, generated for the YAML::Native
+      benchmark; it listens on port 8123.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00123
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00123:1.4.6"
+          ports:
+            - containerPort: 8123
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "33s"}
+            - name: RATIO
+              value: '0.26'
+          resources: {limits: {cpu: 223m, memory: 256Mi}}
+          args: ["--port", "8123", '--verbose']
+      weight: 2.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00124
+  namespace: team-4
+  labels:
+    app: service-00124
+    tier: backend
+    version: "1.5.7"
+  annotations:
+    description: >
+      Service number 124, generated for the YAML::Native
+      benchmark; it listens on port 8124.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00124
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00124:1.5.7"
+          ports:
+            - containerPort: 8124
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "34s"}
+            - name: RATIO
+              value: '0.27'
+          resources: {limits: {cpu: 224m, memory: 320Mi}}
+          args: ["--port", "8124", '--verbose']
+      weight: 2.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00125
+  namespace: team-5
+  labels:
+    app: service-00125
+    tier: worker
+    version: "1.6.8"
+  annotations:
+    description: >
+      Service number 125, generated for the YAML::Native
+      benchmark; it listens on port 8125.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00125
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00125:1.6.8"
+          ports:
+            - containerPort: 8125
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "35s"}
+            - name: RATIO
+              value: '0.28'
+          resources: {limits: {cpu: 225m, memory: 384Mi}}
+          args: ["--port", "8125", '--verbose']
+      weight: 2.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00126
+  namespace: team-6
+  labels:
+    app: service-00126
+    tier: frontend
+    version: "1.0.9"
+  annotations:
+    description: >
+      Service number 126, generated for the YAML::Native
+      benchmark; it listens on port 8126.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00126
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00126:1.0.9"
+          ports:
+            - containerPort: 8126
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "36s"}
+            - name: RATIO
+              value: '0.29'
+          resources: {limits: {cpu: 226m, memory: 448Mi}}
+          args: ["--port", "8126", '--verbose']
+      weight: 2.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00127
+  namespace: team-7
+  labels:
+    app: service-00127
+    tier: backend
+    version: "1.1.10"
+  annotations:
+    description: >
+      Service number 127, generated for the YAML::Native
+      benchmark; it listens on port 8127.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00127
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00127:1.1.10"
+          ports:
+            - containerPort: 8127
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "37s"}
+            - name: RATIO
+              value: '0.30'
+          resources: {limits: {cpu: 227m, memory: 512Mi}}
+          args: ["--port", "8127", '--verbose']
+      weight: 2.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00128
+  namespace: team-8
+  labels:
+    app: service-00128
+    tier: worker
+    version: "1.2.11"
+  annotations:
+    description: >
+      Service number 128, generated for the YAML::Native
+      benchmark; it listens on port 8128.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00128
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00128:1.2.11"
+          ports:
+            - containerPort: 8128
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "38s"}
+            - name: RATIO
+              value: '0.31'
+          resources: {limits: {cpu: 228m, memory: 64Mi}}
+          args: ["--port", "8128", '--verbose']
+      weight: 2.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00129
+  namespace: team-9
+  labels:
+    app: service-00129
+    tier: frontend
+    version: "1.3.12"
+  annotations:
+    description: >
+      Service number 129, generated for the YAML::Native
+      benchmark; it listens on port 8129.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00129
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00129:1.3.12"
+          ports:
+            - containerPort: 8129
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "39s"}
+            - name: RATIO
+              value: '0.32'
+          resources: {limits: {cpu: 229m, memory: 128Mi}}
+          args: ["--port", "8129", '--verbose']
+      weight: 2.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00130-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 10
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 130
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00130 --config /etc/service-00130.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00131
+  namespace: team-11
+  labels:
+    app: service-00131
+    tier: worker
+    version: "1.5.1"
+  annotations:
+    description: >
+      Service number 131, generated for the YAML::Native
+      benchmark; it listens on port 8131.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00131
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00131:1.5.1"
+          ports:
+            - containerPort: 8131
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "41s"}
+            - name: RATIO
+              value: '0.34'
+          resources: {limits: {cpu: 231m, memory: 256Mi}}
+          args: ["--port", "8131", '--verbose']
+      weight: 3.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00132
+  namespace: team-0
+  labels:
+    app: service-00132
+    tier: frontend
+    version: "1.6.2"
+  annotations:
+    description: >
+      Service number 132, generated for the YAML::Native
+      benchmark; it listens on port 8132.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00132
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00132:1.6.2"
+          ports:
+            - containerPort: 8132
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "42s"}
+            - name: RATIO
+              value: '0.35'
+          resources: {limits: {cpu: 232m, memory: 320Mi}}
+          args: ["--port", "8132", '--verbose']
+      weight: 3.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00133
+  namespace: team-1
+  labels:
+    app: service-00133
+    tier: backend
+    version: "1.0.3"
+  annotations:
+    description: >
+      Service number 133, generated for the YAML::Native
+      benchmark; it listens on port 8133.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00133
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00133:1.0.3"
+          ports:
+            - containerPort: 8133
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "43s"}
+            - name: RATIO
+              value: '0.36'
+          resources: {limits: {cpu: 233m, memory: 384Mi}}
+          args: ["--port", "8133", '--verbose']
+      weight: 3.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00134
+  namespace: team-2
+  labels:
+    app: service-00134
+    tier: worker
+    version: "1.1.4"
+  annotations:
+    description: >
+      Service number 134, generated for the YAML::Native
+      benchmark; it listens on port 8134.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00134
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00134:1.1.4"
+          ports:
+            - containerPort: 8134
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "44s"}
+            - name: RATIO
+              value: '0.37'
+          resources: {limits: {cpu: 234m, memory: 448Mi}}
+          args: ["--port", "8134", '--verbose']
+      weight: 3.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00135
+  namespace: team-3
+  labels:
+    app: service-00135
+    tier: frontend
+    version: "1.2.5"
+  annotations:
+    description: >
+      Service number 135, generated for the YAML::Native
+      benchmark; it listens on port 8135.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00135
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00135:1.2.5"
+          ports:
+            - containerPort: 8135
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "45s"}
+            - name: RATIO
+              value: '0.38'
+          resources: {limits: {cpu: 235m, memory: 512Mi}}
+          args: ["--port", "8135", '--verbose']
+      weight: 3.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00136
+  namespace: team-4
+  labels:
+    app: service-00136
+    tier: backend
+    version: "1.3.6"
+  annotations:
+    description: >
+      Service number 136, generated for the YAML::Native
+      benchmark; it listens on port 8136.
+spec:
+  replicas: 2
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00136
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00136:1.3.6"
+          ports:
+            - containerPort: 8136
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "46s"}
+            - name: RATIO
+              value: '0.39'
+          resources: {limits: {cpu: 236m, memory: 64Mi}}
+          args: ["--port", "8136", '--verbose']
+      weight: 3.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00137
+  namespace: team-5
+  labels:
+    app: service-00137
+    tier: worker
+    version: "1.4.7"
+  annotations:
+    description: >
+      Service number 137, generated for the YAML::Native
+      benchmark; it listens on port 8137.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00137
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00137:1.4.7"
+          ports:
+            - containerPort: 8137
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "47s"}
+            - name: RATIO
+              value: '0.40'
+          resources: {limits: {cpu: 237m, memory: 128Mi}}
+          args: ["--port", "8137", '--verbose']
+      weight: 3.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00138
+  namespace: team-6
+  labels:
+    app: service-00138
+    tier: frontend
+    version: "1.5.8"
+  annotations:
+    description: >
+      Service number 138, generated for the YAML::Native
+      benchmark; it listens on port 8138.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00138
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00138:1.5.8"
+          ports:
+            - containerPort: 8138
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "48s"}
+            - name: RATIO
+              value: '0.41'
+          resources: {limits: {cpu: 238m, memory: 192Mi}}
+          args: ["--port", "8138", '--verbose']
+      weight: 3.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00139
+  namespace: team-7
+  labels:
+    app: service-00139
+    tier: backend
+    version: "1.6.9"
+  annotations:
+    description: >
+      Service number 139, generated for the YAML::Native
+      benchmark; it listens on port 8139.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00139
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00139:1.6.9"
+          ports:
+            - containerPort: 8139
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "49s"}
+            - name: RATIO
+              value: '0.42'
+          resources: {limits: {cpu: 239m, memory: 256Mi}}
+          args: ["--port", "8139", '--verbose']
+      weight: 3.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00140-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 20
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 140
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00140 --config /etc/service-00140.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00141
+  namespace: team-9
+  labels:
+    app: service-00141
+    tier: frontend
+    version: "1.1.11"
+  annotations:
+    description: >
+      Service number 141, generated for the YAML::Native
+      benchmark; it listens on port 8141.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00141
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00141:1.1.11"
+          ports:
+            - containerPort: 8141
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "51s"}
+            - name: RATIO
+              value: '0.44'
+          resources: {limits: {cpu: 241m, memory: 384Mi}}
+          args: ["--port", "8141", '--verbose']
+      weight: 4.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00142
+  namespace: team-10
+  labels:
+    app: service-00142
+    tier: backend
+    version: "1.2.12"
+  annotations:
+    description: >
+      Service number 142, generated for the YAML::Native
+      benchmark; it listens on port 8142.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00142
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00142:1.2.12"
+          ports:
+            - containerPort: 8142
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "52s"}
+            - name: RATIO
+              value: '0.45'
+          resources: {limits: {cpu: 242m, memory: 448Mi}}
+          args: ["--port", "8142", '--verbose']
+      weight: 4.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00143
+  namespace: team-11
+  labels:
+    app: service-00143
+    tier: worker
+    version: "1.3.0"
+  annotations:
+    description: >
+      Service number 143, generated for the YAML::Native
+      benchmark; it listens on port 8143.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00143
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00143:1.3.0"
+          ports:
+            - containerPort: 8143
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "53s"}
+            - name: RATIO
+              value: '0.46'
+          resources: {limits: {cpu: 243m, memory: 512Mi}}
+          args: ["--port", "8143", '--verbose']
+      weight: 4.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00144
+  namespace: team-0
+  labels:
+    app: service-00144
+    tier: frontend
+    version: "1.4.1"
+  annotations:
+    description: >
+      Service number 144, generated for the YAML::Native
+      benchmark; it listens on port 8144.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00144
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00144:1.4.1"
+          ports:
+            - containerPort: 8144
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "54s"}
+            - name: RATIO
+              value: '0.47'
+          resources: {limits: {cpu: 244m, memory: 64Mi}}
+          args: ["--port", "8144", '--verbose']
+      weight: 4.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00145
+  namespace: team-1
+  labels:
+    app: service-00145
+    tier: backend
+    version: "1.5.2"
+  annotations:
+    description: >
+      Service number 145, generated for the YAML::Native
+      benchmark; it listens on port 8145.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00145
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00145:1.5.2"
+          ports:
+            - containerPort: 8145
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "55s"}
+            - name: RATIO
+              value: '0.48'
+          resources: {limits: {cpu: 245m, memory: 128Mi}}
+          args: ["--port", "8145", '--verbose']
+      weight: 4.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00146
+  namespace: team-2
+  labels:
+    app: service-00146
+    tier: worker
+    version: "1.6.3"
+  annotations:
+    description: >
+      Service number 146, generated for the YAML::Native
+      benchmark; it listens on port 8146.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00146
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00146:1.6.3"
+          ports:
+            - containerPort: 8146
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "56s"}
+            - name: RATIO
+              value: '0.49'
+          resources: {limits: {cpu: 246m, memory: 192Mi}}
+          args: ["--port", "8146", '--verbose']
+      weight: 4.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00147
+  namespace: team-3
+  labels:
+    app: service-00147
+    tier: frontend
+    version: "1.0.4"
+  annotations:
+    description: >
+      Service number 147, generated for the YAML::Native
+      benchmark; it listens on port 8147.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00147
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00147:1.0.4"
+          ports:
+            - containerPort: 8147
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "57s"}
+            - name: RATIO
+              value: '0.50'
+          resources: {limits: {cpu: 247m, memory: 256Mi}}
+          args: ["--port", "8147", '--verbose']
+      weight: 4.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00148
+  namespace: team-4
+  labels:
+    app: service-00148
+    tier: backend
+    version: "1.1.5"
+  annotations:
+    description: >
+      Service number 148, generated for the YAML::Native
+      benchmark; it listens on port 8148.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00148
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00148:1.1.5"
+          ports:
+            - containerPort: 8148
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "58s"}
+            - name: RATIO
+              value: '0.51'
+          resources: {limits: {cpu: 248m, memory: 320Mi}}
+          args: ["--port", "8148", '--verbose']
+      weight: 4.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00149
+  namespace: team-5
+  labels:
+    app: service-00149
+    tier: worker
+    version: "1.2.6"
+  annotations:
+    description: >
+      Service number 149, generated for the YAML::Native
+      benchmark; it listens on port 8149.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00149
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00149:1.2.6"
+          ports:
+            - containerPort: 8149
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "59s"}
+            - name: RATIO
+              value: '0.52'
+          resources: {limits: {cpu: 249m, memory: 384Mi}}
+          args: ["--port", "8149", '--verbose']
+      weight: 4.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00150-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 30
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 150
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00150 --config /etc/service-00150.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00151
+  namespace: team-7
+  labels:
+    app: service-00151
+    tier: backend
+    version: "1.4.8"
+  annotations:
+    description: >
+      Service number 151, generated for the YAML::Native
+      benchmark; it listens on port 8151.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00151
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00151:1.4.8"
+          ports:
+            - containerPort: 8151
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "11s"}
+            - name: RATIO
+              value: '0.54'
+          resources: {limits: {cpu: 251m, memory: 512Mi}}
+          args: ["--port", "8151", '--verbose']
+      weight: 5.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00152
+  namespace: team-8
+  labels:
+    app: service-00152
+    tier: worker
+    version: "1.5.9"
+  annotations:
+    description: >
+      Service number 152, generated for the YAML::Native
+      benchmark; it listens on port 8152.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00152
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00152:1.5.9"
+          ports:
+            - containerPort: 8152
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "12s"}
+            - name: RATIO
+              value: '0.55'
+          resources: {limits: {cpu: 252m, memory: 64Mi}}
+          args: ["--port", "8152", '--verbose']
+      weight: 5.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00153
+  namespace: team-9
+  labels:
+    app: service-00153
+    tier: frontend
+    version: "1.6.10"
+  annotations:
+    description: >
+      Service number 153, generated for the YAML::Native
+      benchmark; it listens on port 8153.
+spec:
+  replicas: 4
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00153
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00153:1.6.10"
+          ports:
+            - containerPort: 8153
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "13s"}
+            - name: RATIO
+              value: '0.56'
+          resources: {limits: {cpu: 253m, memory: 128Mi}}
+          args: ["--port", "8153", '--verbose']
+      weight: 5.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00154
+  namespace: team-10
+  labels:
+    app: service-00154
+    tier: backend
+    version: "1.0.11"
+  annotations:
+    description: >
+      Service number 154, generated for the YAML::Native
+      benchmark; it listens on port 8154.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00154
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00154:1.0.11"
+          ports:
+            - containerPort: 8154
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "14s"}
+            - name: RATIO
+              value: '0.57'
+          resources: {limits: {cpu: 254m, memory: 192Mi}}
+          args: ["--port", "8154", '--verbose']
+      weight: 5.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00155
+  namespace: team-11
+  labels:
+    app: service-00155
+    tier: worker
+    version: "1.1.12"
+  annotations:
+    description: >
+      Service number 155, generated for the YAML::Native
+      benchmark; it listens on port 8155.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00155
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00155:1.1.12"
+          ports:
+            - containerPort: 8155
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "15s"}
+            - name: RATIO
+              value: '0.58'
+          resources: {limits: {cpu: 255m, memory: 256Mi}}
+          args: ["--port", "8155", '--verbose']
+      weight: 5.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00156
+  namespace: team-0
+  labels:
+    app: service-00156
+    tier: frontend
+    version: "1.2.0"
+  annotations:
+    description: >
+      Service number 156, generated for the YAML::Native
+      benchmark; it listens on port 8156.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00156
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00156:1.2.0"
+          ports:
+            - containerPort: 8156
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "16s"}
+            - name: RATIO
+              value: '0.59'
+          resources: {limits: {cpu: 256m, memory: 320Mi}}
+          args: ["--port", "8156", '--verbose']
+      weight: 5.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00157
+  namespace: team-1
+  labels:
+    app: service-00157
+    tier: backend
+    version: "1.3.1"
+  annotations:
+    description: >
+      Service number 157, generated for the YAML::Native
+      benchmark; it listens on port 8157.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00157
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00157:1.3.1"
+          ports:
+            - containerPort: 8157
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "17s"}
+            - name: RATIO
+              value: '0.60'
+          resources: {limits: {cpu: 257m, memory: 384Mi}}
+          args: ["--port", "8157", '--verbose']
+      weight: 5.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00158
+  namespace: team-2
+  labels:
+    app: service-00158
+    tier: worker
+    version: "1.4.2"
+  annotations:
+    description: >
+      Service number 158, generated for the YAML::Native
+      benchmark; it listens on port 8158.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00158
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00158:1.4.2"
+          ports:
+            - containerPort: 8158
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "18s"}
+            - name: RATIO
+              value: '0.61'
+          resources: {limits: {cpu: 258m, memory: 448Mi}}
+          args: ["--port", "8158", '--verbose']
+      weight: 5.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00159
+  namespace: team-3
+  labels:
+    app: service-00159
+    tier: frontend
+    version: "1.5.3"
+  annotations:
+    description: >
+      Service number 159, generated for the YAML::Native
+      benchmark; it listens on port 8159.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00159
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00159:1.5.3"
+          ports:
+            - containerPort: 8159
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "19s"}
+            - name: RATIO
+              value: '0.62'
+          resources: {limits: {cpu: 259m, memory: 512Mi}}
+          args: ["--port", "8159", '--verbose']
+      weight: 5.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00160-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 40
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 160
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00160 --config /etc/service-00160.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00161
+  namespace: team-5
+  labels:
+    app: service-00161
+    tier: worker
+    version: "1.0.5"
+  annotations:
+    description: >
+      Service number 161, generated for the YAML::Native
+      benchmark; it listens on port 8161.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00161
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00161:1.0.5"
+          ports:
+            - containerPort: 8161
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "21s"}
+            - name: RATIO
+              value: '0.64'
+          resources: {limits: {cpu: 261m, memory: 128Mi}}
+          args: ["--port", "8161", '--verbose']
+      weight: 6.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00162
+  namespace: team-6
+  labels:
+    app: service-00162
+    tier: frontend
+    version: "1.1.6"
+  annotations:
+    description: >
+      Service number 162, generated for the YAML::Native
+      benchmark; it listens on port 8162.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00162
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00162:1.1.6"
+          ports:
+            - containerPort: 8162
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "22s"}
+            - name: RATIO
+              value: '0.65'
+          resources: {limits: {cpu: 262m, memory: 192Mi}}
+          args: ["--port", "8162", '--verbose']
+      weight: 6.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00163
+  namespace: team-7
+  labels:
+    app: service-00163
+    tier: backend
+    version: "1.2.7"
+  annotations:
+    description: >
+      Service number 163, generated for the YAML::Native
+      benchmark; it listens on port 8163.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00163
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00163:1.2.7"
+          ports:
+            - containerPort: 8163
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "23s"}
+            - name: RATIO
+              value: '0.66'
+          resources: {limits: {cpu: 263m, memory: 256Mi}}
+          args: ["--port", "8163", '--verbose']
+      weight: 6.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00164
+  namespace: team-8
+  labels:
+    app: service-00164
+    tier: worker
+    version: "1.3.8"
+  annotations:
+    description: >
+      Service number 164, generated for the YAML::Native
+      benchmark; it listens on port 8164.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00164
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00164:1.3.8"
+          ports:
+            - containerPort: 8164
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "24s"}
+            - name: RATIO
+              value: '0.67'
+          resources: {limits: {cpu: 264m, memory: 320Mi}}
+          args: ["--port", "8164", '--verbose']
+      weight: 6.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00165
+  namespace: team-9
+  labels:
+    app: service-00165
+    tier: frontend
+    version: "1.4.9"
+  annotations:
+    description: >
+      Service number 165, generated for the YAML::Native
+      benchmark; it listens on port 8165.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00165
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00165:1.4.9"
+          ports:
+            - containerPort: 8165
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "25s"}
+            - name: RATIO
+              value: '0.68'
+          resources: {limits: {cpu: 265m, memory: 384Mi}}
+          args: ["--port", "8165", '--verbose']
+      weight: 6.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00166
+  namespace: team-10
+  labels:
+    app: service-00166
+    tier: backend
+    version: "1.5.10"
+  annotations:
+    description: >
+      Service number 166, generated for the YAML::Native
+      benchmark; it listens on port 8166.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00166
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00166:1.5.10"
+          ports:
+            - containerPort: 8166
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "26s"}
+            - name: RATIO
+              value: '0.69'
+          resources: {limits: {cpu: 266m, memory: 448Mi}}
+          args: ["--port", "8166", '--verbose']
+      weight: 6.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00167
+  namespace: team-11
+  labels:
+    app: service-00167
+    tier: worker
+    version: "1.6.11"
+  annotations:
+    description: >
+      Service number 167, generated for the YAML::Native
+      benchmark; it listens on port 8167.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00167
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00167:1.6.11"
+          ports:
+            - containerPort: 8167
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "27s"}
+            - name: RATIO
+              value: '0.70'
+          resources: {limits: {cpu: 267m, memory: 512Mi}}
+          args: ["--port", "8167", '--verbose']
+      weight: 6.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00168
+  namespace: team-0
+  labels:
+    app: service-00168
+    tier: frontend
+    version: "1.0.12"
+  annotations:
+    description: >
+      Service number 168, generated for the YAML::Native
+      benchmark; it listens on port 8168.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00168
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00168:1.0.12"
+          ports:
+            - containerPort: 8168
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "28s"}
+            - name: RATIO
+              value: '0.71'
+          resources: {limits: {cpu: 268m, memory: 64Mi}}
+          args: ["--port", "8168", '--verbose']
+      weight: 6.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00169
+  namespace: team-1
+  labels:
+    app: service-00169
+    tier: backend
+    version: "1.1.0"
+  annotations:
+    description: >
+      Service number 169, generated for the YAML::Native
+      benchmark; it listens on port 8169.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00169
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00169:1.1.0"
+          ports:
+            - containerPort: 8169
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "29s"}
+            - name: RATIO
+              value: '0.72'
+          resources: {limits: {cpu: 269m, memory: 128Mi}}
+          args: ["--port", "8169", '--verbose']
+      weight: 6.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00170-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 50
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 170
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00170 --config /etc/service-00170.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00171
+  namespace: team-3
+  labels:
+    app: service-00171
+    tier: frontend
+    version: "1.3.2"
+  annotations:
+    description: >
+      Service number 171, generated for the YAML::Native
+      benchmark; it listens on port 8171.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00171
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00171:1.3.2"
+          ports:
+            - containerPort: 8171
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "31s"}
+            - name: RATIO
+              value: '0.74'
+          resources: {limits: {cpu: 271m, memory: 256Mi}}
+          args: ["--port", "8171", '--verbose']
+      weight: 7.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00172
+  namespace: team-4
+  labels:
+    app: service-00172
+    tier: backend
+    version: "1.4.3"
+  annotations:
+    description: >
+      Service number 172, generated for the YAML::Native
+      benchmark; it listens on port 8172.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00172
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00172:1.4.3"
+          ports:
+            - containerPort: 8172
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "32s"}
+            - name: RATIO
+              value: '0.75'
+          resources: {limits: {cpu: 272m, memory: 320Mi}}
+          args: ["--port", "8172", '--verbose']
+      weight: 7.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00173
+  namespace: team-5
+  labels:
+    app: service-00173
+    tier: worker
+    version: "1.5.4"
+  annotations:
+    description: >
+      Service number 173, generated for the YAML::Native
+      benchmark; it listens on port 8173.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00173
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00173:1.5.4"
+          ports:
+            - containerPort: 8173
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "33s"}
+            - name: RATIO
+              value: '0.76'
+          resources: {limits: {cpu: 273m, memory: 384Mi}}
+          args: ["--port", "8173", '--verbose']
+      weight: 7.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00174
+  namespace: team-6
+  labels:
+    app: service-00174
+    tier: frontend
+    version: "1.6.5"
+  annotations:
+    description: >
+      Service number 174, generated for the YAML::Native
+      benchmark; it listens on port 8174.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00174
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00174:1.6.5"
+          ports:
+            - containerPort: 8174
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "34s"}
+            - name: RATIO
+              value: '0.77'
+          resources: {limits: {cpu: 274m, memory: 448Mi}}
+          args: ["--port", "8174", '--verbose']
+      weight: 7.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00175
+  namespace: team-7
+  labels:
+    app: service-00175
+    tier: backend
+    version: "1.0.6"
+  annotations:
+    description: >
+      Service number 175, generated for the YAML::Native
+      benchmark; it listens on port 8175.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00175
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00175:1.0.6"
+          ports:
+            - containerPort: 8175
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "35s"}
+            - name: RATIO
+              value: '0.78'
+          resources: {limits: {cpu: 275m, memory: 512Mi}}
+          args: ["--port", "8175", '--verbose']
+      weight: 7.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00176
+  namespace: team-8
+  labels:
+    app: service-00176
+    tier: worker
+    version: "1.1.7"
+  annotations:
+    description: >
+      Service number 176, generated for the YAML::Native
+      benchmark; it listens on port 8176.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00176
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00176:1.1.7"
+          ports:
+            - containerPort: 8176
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "36s"}
+            - name: RATIO
+              value: '0.79'
+          resources: {limits: {cpu: 276m, memory: 64Mi}}
+          args: ["--port", "8176", '--verbose']
+      weight: 7.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00177
+  namespace: team-9
+  labels:
+    app: service-00177
+    tier: frontend
+    version: "1.2.8"
+  annotations:
+    description: >
+      Service number 177, generated for the YAML::Native
+      benchmark; it listens on port 8177.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00177
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00177:1.2.8"
+          ports:
+            - containerPort: 8177
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "37s"}
+            - name: RATIO
+              value: '0.80'
+          resources: {limits: {cpu: 277m, memory: 128Mi}}
+          args: ["--port", "8177", '--verbose']
+      weight: 7.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00178
+  namespace: team-10
+  labels:
+    app: service-00178
+    tier: backend
+    version: "1.3.9"
+  annotations:
+    description: >
+      Service number 178, generated for the YAML::Native
+      benchmark; it listens on port 8178.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00178
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00178:1.3.9"
+          ports:
+            - containerPort: 8178
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "38s"}
+            - name: RATIO
+              value: '0.81'
+          resources: {limits: {cpu: 278m, memory: 192Mi}}
+          args: ["--port", "8178", '--verbose']
+      weight: 7.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00179
+  namespace: team-11
+  labels:
+    app: service-00179
+    tier: worker
+    version: "1.4.10"
+  annotations:
+    description: >
+      Service number 179, generated for the YAML::Native
+      benchmark; it listens on port 8179.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00179
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00179:1.4.10"
+          ports:
+            - containerPort: 8179
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "39s"}
+            - name: RATIO
+              value: '0.82'
+          resources: {limits: {cpu: 279m, memory: 256Mi}}
+          args: ["--port", "8179", '--verbose']
+      weight: 7.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00180-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 0
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 120
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00180 --config /etc/service-00180.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00181
+  namespace: team-1
+  labels:
+    app: service-00181
+    tier: backend
+    version: "1.6.12"
+  annotations:
+    description: >
+      Service number 181, generated for the YAML::Native
+      benchmark; it listens on port 8181.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00181
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00181:1.6.12"
+          ports:
+            - containerPort: 8181
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "41s"}
+            - name: RATIO
+              value: '0.84'
+          resources: {limits: {cpu: 281m, memory: 384Mi}}
+          args: ["--port", "8181", '--verbose']
+      weight: 8.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00182
+  namespace: team-2
+  labels:
+    app: service-00182
+    tier: worker
+    version: "1.0.0"
+  annotations:
+    description: >
+      Service number 182, generated for the YAML::Native
+      benchmark; it listens on port 8182.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00182
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00182:1.0.0"
+          ports:
+            - containerPort: 8182
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "42s"}
+            - name: RATIO
+              value: '0.85'
+          resources: {limits: {cpu: 282m, memory: 448Mi}}
+          args: ["--port", "8182", '--verbose']
+      weight: 8.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00183
+  namespace: team-3
+  labels:
+    app: service-00183
+    tier: frontend
+    version: "1.1.1"
+  annotations:
+    description: >
+      Service number 183, generated for the YAML::Native
+      benchmark; it listens on port 8183.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00183
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00183:1.1.1"
+          ports:
+            - containerPort: 8183
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "43s"}
+            - name: RATIO
+              value: '0.86'
+          resources: {limits: {cpu: 283m, memory: 512Mi}}
+          args: ["--port", "8183", '--verbose']
+      weight: 8.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00184
+  namespace: team-4
+  labels:
+    app: service-00184
+    tier: backend
+    version: "1.2.2"
+  annotations:
+    description: >
+      Service number 184, generated for the YAML::Native
+      benchmark; it listens on port 8184.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00184
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00184:1.2.2"
+          ports:
+            - containerPort: 8184
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "44s"}
+            - name: RATIO
+              value: '0.87'
+          resources: {limits: {cpu: 284m, memory: 64Mi}}
+          args: ["--port", "8184", '--verbose']
+      weight: 8.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00185
+  namespace: team-5
+  labels:
+    app: service-00185
+    tier: worker
+    version: "1.3.3"
+  annotations:
+    description: >
+      Service number 185, generated for the YAML::Native
+      benchmark; it listens on port 8185.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00185
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00185:1.3.3"
+          ports:
+            - containerPort: 8185
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "45s"}
+            - name: RATIO
+              value: '0.88'
+          resources: {limits: {cpu: 285m, memory: 128Mi}}
+          args: ["--port", "8185", '--verbose']
+      weight: 8.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00186
+  namespace: team-6
+  labels:
+    app: service-00186
+    tier: frontend
+    version: "1.4.4"
+  annotations:
+    description: >
+      Service number 186, generated for the YAML::Native
+      benchmark; it listens on port 8186.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00186
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00186:1.4.4"
+          ports:
+            - containerPort: 8186
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "46s"}
+            - name: RATIO
+              value: '0.89'
+          resources: {limits: {cpu: 286m, memory: 192Mi}}
+          args: ["--port", "8186", '--verbose']
+      weight: 8.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00187
+  namespace: team-7
+  labels:
+    app: service-00187
+    tier: backend
+    version: "1.5.5"
+  annotations:
+    description: >
+      Service number 187, generated for the YAML::Native
+      benchmark; it listens on port 8187.
+spec:
+  replicas: 3
+  paused: true
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00187
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00187:1.5.5"
+          ports:
+            - containerPort: 8187
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "47s"}
+            - name: RATIO
+              value: '0.90'
+          resources: {limits: {cpu: 287m, memory: 256Mi}}
+          args: ["--port", "8187", '--verbose']
+      weight: 8.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00188
+  namespace: team-8
+  labels:
+    app: service-00188
+    tier: worker
+    version: "1.6.6"
+  annotations:
+    description: >
+      Service number 188, generated for the YAML::Native
+      benchmark; it listens on port 8188.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00188
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00188:1.6.6"
+          ports:
+            - containerPort: 8188
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "48s"}
+            - name: RATIO
+              value: '0.91'
+          resources: {limits: {cpu: 288m, memory: 320Mi}}
+          args: ["--port", "8188", '--verbose']
+      weight: 8.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00189
+  namespace: team-9
+  labels:
+    app: service-00189
+    tier: frontend
+    version: "1.0.7"
+  annotations:
+    description: >
+      Service number 189, generated for the YAML::Native
+      benchmark; it listens on port 8189.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00189
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00189:1.0.7"
+          ports:
+            - containerPort: 8189
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "49s"}
+            - name: RATIO
+              value: '0.92'
+          resources: {limits: {cpu: 289m, memory: 384Mi}}
+          args: ["--port", "8189", '--verbose']
+      weight: 8.9e0
+      tolerations: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-00190-config
+data:
+  defaults: &defaults
+    retries: 0
+    timeout: 10
+    tls: true
+  production:
+    <<: *defaults
+    timeout: 130
+  staging: *defaults
+  script: |
+    #!/bin/sh
+    exec /srv/service-00190 --config /etc/service-00190.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00191
+  namespace: team-11
+  labels:
+    app: service-00191
+    tier: worker
+    version: "1.2.9"
+  annotations:
+    description: >
+      Service number 191, generated for the YAML::Native
+      benchmark; it listens on port 8191.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00191
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00191:1.2.9"
+          ports:
+            - containerPort: 8191
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "51s"}
+            - name: RATIO
+              value: '0.94'
+          resources: {limits: {cpu: 291m, memory: 512Mi}}
+          args: ["--port", "8191", '--verbose']
+      weight: 9.1e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00192
+  namespace: team-0
+  labels:
+    app: service-00192
+    tier: frontend
+    version: "1.3.10"
+  annotations:
+    description: >
+      Service number 192, generated for the YAML::Native
+      benchmark; it listens on port 8192.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00192
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00192:1.3.10"
+          ports:
+            - containerPort: 8192
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "52s"}
+            - name: RATIO
+              value: '0.95'
+          resources: {limits: {cpu: 292m, memory: 64Mi}}
+          args: ["--port", "8192", '--verbose']
+      weight: 9.2e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00193
+  namespace: team-1
+  labels:
+    app: service-00193
+    tier: backend
+    version: "1.4.11"
+  annotations:
+    description: >
+      Service number 193, generated for the YAML::Native
+      benchmark; it listens on port 8193.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00193
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00193:1.4.11"
+          ports:
+            - containerPort: 8193
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "53s"}
+            - name: RATIO
+              value: '0.96'
+          resources: {limits: {cpu: 293m, memory: 128Mi}}
+          args: ["--port", "8193", '--verbose']
+      weight: 9.3e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00194
+  namespace: team-2
+  labels:
+    app: service-00194
+    tier: worker
+    version: "1.5.12"
+  annotations:
+    description: >
+      Service number 194, generated for the YAML::Native
+      benchmark; it listens on port 8194.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00194
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00194:1.5.12"
+          ports:
+            - containerPort: 8194
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "54s"}
+            - name: RATIO
+              value: '0.0'
+          resources: {limits: {cpu: 294m, memory: 192Mi}}
+          args: ["--port", "8194", '--verbose']
+      weight: 9.4e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00195
+  namespace: team-3
+  labels:
+    app: service-00195
+    tier: frontend
+    version: "1.6.0"
+  annotations:
+    description: >
+      Service number 195, generated for the YAML::Native
+      benchmark; it listens on port 8195.
+spec:
+  replicas: 1
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00195
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00195:1.6.0"
+          ports:
+            - containerPort: 8195
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "55s"}
+            - name: RATIO
+              value: '0.1'
+          resources: {limits: {cpu: 295m, memory: 256Mi}}
+          args: ["--port", "8195", '--verbose']
+      weight: 9.5e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00196
+  namespace: team-4
+  labels:
+    app: service-00196
+    tier: backend
+    version: "1.0.1"
+  annotations:
+    description: >
+      Service number 196, generated for the YAML::Native
+      benchmark; it listens on port 8196.
+spec:
+  replicas: 2
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00196
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00196:1.0.1"
+          ports:
+            - containerPort: 8196
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "56s"}
+            - name: RATIO
+              value: '0.2'
+          resources: {limits: {cpu: 296m, memory: 320Mi}}
+          args: ["--port", "8196", '--verbose']
+      weight: 9.6e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00197
+  namespace: team-5
+  labels:
+    app: service-00197
+    tier: worker
+    version: "1.1.2"
+  annotations:
+    description: >
+      Service number 197, generated for the YAML::Native
+      benchmark; it listens on port 8197.
+spec:
+  replicas: 3
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00197
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00197:1.1.2"
+          ports:
+            - containerPort: 8197
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            - {name: TIMEOUT, value: "57s"}
+            - name: RATIO
+              value: '0.3'
+          resources: {limits: {cpu: 297m, memory: 384Mi}}
+          args: ["--port", "8197", '--verbose']
+      weight: 9.7e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00198
+  namespace: team-6
+  labels:
+    app: service-00198
+    tier: frontend
+    version: "1.2.3"
+  annotations:
+    description: >
+      Service number 198, generated for the YAML::Native
+      benchmark; it listens on port 8198.
+spec:
+  replicas: 4
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00198
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00198:1.2.3"
+          ports:
+            - containerPort: 8198
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - {name: TIMEOUT, value: "58s"}
+            - name: RATIO
+              value: '0.4'
+          resources: {limits: {cpu: 298m, memory: 448Mi}}
+          args: ["--port", "8198", '--verbose']
+      weight: 9.8e0
+      tolerations: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-00199
+  namespace: team-7
+  labels:
+    app: service-00199
+    tier: backend
+    version: "1.3.4"
+  annotations:
+    description: >
+      Service number 199, generated for the YAML::Native
+      benchmark; it listens on port 8199.
+spec:
+  replicas: 5
+  paused: false
+  progressDeadlineSeconds: ~
+  selector:
+    matchLabels:
+      app: service-00199
+  template:
+    spec:
+      containers:
+        - name: main
+          image: "registry.example.com/service-00199:1.3.4"
+          ports:
+            - containerPort: 8199
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - {name: TIMEOUT, value: "59s"}
+            - name: RATIO
+              value: '0.5'
+          resources: {limits: {cpu: 299m, memory: 512Mi}}
+          args: ["--port", "8199", '--verbose']
+      weight: 9.9e0
+      tolerations: []

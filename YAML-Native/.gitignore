@@ -1,0 +1,10 @@
+# fez bundles the upload from THIS directory's .gitignore, not the repo
+# root's — without this file the locally built extension (a macOS binary tied
+# to one rakupp ABI) would be shipped inside the source tarball. Build compiles
+# it per-machine at install time; it must never travel.
+resources/libraries/
+# fez writes the upload tarball here
+sdist/
+# when this file exists, fez replaces its built-in defaults with it — so the
+# precomp cache exclusion has to be restated here or it lands in the tarball
+.precomp/

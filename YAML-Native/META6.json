@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "YAML 1.2 parsing and writing with a native fast path on Raku++, and pure Raku everywhere else",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "YAML::Native",
+  "provides": {
+    "YAML::Native": "lib/YAML/Native.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+    "libraries/yaml"
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/YAML-Native",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/YAML-Native"
+  },
+  "tags": [
+    "YAML",
+    "config",
+    "native",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
