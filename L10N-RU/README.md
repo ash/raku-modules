@@ -102,15 +102,15 @@ session, which needs no `use` line for the same reason:
 | `scope` | 9 of 9 | `my`, `our`, `state`, `has`, `constant`, … |
 | `package` | 5 of 5 | `class`, `role`, `grammar`, `module`, `package` |
 | `routine` | 6 of 6 | `sub`, `method`, `submethod`, `token`, `rule`, `regex` |
-| `trait-is` | 16 of 16 | `is rw`, `is copy`, `is pure`, … |
+| `trait-is` | 17 of 17 | `is rw`, `is copy`, `is pure`, … |
 | `traitmod` | 7 of 7 | `is`, `does`, `handles`, `of`, `trusts`, … |
 | `stmt-prefix` | 13 of 13 | `do`, `try`, `gather`, `lazy`, `start`, … |
 | `phaser` | 14 of 18 | `ENTER`, `LEAVE`, `CATCH`, `END`, … |
-| `infix` | 24 of 41 | the word operators: `and`, `or`, `cmp`, `eq`, `mod`, … |
-| `core` | 174 of 234 | sub and method names: `say`, `map`, `sort`, `elems`, … |
-| `named` | 65 of 135 | named arguments: `:key`, `:delete`, `:global`, … |
+| `infix` | 25 of 43 | the word operators: `and`, `or`, `cmp`, `eq`, `mod`, … |
+| `core` | 231 of 304 | sub and method names: `say`, `map`, `sort`, `elems`, … |
+| `named` | 68 of 138 | named arguments: `:key`, `:delete`, `:global`, … |
 | everything else | 47 of 136 | enums, adverbs, pragmas, terms, quote languages |
-| | **405 of 645** | |
+| | **467 of 721** | |
 
 A name with no translation keeps its English spelling and goes on working, so
 the table is a floor rather than a boundary: `pi`, `BEGIN`, `gcd`, `unicmp`
@@ -153,7 +153,7 @@ finding `.new` is the same mechanism seen from the useful side.
 
 ## Regenerating
 
-`RU.l10n` is the source and `lib/` is output. That file lists all 645 keys,
+`RU.l10n` is the source and `lib/` is output. That file lists all 721 keys,
 the untranslated ones commented out, and carries the instructions at its top.
 To change a word, edit it and run, from the distribution root — `L10N-RU/`
 in a checkout of this repository, not the repository root:
@@ -185,11 +185,12 @@ raku -I lib examples/fizzbuzz.raku
 
 ## Scope
 
-The 240 untranslated names are the ones where a Russian word would be worse
+The 254 untranslated names are the ones where a Russian word would be worse
 than the English: the quote languages (`q`, `qq`, `rx`, `m`, `s`), the regex
 adverbs that are single letters (`:i`, `:g`, `:s`), the pragmas that name
 themselves (`nqp`, `isms`, `precompilation`), the system methods (`BUILD`,
-`TWEAK`, `ACCEPTS`), the meta-operators, and the mathematical terms `pi`,
+`TWEAK`, `ACCEPTS`), the file-system and date-format names (`inode`, `devtype`,
+`yyyy-mm-dd`), the meta-operators, and the mathematical terms `pi`,
 `tau` and `nano`. They are listed, commented out, in `RU.l10n`; uncommenting
 one and regenerating is all it takes to change that judgement.
 

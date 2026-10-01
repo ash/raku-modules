@@ -109,6 +109,9 @@ constraint-where  де
 
 # KEY                  TRANSLATION
 #core-abs               abs
+core-accessed          доступ
+core-actions           дії
+core-add               долучи
 core-all               всі
 core-antipair          антипара
 core-antipairs         антипари
@@ -127,28 +130,38 @@ core-append            додай
 #core-atomic-sub-fetch  atomic-sub-fetch
 core-await             дочекайся
 
-# KEY          TRANSLATION
-core-bag       торба
-core-bail-out  здаюся
-core-bless     благослови
+# KEY           TRANSLATION
+core-backtrace  стек-викликів
+core-bag        торба
+core-bail-out   здаюся
+core-base       основа
+core-batch      пачками
+core-bless      благослови
 
 # KEY              TRANSLATION
+core-cache         кешуй
 #core-callframe     callframe
 #core-callsame      callsame
 #core-callwith      callwith
 core-can-ok        вміє-ок
+#core-caps          caps
 #core-cas           cas
 core-categorize    категоризуй
 core-ceiling       стеля
+core-changed       зміна
 core-chars         символів
 core-chdir         зміни-каталог
+core-child         нащадок
 #core-chmod         chmod
 core-chomp         відсічи-кінець
 core-chop          відсічи
 #core-chown         chown
 core-chr           всимвол
 core-chrs          всимволи
+core-chunks        шматки
 core-classify      класифікуй
+core-cleanup       прибери
+core-clone         клонуй
 core-close         закрий
 core-cmp-ok        порівняй-ок
 core-codes         кодів
@@ -158,29 +171,42 @@ core-combinations  сполучення
 core-contains      містить
 core-cross         перехрест
 
-# KEY         TRANSLATION
-core-decode   розкодуй
-#core-deepmap  deepmap
-core-defined  визначено
-core-diag     діагностика
-core-die      помри
-core-dies-ok  помирає-ок
-core-dir      каталог
-core-does-ok  робить-ок
-core-done     готово
-#core-duckmap  duckmap
+# KEY                  TRANSLATION
+core-day-of-week       день-тижня
+core-day-of-year       день-року
+core-daycount          кількість-днів
+core-days-in-month     днів-у-місяці
+core-days-in-year      днів-у-році
+#core-dd-mm-yyyy        dd-mm-yyyy
+core-decode            розкодуй
+#core-deepmap           deepmap
+core-defined           визначено
+#core-dev               dev
+#core-devtype           devtype
+core-diag              діагностика
+core-die               помри
+core-dies-ok           помирає-ок
+core-dir               каталог
+core-dir-with-entries  непорожній-каталог
+core-does-ok           робить-ок
+core-done              готово
+#core-duckmap           duckmap
 
 # KEY               TRANSLATION
+core-eager          жадібно
+core-earlier        раніше
 core-elems          елементів
 core-emit           випусти
 core-encode         закодуй
 core-end            кінець
 core-ends-with      закінчується-на
+core-enums          переліки
 core-eval-dies-ok   eval-помирає-ок
 core-eval-lives-ok  eval-живе-ок
 core-exit           вийди
 #core-exp            exp
 #core-expmod         expmod
+core-extension      розширення
 
 # KEY              TRANSLATION
 core-fail          завались
@@ -188,35 +214,45 @@ core-fails-like    падає-як
 #core-fc            fc
 core-first         перший
 core-flat          плаский
+#core-flatmap       flatmap
 core-flip          переверни
 core-floor         підлога
 core-flunk         незалік
 #core-fmt           fmt
+core-from          звідки
 #core-full-barrier  full-barrier
 
-# KEY      TRANSLATION
-core-get   отримай
-core-getc  отримай-символ
-core-gist  суть
-core-grep  відбери
+# KEY           TRANSLATION
+core-get        отримай
+core-getc       отримай-символ
+core-gist       суть
+core-grab       схопи
+core-grabpairs  схопи-пари
+core-grep       відбери
+core-group      група
 
 # KEY      TRANSLATION
 core-hash  хеш
 core-head  голова
 
-# KEY           TRANSLATION
-core-indent     відступ
-core-index      індекс
-core-indices    індекси
-#core-indir      indir
-core-invert     оберни
-core-is         це
-core-is-approx  це-приблизно
-core-is-deeply  це-точно
-core-is-prime   просте
-core-isa-ok     типу-ок
-core-isnt       нете
-core-item       елемент
+# KEY             TRANSLATION
+#core-im           im
+core-indent       відступ
+core-index        індекс
+core-indices      індекси
+#core-indir        indir
+#core-inode        inode
+core-invert       оберни
+#core-IO           IO
+core-is           це
+core-is-absolute  є-абсолютним
+core-is-approx    це-приблизно
+core-is-deeply    це-точно
+core-is-prime     просте
+core-is-relative  є-відносним
+core-isa-ok       типу-ок
+core-isnt         нете
+core-item         елемент
 
 # KEY      TRANSLATION
 core-join  єднай
@@ -229,6 +265,7 @@ core-kv    кз
 # KEY          TRANSLATION
 core-last      перерви
 #core-lastcall  lastcall
+core-later     пізніше
 core-lc        малі
 core-like      схоже
 core-lines     рядки
@@ -237,17 +274,20 @@ core-list      список
 core-lives-ok  живе-ок
 #core-lsb       lsb
 
-# KEY        TRANSLATION
-core-make    зроби
-core-map     відобрази
-core-match   збіг
-core-max     макс
-core-min     мін
-core-minmax  мінмакс
-core-mix     суміш
-core-mkdir   створи-каталог
-core-move    перемісти
-#core-msb     msb
+# KEY            TRANSLATION
+core-made        зроблене
+core-make        зроби
+core-map         відобрази
+core-match       збіг
+core-max         макс
+core-message     повідомлення
+core-min         мін
+core-minmax      мінмакс
+core-mix         суміш
+core-mkdir       створи-каталог
+#core-mm-dd-yyyy  mm-dd-yyyy
+core-move        перемісти
+#core-msb         msb
 
 # KEY            TRANSLATION
 core-new         новий
@@ -266,30 +306,45 @@ core-one   один
 core-open  відкрий
 core-ord   вкод
 core-ords  вкоди
+core-orig  оригінал
 
 # KEY              TRANSLATION
 core-pair          пара
 core-pairs         пари
+core-parent        батько
+core-parse         розбери
 #core-parse-base    parse-base
 core-pass          залік
+core-path          шлях
 core-permutations  перестановки
 core-pick          вибери
 core-plan          план
 core-pop           виштовхни
+core-pos           позиція
+core-postmatch     після-збігу
+core-pred          попередній
+core-prematch      до-збігу
 core-prepend       додай-на-початок
 core-print         друкуй
 core-printf        друкуйф
 core-proceed       продовж
+core-produce       накопич
 core-prompt        запитай
 core-push          заштовхни
 core-put           виведи
 
 # KEY            TRANSLATION
+#core-raku        raku
 core-rand        випадкове
+#core-re          re
 core-redo        заново
 core-reduce      згорни
+core-relative    відносний
 core-repeated    повторні
 #core-repl        repl
+core-resolve     визнач
+core-resume      віднови
+core-rethrow     перекинь
 core-return      поверни
 core-return-rw   поверни-чз
 core-reverse     навпаки
@@ -298,6 +353,7 @@ core-rmdir       видали-каталог
 core-roll        кинь
 core-roots       корені
 core-rotate      прокрути
+#core-rotor       rotor
 core-round       округли
 core-roundrobin  поколу
 core-run         запусти
@@ -312,6 +368,7 @@ core-shell        оболонка
 core-shift        зсунь
 core-sign         знак
 #core-signal       signal
+core-sink         внікуди
 core-skip         пропусти
 core-skip-rest    пропусти-все
 core-sleep        спи
@@ -333,11 +390,13 @@ core-srand        зерно
 core-starts-with  починається-з
 #core-subbuf       subbuf
 #core-subbuf-rw    subbuf-rw
+core-subparse     розбери-частину
 core-subst        заміни
 core-substr       підрядок
 #core-substr-eq    substr-eq
 #core-substr-rw    substr-rw
 core-subtest      підтест
+core-succ         наступний
 core-succeed      досягни
 core-sum          сума
 core-symlink      симпосилання
@@ -346,10 +405,14 @@ core-symlink      симпосилання
 core-tail           хвіст
 core-take           візьми
 core-take-rw        візьми-чз
+core-target         ціль
 #core-tc             tc
 #core-tclc           tclc
 #core-temp           temp
+core-throw          викинь
 core-throws-like    кидає-як
+core-to             докуди
+core-today          сьогодні
 core-todo           треба
 core-trans          переклади
 core-trim           обріж
@@ -373,16 +436,25 @@ core-unlink    видали
 #core-unpolar   unpolar
 core-unshift   всунь
 core-use-ok    використай-ок
+core-user      користувач
 
 # KEY        TRANSLATION
 #core-val     val
 core-value   значення
 core-values  значень
 
-# KEY          TRANSLATION
-core-warn      попередь
-#core-wordcase  wordcase
-core-words     слова
+# KEY                  TRANSLATION
+core-warn              попередь
+core-watch             стеж
+core-week              тиждень
+core-week-number       номер-тижня
+core-week-year         рік-тижня
+core-weekday-of-month  день-тижня-в-місяці
+#core-wordcase          wordcase
+core-words             слова
+
+# KEY            TRANSLATION
+#core-yyyy-mm-dd  yyyy-mm-dd
 
 # KEY     TRANSLATION
 core-zip  блискавка
@@ -422,6 +494,7 @@ infix-cmp         порівняй
 infix-div         діли
 infix-does        робить
 infix-eq          рівне
+#infix-eqv         eqv
 #infix-ff          ff
 #infix-ff^         ff^
 #infix-fff         fff
@@ -445,6 +518,7 @@ infix-orelse      абоінакше
 #infix-unicmp      unicmp
 #infix-x           x
 #infix-X           X
+infix-xor         чи
 #infix-xx          xx
 #infix-Z           Z
 
@@ -486,6 +560,7 @@ named-append    додати
 #named-bin        bin
 #named-bleed      bleed
 #named-broadcast  broadcast
+named-by         за
 
 # KEY             TRANSLATION
 #named-catch       catch
@@ -499,6 +574,7 @@ named-continue    продовжити
 #named-control     control
 named-count       кількість
 named-create      створити
+named-created     створено
 #named-createonly  createonly
 #named-cwd         cwd
 #named-CWD         CWD
@@ -560,13 +636,14 @@ named-listen     слухати
 #named-localhost  localhost
 #named-localport  localport
 
-# KEY         TRANSLATION
-named-match   збіг
-named-merge   злити
-named-minute  хвилина
-#named-mm      mm
-named-mode    режим
-named-month   місяць
+# KEY           TRANSLATION
+named-match     збіг
+named-merge     злити
+named-minute    хвилина
+#named-mm        mm
+named-mode      режим
+named-modified  змінено
+named-month     місяць
 
 # KEY               TRANSLATION
 named-name          назва
@@ -781,6 +858,7 @@ trait-is-looser                 слабше
 trait-is-nodal                  вузловий
 trait-is-pure                   чистий
 trait-is-raw                    сирий
+trait-is-required               необхідний
 trait-is-rw                     читання-запис
 trait-is-test-assertion         тестове-твердження
 trait-is-tighter                сильніше

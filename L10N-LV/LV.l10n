@@ -109,6 +109,9 @@ constraint-where  kur
 
 # KEY                  TRANSLATION
 #core-abs               abs
+core-accessed          piekļuve
+core-actions           darbības
+core-add               pieliec
 core-all               visi
 core-antipair          antipāris
 core-antipairs         antipāri
@@ -127,28 +130,38 @@ core-append            pievieno
 #core-atomic-sub-fetch  atomic-sub-fetch
 core-await             gaidi
 
-# KEY          TRANSLATION
-core-bag       maiss
-core-bail-out  padodos
-core-bless     svētī
+# KEY           TRANSLATION
+core-backtrace  izsaukumu-steks
+core-bag        maiss
+core-bail-out   padodos
+core-base       bāze
+core-batch      partijās
+core-bless      svētī
 
 # KEY              TRANSLATION
+core-cache         kešo
 #core-callframe     callframe
 #core-callsame      callsame
 #core-callwith      callwith
 core-can-ok        var-ok
+#core-caps          caps
 #core-cas           cas
 core-categorize    kategorizē
 core-ceiling       griesti
+core-changed       izmaiņas
 core-chars         rakstzīmes
 core-chdir         maini-direktoriju
+core-child         bērns
 #core-chmod         chmod
 core-chomp         nocērt-galu
 core-chop          nocērt
 #core-chown         chown
 core-chr           par-rakstzīmi
 core-chrs          par-rakstzīmēm
+core-chunks        gabali
 core-classify      klasificē
+core-cleanup       sakop
+core-clone         klonē
 core-close         aizver
 core-cmp-ok        salidzini-ok
 core-codes         kodi
@@ -158,29 +171,42 @@ core-combinations  kombinācijas
 core-contains      satur
 core-cross         krustojums
 
-# KEY         TRANSLATION
-core-decode   atkodē
-#core-deepmap  deepmap
-core-defined  definēts
-core-diag     diagnostika
-core-die      mirsti
-core-dies-ok  mirst-ok
-core-dir      direktorija
-core-does-ok  dara-ok
-core-done     pabeigts
-#core-duckmap  duckmap
+# KEY                  TRANSLATION
+core-day-of-week       nedēļas-diena
+core-day-of-year       gada-diena
+core-daycount          dienu-skaits
+core-days-in-month     dienas-mēnesī
+core-days-in-year      dienas-gadā
+#core-dd-mm-yyyy        dd-mm-yyyy
+core-decode            atkodē
+#core-deepmap           deepmap
+core-defined           definēts
+#core-dev               dev
+#core-devtype           devtype
+core-diag              diagnostika
+core-die               mirsti
+core-dies-ok           mirst-ok
+core-dir               direktorija
+core-dir-with-entries  netukša-direktorija
+core-does-ok           dara-ok
+core-done              pabeigts
+#core-duckmap           duckmap
 
 # KEY               TRANSLATION
+core-eager          dedzīgi
+core-earlier        agrāk
 core-elems          elementi
 core-emit           izstaro
 core-encode         kodē
 core-end            beigas
 core-ends-with      beidzas-ar
+core-enums          uzskaitījumi
 core-eval-dies-ok   eval-mirst-ok
 core-eval-lives-ok  eval-dzivo-ok
 core-exit           iziet
 #core-exp            exp
 #core-expmod         expmod
+core-extension      paplašinājums
 
 # KEY              TRANSLATION
 core-fail          neizdodies
@@ -188,35 +214,45 @@ core-fails-like    krit-lidzigi
 #core-fc            fc
 core-first         pirmais
 core-flat          plakans
+#core-flatmap       flatmap
 core-flip          otrādi
 core-floor         grīda
 core-flunk         neizturēts
 #core-fmt           fmt
+core-from          no-kurienes
 #core-full-barrier  full-barrier
 
-# KEY      TRANSLATION
-core-get   saņem
-core-getc  saņem-rakstzīmi
-core-gist  būtība
-core-grep  atlasi
+# KEY           TRANSLATION
+core-get        saņem
+core-getc       saņem-rakstzīmi
+core-gist       būtība
+core-grab       satver
+core-grabpairs  satver-pārus
+core-grep       atlasi
+core-group      grupa
 
 # KEY      TRANSLATION
 core-hash  hešs
 core-head  galva
 
-# KEY           TRANSLATION
-core-indent     atkāpe
-core-index      indekss
-core-indices    indeksi
-#core-indir      indir
-core-invert     invertē
-core-is         ir
-core-is-approx  ir-aptuveni
-core-is-deeply  ir-dzili
-core-is-prime   pirmskaitlis
-core-isa-ok     tips-ok
-core-isnt       navir
-core-item       vienums
+# KEY             TRANSLATION
+#core-im           im
+core-indent       atkāpe
+core-index        indekss
+core-indices      indeksi
+#core-indir        indir
+#core-inode        inode
+core-invert       invertē
+#core-IO           IO
+core-is           ir
+core-is-absolute  ir-absolūts
+core-is-approx    ir-aptuveni
+core-is-deeply    ir-dzili
+core-is-prime     pirmskaitlis
+core-is-relative  ir-relatīvs
+core-isa-ok       tips-ok
+core-isnt         navir
+core-item         vienums
 
 # KEY      TRANSLATION
 core-join  savieno
@@ -229,6 +265,7 @@ core-kv    av
 # KEY          TRANSLATION
 core-last      pārtrauc
 #core-lastcall  lastcall
+core-later     vēlāk
 core-lc        mazie
 core-like      līdzīgs
 core-lines     rindas
@@ -237,17 +274,20 @@ core-list      saraksts
 core-lives-ok  dzivo-ok
 #core-lsb       lsb
 
-# KEY        TRANSLATION
-core-make    izveido
-core-map     attēlo
-core-match   sakritība
-core-max     maks
-core-min     min
-core-minmax  minmaks
-core-mix     maisījums
-core-mkdir   izveido-direktoriju
-core-move    pārvieto
-#core-msb     msb
+# KEY            TRANSLATION
+core-made        izveidotais
+core-make        izveido
+core-map         attēlo
+core-match       sakritība
+core-max         maks
+core-message     ziņojums
+core-min         min
+core-minmax      minmaks
+core-mix         maisījums
+core-mkdir       izveido-direktoriju
+#core-mm-dd-yyyy  mm-dd-yyyy
+core-move        pārvieto
+#core-msb         msb
 
 # KEY            TRANSLATION
 core-new         jauns
@@ -266,30 +306,45 @@ core-one   viens
 core-open  atver
 core-ord   par-kodu
 core-ords  par-kodiem
+core-orig  oriģināls
 
 # KEY              TRANSLATION
 core-pair          pāris
 core-pairs         pāri
+core-parent        vecāks
+core-parse         parsē
 #core-parse-base    parse-base
 core-pass          izturēts
+core-path          ceļš
 core-permutations  permutācijas
 core-pick          izvēlies
 core-plan          plāns
 core-pop           izbīdi
+core-pos           pozīcija
+core-postmatch     pēc-sakritības
+core-pred          iepriekšējais
+core-prematch      pirms-sakritības
 core-prepend       pievieno-sākumā
 core-print         drukā
 core-printf        drukāf
 core-proceed       turpini
+core-produce       uzkrāj
 core-prompt        jautā
 core-push          iebīdi
 core-put           izvadi
 
 # KEY            TRANSLATION
+#core-raku        raku
 core-rand        nejaušs
+#core-re          re
 core-redo        pārdari
 core-reduce      reducē
+core-relative    relatīvs
 core-repeated    atkārtoti
 #core-repl        repl
+core-resolve     atrisini
+core-resume      atsāc
+core-rethrow     pārmet
 core-return      atgriez
 core-return-rw   atgriez-lr
 core-reverse     apvērs
@@ -298,6 +353,7 @@ core-rmdir       dzēs-direktoriju
 core-roll        met
 core-roots       saknes
 core-rotate      pagriez
+#core-rotor       rotor
 core-round       noapaļo
 core-roundrobin  peckartas
 core-run         palaid
@@ -312,6 +368,7 @@ core-shell        čaula
 core-shift        nobīdi
 core-sign         zīme
 #core-signal       signal
+core-sink         iztukšo
 core-skip         izlaid
 core-skip-rest    izlaid-parejo
 core-sleep        guli
@@ -333,11 +390,13 @@ core-srand        sēkla
 core-starts-with  sākas-ar
 #core-subbuf       subbuf
 #core-subbuf-rw    subbuf-rw
+core-subparse     parsē-daļu
 core-subst        aizvieto
 core-substr       apakšvirkne
 #core-substr-eq    substr-eq
 #core-substr-rw    substr-rw
 core-subtest      apakštests
+core-succ         nākamais
 core-succeed      izdodies
 core-sum          summa
 core-symlink      simsaite
@@ -346,10 +405,14 @@ core-symlink      simsaite
 core-tail           aste
 core-take           ņem
 core-take-rw        ņem-lr
+core-target         mērķis
 #core-tc             tc
 #core-tclc           tclc
 #core-temp           temp
+core-throw          izmet
 core-throws-like    met-lidzigi
+core-to             līdz-kurienei
+core-today          šodien
 core-todo           jādara
 core-trans          tulko
 core-trim           apgriez
@@ -373,16 +436,25 @@ core-unlink    dzēs
 #core-unpolar   unpolar
 core-unshift   atbīdi
 core-use-ok    lieto-ok
+core-user      lietotājs
 
 # KEY        TRANSLATION
 #core-val     val
 core-value   vērtība
 core-values  vērtības
 
-# KEY          TRANSLATION
-core-warn      brīdini
-#core-wordcase  wordcase
-core-words     vārdi
+# KEY                  TRANSLATION
+core-warn              brīdini
+core-watch             vēro
+core-week              nedēļa
+core-week-number       nedēļas-numurs
+core-week-year         nedēļas-gads
+core-weekday-of-month  nedēļas-diena-mēnesī
+#core-wordcase          wordcase
+core-words             vārdi
+
+# KEY            TRANSLATION
+#core-yyyy-mm-dd  yyyy-mm-dd
 
 # KEY     TRANSLATION
 core-zip  savij
@@ -422,6 +494,7 @@ infix-cmp         salīdzini
 infix-div         dali
 infix-does        dara
 infix-eq          vienāds
+#infix-eqv         eqv
 #infix-ff          ff
 #infix-ff^         ff^
 #infix-fff         fff
@@ -445,6 +518,7 @@ infix-orelse      vaicitādi
 #infix-unicmp      unicmp
 #infix-x           x
 #infix-X           X
+infix-xor         vainu
 #infix-xx          xx
 #infix-Z           Z
 
@@ -486,6 +560,7 @@ named-append    pievienot
 #named-bin        bin
 #named-bleed      bleed
 #named-broadcast  broadcast
+named-by         atbilstoši
 
 # KEY             TRANSLATION
 #named-catch       catch
@@ -499,6 +574,7 @@ named-continue    turpināt
 #named-control     control
 named-count       skaits
 named-create      izveidot
+named-created     izveidots
 #named-createonly  createonly
 #named-cwd         cwd
 #named-CWD         CWD
@@ -560,13 +636,14 @@ named-listen     klausīties
 #named-localhost  localhost
 #named-localport  localport
 
-# KEY         TRANSLATION
-named-match   sakritība
-named-merge   sapludināt
-named-minute  minūte
-#named-mm      mm
-named-mode    režīms
-named-month   mēnesis
+# KEY           TRANSLATION
+named-match     sakritība
+named-merge     sapludināt
+named-minute    minūte
+#named-mm        mm
+named-mode      režīms
+named-modified  mainīts
+named-month     mēnesis
 
 # KEY               TRANSLATION
 named-name          vārds
@@ -781,6 +858,7 @@ trait-is-looser                 vaļīgāks
 trait-is-nodal                  mezglains
 trait-is-pure                   tīrs
 trait-is-raw                    jēls
+trait-is-required               obligāts
 trait-is-rw                     lasīt-rakstīt
 trait-is-test-assertion         testa-apgalvojums
 trait-is-tighter                ciešāks
