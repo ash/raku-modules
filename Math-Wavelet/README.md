@@ -28,7 +28,7 @@ my ($a, ($h, $v, $d)) = dwt2(@image, 'haar');   # an image is an array of rows
 ```
 
 ```bash
-raku   -Ilib examples/denoise.raku
+rakudo -Ilib examples/denoise.raku
 rakupp -Ilib examples/denoise.raku
 ```
 
