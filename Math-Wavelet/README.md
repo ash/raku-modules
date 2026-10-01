@@ -34,7 +34,10 @@ rakupp -Ilib examples/denoise.raku
 
 ## Install
 
+Either installer takes it, into the same `~/.raku` store:
+
 ```bash
+rakupp install Math::Wavelet
 zef install Math::Wavelet
 ```
 
