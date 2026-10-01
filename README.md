@@ -21,6 +21,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [L10N::RU](L10N-RU) — Raku written with Russian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::UK](L10N-UK) — Raku written with Ukrainian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::LV](L10N-LV) — Raku written with Latvian keywords | 0.0.1 | 16/16 § | 15/16 § |
+| [Math::Wavelet](Math-Wavelet) — discrete wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.1 | 2157/2157 ¶ | 2157/2157 ¶ |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -63,6 +64,10 @@ translatable names. `my` is the one that cannot be translated properly:
 Slavic and Baltic possessives agree in gender, so no single spelling of it is
 right in front of every variable name, and what ships is the citation form.
 
+¶ Measured on Rakudo `v2026.09` and a Raku++ `5.1.0` development build,
+neither of them an established floor. Every expected value in its suite comes
+from PyWavelets 1.8.0, and so does its table of 106 wavelets.
+
 ## Layout
 
 One directory per distribution, each a complete distribution root:
@@ -98,6 +103,7 @@ installing the module has to read past:
 - [notes/Compress-Zlib-Native.md](notes/Compress-Zlib-Native.md)
 - [notes/Data-Native.md](notes/Data-Native.md)
 - [notes/Prompt-Hidden.md](notes/Prompt-Hidden.md)
+- [notes/Math-Wavelet.md](notes/Math-Wavelet.md)
 
 The two `**::Native` distributions added for the `Data::Native` campaign each
 carry their conformance vectors INSIDE `t/vectors/`, together with the

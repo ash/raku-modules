@@ -1,0 +1,38 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [],
+  "depends": [],
+  "description": "Discrete wavelet transforms in pure Raku — DWT, multilevel, stationary and 2-D, with thresholding and denoising — and the 106 wavelets PyWavelets has",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Math::Wavelet",
+  "provides": {
+    "Math::Wavelet": "lib/Math/Wavelet.rakumod",
+    "Math::Wavelet::DWT": "lib/Math/Wavelet/DWT.rakumod",
+    "Math::Wavelet::DWT2": "lib/Math/Wavelet/DWT2.rakumod",
+    "Math::Wavelet::Filter": "lib/Math/Wavelet/Filter.rakumod",
+    "Math::Wavelet::SWT": "lib/Math/Wavelet/SWT.rakumod",
+    "Math::Wavelet::Table": "lib/Math/Wavelet/Table.rakumod",
+    "Math::Wavelet::Threshold": "lib/Math/Wavelet/Threshold.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Math-Wavelet",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Math-Wavelet"
+  },
+  "tags": [
+    "wavelet",
+    "DWT",
+    "signal-processing",
+    "denoising",
+    "math"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
