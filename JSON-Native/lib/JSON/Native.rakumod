@@ -155,8 +155,11 @@ my Bool $engine-codec = ?(!$is-native && &ext-load);
 # is undefined, so `(try ::(…)) // fallback` would always take the fallback.
 # Same reason as probe-symbol above: the `try` has to live inside a routine, or
 # the exception it catches stays in this file's `$!` and makes the module
-# unserializable for any module that `use`s it.
+# unserializable for any module that `use`s it. Asked only on Raku++
+# (&ext-load): on Rakudo the lookup yields a Failure that nothing handles, and
+# once a garbage collection runs its DESTROY warns "unhandled Failure detected".
 sub engine-json-class() {
+    return Rakudo::Internals::JSON unless &ext-load;
     my $ok = try { ::('Rakupp::Internals::JSON').from-json('1') === 1 };
     $ok ?? ::('Rakupp::Internals::JSON') !! Rakudo::Internals::JSON
 }
