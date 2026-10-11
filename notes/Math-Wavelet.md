@@ -107,3 +107,50 @@ each, with no `todo`.
   bound its input to a `num` array directly, so coefficients given as
   integer literals died on both engines. Everything that enters a `num` array
   is now `.Num`-ed first, and `t/04-dwt2.t` passes integer bands to check it.
+
+## The continuous transform (0.0.2)
+
+PyWavelets stays the specification. Its continuous wavelets live in C, so
+their definitions were recovered by sampling `wavefun` and fitting closed
+forms. Every one of the 21 matches a formula to 10⁻¹⁵:
+
+- `gausP` is the P-th derivative of e^(−x²), Hₚ(x) e^(−x²) up to sign, over
+  √((2P−1)!! √(π/2)). The sign is not (−1)ᴾ: P = 1…8 go − − + + − − + +
+  against Hₚ. The table is in `Continuous.rakumod`, and `t/07-cwt.t` holds it
+  to PyWavelets.
+- `cgauP` is the P-th derivative of e^(−ix−x²), normalised exactly. Through
+  Parseval its energy is (√(2π)/2) Σₘ C(2P, 2m)(2m−1)!!, which reproduces
+  PyWavelets' constants to the last digit for all eight.
+- `mexh`, `morl`, `cmor`, `shan` and `fbsp` are the textbook formulas,
+  with `sinc(x) = sin(πx)/(πx)`.
+
+`cwt` indexes the integrated wavelet by `⌊k / (scale · step)⌋`, so `step`
+has to be NumPy's to the last bit, or the kernel picks a neighbouring
+sample. `wavefun` therefore builds its grid as `numpy.linspace` does: `i·Δ +
+lower`, with the upper bound written in exactly. `central-frequency` takes
+the arg-max of an FFT. Ties between mirror bins fold to the same answer, so
+it matches PyWavelets exactly, not just to 10⁻¹⁰.
+
+The FFT path is what makes a scalogram practical. A first version, three
+FFTs per scale and six for a complex wavelet, took 3.8 s for 48 scales over
+512 samples on Raku++. Three changes brought that down: the signal's spectrum
+is kept per transform size, a complex kernel goes through one complex FFT
+(the signal is real, so the real and imaginary parts of one inverse are the
+two convolutions), and the twiddle factors are tabled once per size.
+
+### What the two engines turned up
+
+- **On Raku++ a native `my` inside the innermost loop costs more than the
+  arithmetic.** A 1024-point FFT took 19 ms with its temporaries declared
+  in the butterfly loop, and 8 ms with them declared once outside it. As
+  separate `my int $i; my int $j;` declarations, the hoisted form is what
+  ships. Rakudo is slower with it, 1.3 s for 40 scales against 0.7 s with
+  the temporaries inside the loop. `my int ($i, $j)` as a list is slower
+  still on Rakudo, so it isn't used.
+- **Rakudo will not slice a native array with a range.** `@num[^$k]` dies
+  with "This type (Scalar) does not support elems". `.head($k)` works on
+  both.
+- **Raku++ accepts two things Rakudo refuses**: `Range.max` with a positional
+  block (Rakudo wants `:by`), and a class named in a test that only `use`d
+  the module re-exporting it (Rakudo wants its own `use`). Both surfaced
+  only when the Rakudo run was made, which is the case for running it.

@@ -4,7 +4,7 @@ use Vectors;
 use Math::Wavelet;
 use Math::Wavelet::Filter;
 
-my @names = wavelist;
+my @names = wavelist(:kind<discrete>);
 plan 2 * @names + 16;
 
 is +@names, 106, 'the 106 discrete wavelets PyWavelets has';

@@ -21,7 +21,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [L10N::RU](L10N-RU) — Raku written with Russian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::UK](L10N-UK) — Raku written with Ukrainian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::LV](L10N-LV) — Raku written with Latvian keywords | 0.0.1 | 16/16 § | 15/16 § |
-| [Math::Wavelet](Math-Wavelet) — discrete wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.1 | 2157/2157 ¶ | 2157/2157 ¶ |
+| [Math::Wavelet](Math-Wavelet) — discrete and continuous wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.2 | 2722/2722 ¶ | 2722/2722 ¶ |
 | [TOML::Native](TOML-Native) — TOML v1.0.0 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 250/250 | 432/432 |
 | [Text::Diff::Native](Text-Diff-Native) — line and unified diffs (Myers O(ND)), native on Raku++, pure Raku elsewhere | 0.0.1 | 643/643 | 1265/1265 |
 | [YAML::Native](YAML-Native) — YAML 1.2 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 237/237 | 461/461 |
@@ -67,9 +67,9 @@ translatable names. `my` is the one that cannot be translated properly:
 Slavic and Baltic possessives agree in gender, so no single spelling of it is
 right in front of every variable name, and what ships is the citation form.
 
-¶ Measured on Rakudo `v2026.09` and a Raku++ `5.1.0` development build,
+¶ Measured on Rakudo `v2026.09` and a Raku++ `5.3.0` development build,
 neither of them an established floor. Every expected value in its suite comes
-from PyWavelets 1.8.0, and so does its table of 106 wavelets.
+from PyWavelets 1.8.0, and so does its table of 106 discrete wavelets.
 
 TOML::Native and Text::Diff::Native were tried on Rakudo v2026.08 and Raku++
 4.0.1, and YAML::Native on Rakudo v2026.08 and Raku++ 4.0.1-160; those are the

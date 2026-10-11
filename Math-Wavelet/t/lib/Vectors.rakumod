@@ -11,6 +11,18 @@ sub nums(Str $f) is export { $f eq '-' ?? Nil !! $f.words.map(*.Num).Array }
 sub list-of(Str $f) is export { $f.split('|').map(&nums).Array }
 sub matrix(Str $f) is export { $f.split(';').map(&nums).Array }
 
+#| A field that may be complex: the real parts, '|', the imaginary parts.
+sub cnums(Str $f) is export {
+    return nums($f) unless $f.contains('|');
+    my ($re, $im) = $f.split('|').map(&nums);
+    ($re.list Z $im.list).map({ Complex.new(|$_) }).Array
+}
+sub cmatrix(Str $f) is export {
+    return matrix($f) unless $f.contains('|');
+    my ($re, $im) = $f.split('|').map(&matrix);
+    ($re.list Z $im.list).map(-> ($r, $i) { ($r.list Z $i.list).map({ Complex.new(|$_) }).Array }).Array
+}
+
 #| Agreement to a part in 10¹⁰ of the largest value: the sums run in a
 #| different order than PyWavelets' C, so the last bits may differ. Nested
 #| arrays are compared flattened, after their shapes.

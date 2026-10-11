@@ -1,12 +1,13 @@
 # Math::Wavelet
 
-Discrete wavelet transforms in pure Raku: the single-level and multilevel
-DWT, the stationary transform, the 2-D transform, thresholding and wavelet
-denoising, over the 106 discrete wavelets PyWavelets has. It has no
-dependencies and no native library, and agrees with PyWavelets to ten
-significant digits.
+Wavelet transforms in pure Raku: the single-level and multilevel DWT, the
+stationary transform, the 2-D transform, thresholding and wavelet denoising,
+over the 106 discrete wavelets PyWavelets has; and the continuous transform,
+over its 21 continuous ones — the Gaussian derivatives, the Mexican hat,
+Morlet, and their complex relatives. It has no dependencies and no native
+library, and agrees with PyWavelets to ten significant digits.
 
-> Version 0.0.1. The interface below is implemented and tested on both
+> Version 0.0.2. The interface below is implemented and tested on both
 > engines; what it leaves out is under Scope.
 
 ```raku
@@ -25,6 +26,8 @@ my @clean = denoise(@x, 'db4');                 # VisuShrink, soft
 
 my @image = (^8).map(-> $r { (^8).map({ $r * $_ }).Array });
 my ($a, ($h, $v, $d)) = dwt2(@image, 'haar');   # an image is an array of rows
+
+my ($W, $f) = cwt(@x, [1, 2, 4, 8], 'mexh');    # a row of coefficients per scale
 ```
 
 ```bash
@@ -54,11 +57,13 @@ also be used one at a time:
 | `Math::Wavelet::SWT` | `swt`, `iswt` |
 | `Math::Wavelet::DWT2` | `dwt2`, `idwt2`, `wavedec2`, `waverec2` |
 | `Math::Wavelet::Threshold` | `threshold`, `noise-sigma`, `denoise` |
+| `Math::Wavelet::Continuous` | a continuous wavelet: ψ, its support and what is known about it |
+| `Math::Wavelet::CWT` | `cwt`, `integrate-wavelet`, `central-frequency`, `scale2frequency`, `frequency2scale` |
 | `Math::Wavelet::Table` | the filter coefficients, generated from PyWavelets |
 
 ## Wavelets
 
-A wavelet is given by name, or as a `Math::Wavelet::Filter`:
+A discrete wavelet is given by name, or as a `Math::Wavelet::Filter`:
 
 | family | names |
 |---|---|
@@ -76,7 +81,13 @@ say $w.family;                     # Symlets
 say $w.dec-len;                    # 8
 say $w.vanishing-moments-psi;      # 4
 say wavelist('coif').elems;        # 17
+say wavelist.elems;                # 127: wavelist(:kind<discrete>) is 106
 ```
+
+`wavelist` takes PyWavelets' `:kind`, `all` (the default), `discrete` or
+`continuous`, and `wavelet` answers a `Math::Wavelet::Continuous` for a
+continuous name. The continuous wavelets are under *The continuous
+transform*.
 
 | method | |
 |---|---|
@@ -201,6 +212,70 @@ given), leaves the approximation alone, and reconstructs `n` samples.
 - `examples/image.raku` — a two-level 2-D decomposition of a synthetic image
   with a horizontal and a vertical edge: where its energy goes, and which
   band sees which edge.
+- `examples/scalogram.raku` — a chirp followed along the ridge of its
+  scalogram: at each moment, the frequency where |W| peaks, against the one
+  the chirp has.
+
+## The continuous transform
+
+| | |
+|---|---|
+| `cwt(@x, $scales, $w, :$sampling-period, :$method)` | `(coefficients, frequencies)`: a row of `+@x` coefficients per scale |
+| `integrate-wavelet($w, :$precision)` | `(∫ψ, x)` over `2**$precision` samples |
+| `central-frequency($w, :$precision)` | where ψ's spectrum peaks, in cycles per sample at scale 1 |
+| `scale2frequency($w, $scale)`, `frequency2scale($w, $f)` | either takes one value or a list |
+
+`$scales` is one positive number or a list of them, not necessarily
+integers. A coefficient is a `Num`, or a `Complex` for a complex wavelet.
+The frequencies are in cycles per `$sampling-period`, which defaults to one
+sample.
+
+The algorithm is PyWavelets': ψ is sampled at 2¹⁰ points and integrated
+once, the integral is resampled at each scale, convolved with the signal, and
+differenced. `:method<conv>` (the default) convolves directly, which costs
+`n·m` for a kernel of `m` taps, and `m` grows with the scale.
+`:method<fft>` convolves through a radix-2 FFT. The signal's spectrum is
+computed once per transform size, and a complex kernel costs no more than a
+real one. The two methods agree to rounding. For 40 scales over 512 samples
+of `mexh`, `conv` takes 3.2 s on Raku++ and 1.5 s on Rakudo, and `fft`
+takes 1.1 s on Raku++ and 1.3 s on Rakudo.
+
+### Continuous wavelets
+
+| family | names | ψ(x) |
+|---|---|---|
+| Gaussian | `gaus1` … `gaus8` | the p-th derivative of e^(−x²), normalised |
+| Mexican hat | `mexh` | (2 / (√3 π^¼)) (1 − x²) e^(−x²/2) |
+| Morlet | `morl` | cos(5x) e^(−x²/2) |
+| Complex Gaussian | `cgau1` … `cgau8` | the p-th derivative of e^(−ix − x²), normalised |
+| Shannon | `shanB-C` | √B sinc(Bx) e^(2πiCx) |
+| Frequency B-spline | `fbspM-B-C` | √B sinc(Bx/M)^M e^(2πiCx) |
+| Complex Morlet | `cmorB-C` | (πB)^(−½) e^(−x²/B) e^(2πiCx) |
+
+B is the bandwidth and C the centre frequency, and M is the spline order, an
+integer of at least 1: `cmor1.5-1.0`, `fbsp2-1-0.5`. A bare `shan`, `fbsp`
+or `cmor` takes PyWavelets' defaults, which PyWavelets itself now warns
+about. The explicit form is the one to write.
+
+```raku
+my $w = wavelet('cmor1.5-1.0');
+say $w.family;                     # Complex Morlet wavelets
+say $w.complex-cwt;                # True
+say $w.bandwidth-frequency;        # 1.5
+my ($psi, $x) = $w.wavefun(:level(8));   # 256 samples over [-8, 8]
+say $w.psi(0);                     # 0.4606+0i
+```
+
+| method | |
+|---|---|
+| `.psi($x)` | ψ at one point: a `Num`, or a `Complex` |
+| `.wavefun(:$level, :$length)` | `(psi, x)`: `2**$level` samples, or `$length`, over the support |
+| `.lower-bound`, `.upper-bound` | the support that `wavefun` and `cwt` sample |
+| `.center-frequency`, `.bandwidth-frequency`, `.fbsp-order` | for `shan`, `fbsp` and `cmor`; undefined otherwise |
+| `.name` `.family` `.short-family` `.symmetry` `.complex-cwt` | |
+
+The discrete transforms refuse a continuous wavelet, and `cwt` refuses a
+discrete one, saying so.
 
 ## Scope
 
@@ -208,25 +283,29 @@ Left out of 0.0.1 on purpose:
 
 | | |
 |---|---|
-| the continuous transform | `cwt` and the continuous wavelets (Morlet, Mexican hat, Gaussian, …) |
+| the continuous transform of a matrix | `cwt` takes one signal; PyWavelets' `axis` is not there |
+| `central-frequency` of a discrete wavelet | PyWavelets runs the cascade algorithm for it; here it takes a continuous one |
 | wavelet packets | the full decomposition tree, and best-basis selection |
 | n-dimensional transforms | `dwtn` and `swt2`; 2-D is `dwt2` and `wavedec2` only |
-| complex data | the transforms take real numbers |
+| complex data | the transforms take real numbers; a complex wavelet gives complex coefficients |
 | per-axis wavelets or modes | one wavelet and one mode for both axes of an image |
 
 The stationary transform inverts only from start level 0, as in PyWavelets.
 
 ## Compatibility
 
-| engine | version | `01-dwt` | `02-multilevel` | `03-swt` | `04-dwt2` | `05-threshold` | `06-wavelets` |
-|---|---|---:|---:|---:|---:|---:|---:|
-| Rakudo | v2026.09 | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 |
-| Raku++ | 5.1.0, a development build | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 |
+| engine | version | `01-dwt` | `02-multilevel` | `03-swt` | `04-dwt2` | `05-threshold` | `06-wavelets` | `07-cwt` |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Rakudo | v2026.09 | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 565/565 |
+| Raku++ | 5.3.0, a development build | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 565/565 |
 
 Neither version is an established floor; no older engine has been tried.
 The expected values in `t/vectors` come from PyWavelets 1.8.0, through
 `tools/gen-vectors.py`, and the filter table from the same version, through
-`tools/gen-table.py`.
+`tools/gen-table.py`. `continuous.vec` and `cwt.vec` came later, from the
+same PyWavelets on NumPy 2.5.4. That build regenerates the older files with
+a few last-digit differences, such as `0` against `-2.4e-16`, so those files
+were kept as they were.
 
 ## Author
 

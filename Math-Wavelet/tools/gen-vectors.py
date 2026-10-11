@@ -180,3 +180,56 @@ for w, level, mode in (('db4', None, 'soft'), ('sym8', 3, 'hard'),
                             mode, repr(float(sigma)), repr(float(thr)), v(x), v(y)]))
 write('denoise.vec', lines, [
     'denoise wavelet level mode sigma threshold x y'])
+
+# ---- continuous ---------------------------------------------------------
+# Complex values are written as two fields' worth in one: the real parts,
+# '|', the imaginary parts — for a matrix, each part is ';'-separated rows.
+
+import warnings
+warnings.simplefilter('ignore', FutureWarning)   # plain 'cmor', 'shan', 'fbsp'
+
+def cv(xs):
+    xs = np.asarray(xs)
+    return v(xs.real) + '|' + v(xs.imag) if np.iscomplexobj(xs) else v(xs)
+
+def cm(a):
+    a = np.asarray(a)
+    return m(a.real) + '|' + m(a.imag) if np.iscomplexobj(a) else m(a)
+
+def opt(x):
+    return '-' if x is None else repr(x)
+
+CONTINUOUS = (pywt.wavelist(kind='continuous')
+              + ['cmor1.5-1.0', 'cmor0.5-2', 'shan1.5-1.0', 'shan0.25-0.5',
+                 'fbsp2-1-1.5', 'fbsp3-0.5-2', 'fbsp1-1.5-1'])
+
+lines = []
+for name in CONTINUOUS:
+    w = pywt.ContinuousWavelet(name)
+    lines.append('\t'.join(['wavelet', name, w.family_name, w.short_family_name,
+                            str(w.complex_cwt), repr(w.lower_bound), repr(w.upper_bound),
+                            opt(w.center_frequency), opt(w.bandwidth_frequency),
+                            opt(w.fbsp_order), w.symmetry]))
+    for level, length in ((5, None), (8, None), (3, 7)):
+        psi, x = w.wavefun(level, length=length)
+        lines.append('\t'.join(['wavefun', name, str(level), opt(length), cv(psi), v(x)]))
+    for precision in (8, 10):
+        lines.append('\t'.join(['central-frequency', name, str(precision),
+                                repr(float(pywt.central_frequency(w, precision=precision)))]))
+    int_psi, x = pywt.integrate_wavelet(w, precision=6)
+    lines.append('\t'.join(['integrate', name, '6', cv(int_psi), v(x)]))
+write('continuous.vec', lines, [
+    'wavelet           name family short-family complex lower upper center bandwidth fbsp-order symmetry',
+    'wavefun           name level length psi x',
+    'central-frequency name precision frequency',
+    'integrate         name precision integral x'])
+
+lines = []
+for name in ['gaus1', 'gaus4', 'gaus8', 'mexh', 'morl', 'cgau1', 'cgau6',
+             'shan1.5-1.0', 'fbsp2-1-1.5', 'cmor1.5-1.0', 'cmor0.5-2']:
+    for n, scales in ((40, [1, 2, 3.5, 8, 20]), (7, [0.5, 1, 3]), (1, [1, 4])):
+        x = signal(n)
+        coef, freqs = pywt.cwt(x, scales, name, sampling_period=0.5)
+        lines.append('\t'.join(['cwt', name, v(scales), '0.5', v(x), cm(coef), v(freqs)]))
+write('cwt.vec', lines, [
+    'cwt wavelet scales sampling-period x coefficients(rows) frequencies'])

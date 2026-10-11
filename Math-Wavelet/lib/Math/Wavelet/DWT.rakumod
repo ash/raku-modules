@@ -1,4 +1,5 @@
 use Math::Wavelet::Filter;
+use Math::Wavelet::Continuous;
 
 #| The one-dimensional discrete wavelet transform, single- and multilevel.
 unit module Math::Wavelet::DWT;
@@ -8,7 +9,11 @@ our constant MODES is export(:modes) = <zero constant symmetric periodic smooth
     periodization reflect antisymmetric antireflect>;
 
 our sub as-wavelet($w --> Math::Wavelet::Filter) {
-    $w ~~ Math::Wavelet::Filter ?? $w !! Math::Wavelet::Filter.named(~$w)
+    return $w if $w ~~ Math::Wavelet::Filter;
+    die "'$w' is a continuous wavelet; the discrete transforms take one of "
+        ~ "wavelist(:kind<discrete>), and cwt takes this one"
+        if $w ~~ Math::Wavelet::Continuous || Math::Wavelet::Continuous.is-continuous(~$w);
+    Math::Wavelet::Filter.named(~$w)
 }
 
 our sub check-mode(Str $mode) {
