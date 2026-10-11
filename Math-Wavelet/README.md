@@ -294,7 +294,7 @@ The stationary transform inverts only from start level 0, as in PyWavelets.
 
 ## Compatibility
 
-| engine | version | `01-dwt` | `02-multilevel` | `03-swt` | `04-dwt2` | `05-threshold` | `06-wavelets` | `07-cwt` |
+| engine | version | 01-dwt | 02-multilevel | 03-swt | 04-dwt2 | 05-threshold | 06-wavelets | 07-cwt |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | Rakudo | v2026.09 | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 569/569 |
 | Raku++ | 5.3.0, a development build | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 569/569 |

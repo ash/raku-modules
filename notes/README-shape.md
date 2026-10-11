@@ -71,4 +71,8 @@ the first, a maintainer the second.
   commit that changes what they measure.
 - Bold carries the load-bearing sentence of a section — one per section at
   most.
+- No inline code in a table's header row. raku.land draws the header on a
+  dark band and a code span in it on a light chip with light text, so the
+  label is all but invisible there: write `01-dwt`, not `` `01-dwt` ``, and
+  keep code spans to the body cells.
 - British "Licence" for the heading; the SPDX identifier for the body.
