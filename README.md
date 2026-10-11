@@ -21,7 +21,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [L10N::RU](L10N-RU) — Raku written with Russian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::UK](L10N-UK) — Raku written with Ukrainian keywords | 0.0.1 | 16/16 § | 14/16 § |
 | [L10N::LV](L10N-LV) — Raku written with Latvian keywords | 0.0.1 | 16/16 § | 15/16 § |
-| [Math::Wavelet](Math-Wavelet) — discrete and continuous wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.2 | 2722/2722 ¶ | 2722/2722 ¶ |
+| [Math::Wavelet](Math-Wavelet) — discrete and continuous wavelet transforms, pure Raku, PyWavelets-compatible | 0.0.2 | 2726/2726 ¶ | 2726/2726 ¶ |
 | [TOML::Native](TOML-Native) — TOML v1.0.0 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 250/250 | 432/432 |
 | [Text::Diff::Native](Text-Diff-Native) — line and unified diffs (Myers O(ND)), native on Raku++, pure Raku elsewhere | 0.0.1 | 643/643 | 1265/1265 |
 | [YAML::Native](YAML-Native) — YAML 1.2 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 237/237 | 461/461 |

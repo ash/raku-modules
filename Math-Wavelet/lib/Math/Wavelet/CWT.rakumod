@@ -44,13 +44,13 @@ our sub central-frequency($wavelet, Int :$precision = 8 --> Num) is export {
 #| The frequency each scale corresponds to, in cycles per sample.
 our sub scale2frequency($wavelet, $scale, Int :$precision = 8) is export {
     my $f = central-frequency($wavelet, :$precision);
-    $scale ~~ Positional ?? $scale.map({ $f / $_ }).Array !! $f / $scale
+    $scale ~~ Iterable ?? $scale.map({ $f / $_ }).Array !! $f / $scale
 }
 
 #| The scale each frequency corresponds to.
 our sub frequency2scale($wavelet, $frequency, Int :$precision = 8) is export {
     my $f = central-frequency($wavelet, :$precision);
-    $frequency ~~ Positional ?? $frequency.map({ $f / $_ }).Array !! $f / $frequency
+    $frequency ~~ Iterable ?? $frequency.map({ $f / $_ }).Array !! $f / $frequency
 }
 
 #| The continuous wavelet transform of `@data` at each of `@scales`. Returns
@@ -65,7 +65,9 @@ our sub cwt(@data, $scales, $wavelet, Real :$sampling-period = 1,
             Str :$method = 'conv' --> List) is export {
     my $w = as-continuous($wavelet);
     die "method must be 'conv' or 'fft'" unless $method eq 'conv' | 'fft';
-    my @scales = ($scales ~~ Positional ?? $scales.list !! ($scales,)).map(*.Num);
+    # a list of scales is anything iterable: an Array, a Range, or the Seq that
+    # `@f.map({ $cf / $_ })` makes — not only a Positional, which a Seq is not
+    my @scales = ($scales ~~ Iterable ?? $scales.list !! ($scales,)).map(*.Num);
     die '`scales` must only include positive values' if @scales.first(* <= 0).defined;
     my @x = @data.map(*.Num);
     my $n = +@x;

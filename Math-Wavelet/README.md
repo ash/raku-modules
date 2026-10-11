@@ -225,8 +225,8 @@ given), leaves the approximation alone, and reconstructs `n` samples.
 | `central-frequency($w, :$precision)` | where ψ's spectrum peaks, in cycles per sample at scale 1 |
 | `scale2frequency($w, $scale)`, `frequency2scale($w, $f)` | either takes one value or a list |
 
-`$scales` is one positive number or a list of them, not necessarily
-integers. A coefficient is a `Num`, or a `Complex` for a complex wavelet.
+`$scales` is one positive number or any list of them: an Array, a Range,
+or a Seq such as `@freqs.map({ $cf / $_ })`. They need not be integers. A coefficient is a `Num`, or a `Complex` for a complex wavelet.
 The frequencies are in cycles per `$sampling-period`, which defaults to one
 sample.
 
@@ -296,8 +296,8 @@ The stationary transform inverts only from start level 0, as in PyWavelets.
 
 | engine | version | `01-dwt` | `02-multilevel` | `03-swt` | `04-dwt2` | `05-threshold` | `06-wavelets` | `07-cwt` |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Rakudo | v2026.09 | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 565/565 |
-| Raku++ | 5.3.0, a development build | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 565/565 |
+| Rakudo | v2026.09 | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 569/569 |
+| Raku++ | 5.3.0, a development build | 1144/1144 | 534/534 | 136/136 | 74/74 | 41/41 | 228/228 | 569/569 |
 
 Neither version is an established floor; no older engine has been tried.
 The expected values in `t/vectors` come from PyWavelets 1.8.0, through

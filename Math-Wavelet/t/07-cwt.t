@@ -6,7 +6,7 @@ use Math::Wavelet::Continuous;
 
 my @info  = cases('continuous.vec');
 my @cases = cases('cwt.vec');
-plan @info.grep(*[0] eq 'wavelet') * 9 + @info.grep(*[0] ne 'wavelet') + 4 * @cases + 13;
+plan @info.grep(*[0] eq 'wavelet') * 9 + @info.grep(*[0] ne 'wavelet') + 4 * @cases + 17;
 
 #| An attribute PyWavelets may leave as None, written '-'.
 sub maybe($got, Str $want, Str $what) {
@@ -69,6 +69,17 @@ isa-ok wavelet('mexh'), Math::Wavelet::Continuous, 'wavelet() gives a continuous
 my ($c) = cwt((^16).map(*.sin), 2, 'cgau2');
 isa-ok $c[0][0], Complex, 'a complex wavelet gives complex coefficients';
 is-approx scale2frequency('morl', 4), central-frequency('morl') / 4, 'scale2frequency';
+{
+    my @x = (^32).map(*.sin);
+    my ($a) = cwt(@x, [1, 2, 4], 'mexh');
+    my ($b) = cwt(@x, (1, 2, 4).map(*.Num), 'mexh');
+    my ($c) = cwt(@x, 1..2, 'mexh');
+    is +$b, 3, 'cwt takes its scales as a Seq';
+    close-to $b, $a, '…and transforms at each of them';
+    is +$c, 2, '…or as a Range';
+    is-deeply scale2frequency('morl', (2, 4).map(* + 0)), [scale2frequency('morl', 2), scale2frequency('morl', 4)],
+        'scale2frequency takes a Seq';
+}
 is-approx frequency2scale('morl', 0.2), central-frequency('morl') / 0.2, 'frequency2scale';
 
 throws-like { wavelet('gaus9') }, Exception, message => /'Unknown wavelet'/, 'gaus9 is unknown';
