@@ -7,8 +7,7 @@ over its 21 continuous ones — the Gaussian derivatives, the Mexican hat,
 Morlet, and their complex relatives. It has no dependencies and no native
 library, and agrees with PyWavelets to ten significant digits.
 
-> Version 0.0.2. The interface below is implemented and tested on both
-> engines; what it leaves out is under Scope.
+> Version 0.0.3. The interface below works under Raku++ and Rakudo.
 
 ```raku
 use Math::Wavelet;
