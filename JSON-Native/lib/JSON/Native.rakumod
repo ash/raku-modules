@@ -2,29 +2,8 @@
 
 =head1 JSON::Native
 
-A JSON parser with a native fast path on Raku++, and JSON::Fast everywhere else.
-
-The XS pattern: the distribution ships C source, the build step compiles it
-against Raku++'s extension ABI, and the module uses it when it is there. On a
-Raku++ without the built extension, C<from-json> still runs native through the
-interpreter's own built-in codec. On Rakudo — or wherever neither is present —
-nothing breaks, it simply calls C<JSON::Fast>. The same program runs on both.
-
-=head2 Why it exists
-
-Raku++ interprets an AST rather than JIT-compiling, so a tokenizer written in
-Raku costs it roughly an order of magnitude more than it costs Rakudo, and
-JSON is exactly that shape of work. The engine fast-paths the C<JSON::Fast>
-calls it can cover — both directions — so what this module adds is the parse
-column below, and a name that says at the point of C<use> that the code leans
-on native speed. 278 KB document, measured 2026-08-23:
-
-    278 KB document                  parse       serialise
-    Rakudo JSON::Fast                42 ms        41 ms
-    Raku++ JSON::Fast (fast path)    ~6 ms        6.1 ms
-    JSON::Native (extension)          5.0 ms       3.5 ms
-
-=head2 Synopsis
+JSON parsing and writing that takes the fastest path the machine has, and
+gives JSON::Fast's answers on every one of them. No dependencies.
 
     use JSON::Native;
 
@@ -32,56 +11,50 @@ on native speed. 278 KB document, measured 2026-08-23:
     say $data<a>[1].WHAT;        # (Rat) — Raku numerics, not doubles
     say to-json($data, :!pretty);
 
-    say json-backend;                  # 'native', 'engine' or 'JSON::Fast'
+    say json-backend;            # which path parses here
+    say json-backend(:write);    # and which one writes
+
+=head2 Backends
+
+On B<Raku++>, the interpreter's own codec (C<engine>) — handed out as the
+routines themselves where the engine offers C<rakupp-json-codec>, so a call
+has nothing of this module's in front of it — then the compiled extension
+(C<native>), then the Raku implementation (C<raku>).
+
+On B<Rakudo>, a C tokenizer reached through NativeCall (C<nativecall>), where
+a C compiler was there at install time; then JSON::Fast (C<json-fast>), if it
+happens to be installed — it is not a dependency, and nothing here installs
+it; then C<raku>. JSON::Fast also writes where it is installed, as the faster
+of the two writers.
+
+C<JSON_NATIVE_BACKEND> names one to use instead: C<engine>, C<native>,
+C<nativecall>, C<json-fast> or C<raku>. One that is not available on this
+machine is reported on STDERR and the usual order is used.
 
 =head2 Compatibility
 
-C<from-json> returns what C<JSON::Fast> returns, checked value by value: Int for
-integer tokens (arbitrary precision), Rat for decimals, Num for exponent forms,
-Bool, Any for null, Hash and Array — or Map and List under C<:immutable>.
-
-C<to-json> is native too as of extension ABI 2, which made a hash walk cost
-O(1) per key instead of O(i). Its output is C<JSON::Fast>'s, byte for byte —
-that is a contract programs already depend on, so it is checked value by value
-rather than merely being valid JSON, down to backspace being written as a
-six-character \u escape rather than as \b.
-
-The native serialiser takes one value and an optional C<:pretty>. Anything
-else — C<:sorted-keys>, C<:spacing>, NaN/Inf (whose rendering follows
-C<$*JSON_NAN_INF_SUPPORT>), or a value outside the extension ABI's
-vocabulary — falls through to C<JSON::Fast> unchanged. C<from-json> follows
-the same rule for adverbs: C<:immutable> is native, anything else
-(C<:allow-jsonc>, or whatever C<JSON::Fast> grows next) is delegated, never
-refused. Being exactly right or standing aside is the whole bargain; being
-approximately right would be worse than being slow.
+The contract is JSON::Fast's: C<from-json> returns what JSON::Fast returns,
+C<to-json> writes what it writes, byte for byte, with the same adverbs. A
+native path answers exactly or stands aside — one that declines or raises
+hands the call to the Raku implementation, so even a refusal is JSON::Fast's.
+Content after the document raises C<X::JSON::Native::AdditionalContent>,
+from every path.
 
 =end pod
 
 # No `unit module` line, and that is load-bearing rather than an omission: `sub
-# EXPORT` — which this module now uses, so it can cooperate with Data::Native —
+# EXPORT` — which this module uses, so it can cooperate with Data::Native —
 # must sit at the file's outermost scope. Inside a package declaration Rakudo
 # never runs it, exports nothing, and reports no error, which is the worst
 # possible shape. The subs below are file-scoped and handed out by the EXPORT
 # at the bottom.
 #
 # Unlike CSV::Native, this file needs no implementation/face split: Data::Native
-# delegates its `json` tag straight to JSON::Fast, so it never `use`s this
-# module and there is nothing here to poison the registry.
-
-# JSON::Fast is imported inside a BLOCK on purpose. `use` is lexically scoped,
-# so its `from-json`/`to-json` stay in here and do not collide with the ones this
-# module declares — importing it at module scope is a redeclaration error, which
-# is the whole reason for the two captured references.
-my &jf-from-json;
-my &jf-to-json;
-{
-    use JSON::Fast;
-    &jf-from-json = &from-json;
-    &jf-to-json   = &to-json;
-}
+# delegates its `json` tag elsewhere, so it never `use`s this module and there
+# is nothing here to poison the registry.
 
 # `&::(…)` is a RUNTIME lookup, so this line compiles on Rakudo too — where it
-# simply yields Nil and the module falls through to JSON::Fast. Anything
+# simply yields Nil and the module runs its Raku implementation. Anything
 # spelled `use Rakupp::Ext` would have made the file uncompilable there.
 # The probe sits in a SUB, and that is load-bearing rather than tidiness. A
 # bare `my &ext-load = try &::('rakupp-ext-load');` at module scope leaves the
@@ -100,6 +73,60 @@ sub probe-symbol(Str $name) {
     $c ~~ Callable ?? $c !! Nil
 }
 my &ext-load = probe-symbol('rakupp-ext-load');
+my Bool $on-rakupp = ?&ext-load;
+
+# ---- the Raku implementation --------------------------------------------------
+#
+# Loaded the first time a call needs it, by a runtime `require`: on a Raku++
+# whose native paths answer every call a program makes, it is never loaded.
+# These two are also the FALLBACK every native path hands a call to — the
+# engine codec calls them itself — so they take what the caller passed,
+# untouched, Mu and all, and let the implementation refuse what JSON::Fast
+# refuses.
+my &raku-from-json;
+my &raku-to-json;
+sub load-raku() {
+    require ::('JSON::Native::Raku');
+    &raku-to-json   = ::('&JSON::Native::Raku::to-json');
+    &raku-from-json = ::('&JSON::Native::Raku::from-json');
+}
+sub raku-from(Mu \text, *%opt) {
+    load-raku() unless &raku-from-json;
+    raku-from-json(text, |%opt)
+}
+sub raku-to(Mu \obj, *%opt) {
+    load-raku() unless &raku-to-json;
+    raku-to-json(obj, |%opt)
+}
+
+# ---- Raku++: the engine's codec -------------------------------------------------
+#
+# Asked for only on Raku++ (&ext-load resolves): a name lookup that fails on
+# Rakudo is a Failure whose DESTROY warns "unhandled Failure detected".
+#
+# rakupp-json-codec makes the codec a ROUTINE with the fallback built in, and
+# that routine is what this module exports: no Raku-level frame stands between
+# a call and the codec, which on a fifty-byte document is most of the cost.
+# An engine without it still has the bare primitives, which raise for what
+# they do not cover and are reached through from-json/to-json below.
+my &codec-maker      = $on-rakupp ?? probe-symbol('rakupp-json-codec') !! Nil;
+my &engine-from-json = $on-rakupp ?? probe-symbol('rakupp-from-json')  !! Nil;
+my &engine-to-json   = $on-rakupp ?? probe-symbol('rakupp-to-json')    !! Nil;
+my &codec-from-json  = &codec-maker ?? codec-maker('from-json', &raku-from) !! Nil;
+my &codec-to-json    = &codec-maker ?? codec-maker('to-json',   &raku-to)   !! Nil;
+
+# Whether the bare primitive hands back text in NFC, as every Str Rakudo and
+# JSON::Fast produce is. One that does not (Raku++ 5.3 and before), decoding
+# "a\x5Cu0301", returns an "a" and a separate combining mark — which looks like
+# "á" and is not equal to it; there a document with a \u escape in it goes to
+# the Raku implementation. An engine with rakupp-json-codec has the fix.
+sub engine-normalises(--> Bool) {
+    my $s = try engine-from-json("\"a\x5Cu0301\"");
+    so $s.defined && $s.codes == 1
+}
+my Bool $engine-nfc = &codec-maker ?? True !! &engine-from-json ?? engine-normalises() !! False;
+
+# ---- Raku++: the compiled extension -----------------------------------------------
 my &native-parse;
 my &native-write;
 
@@ -112,8 +139,8 @@ sub load-native(--> Bool) {
         # The loader installs the extension's subs into THIS scope.
         &native-parse = try &::('from-json-native');
         # Absent on a library built against ABI 1, which is a supported state:
-        # the parser is the reason this module exists, and to-json simply stays
-        # on JSON::Fast until the extension is rebuilt.
+        # the parser is the reason the extension exists, and to-json simply
+        # stays on the next path down until the extension is rebuilt.
         &native-write = try &::('to-json-native');
         return True if &native-parse;
     }
@@ -135,81 +162,153 @@ sub libraries() {
     @c
 }
 
-my Bool $is-native = load-native();
+# What the extension calls back for a decoded string that may not be in NFC —
+# one assembled around a \u escape, which Raku++ does not normalise on its
+# own. Reached by name through rk_call, so nothing here appears to use it. See
+# nfc() in src/json.c.
+my sub json-native-nfc(Str $s) { $s.NFC.Str }
 
-# The middle path: on Raku++ WITHOUT a compiled extension, from-json still
-# runs native — the interpreter's own C++ parser, reached through the
-# Rakudo::Internals::JSON compatibility class it answers to. It types values
-# exactly as JSON::Fast does (Int/Rat/Num per Str.Numeric, strict escapes,
-# surrogate pairs), so the compatibility contract holds. Gated on &ext-load
-# resolving, which only Raku++ answers: under Rakudo the same class name
-# exists but is the slow vendored copy, and JSON::Fast is the right choice
-# there. Two things deliberately stay OFF this path: :immutable (the engine
-# class does not take it) and to-json (the engine's is compact-only where
-# JSON::Fast pretty-prints by default, and byte-identical output is the
-# contract — approximately right would be worse than slow).
-my Bool $engine-codec = ?(!$is-native && &ext-load);
-
-# The codec's first-party name, when this Raku++ has it; older builds answer
-# only the Rakudo-compatibility spelling. Probed FUNCTIONALLY — a type object
-# is undefined, so `(try ::(…)) // fallback` would always take the fallback.
-# Same reason as probe-symbol above: the `try` has to live inside a routine, or
-# the exception it catches stays in this file's `$!` and makes the module
-# unserializable for any module that `use`s it. Asked only on Raku++
-# (&ext-load): on Rakudo the lookup yields a Failure that nothing handles, and
-# once a garbage collection runs its DESTROY warns "unhandled Failure detected".
-sub engine-json-class() {
-    return Rakudo::Internals::JSON unless &ext-load;
-    my $ok = try { ::('Rakupp::Internals::JSON').from-json('1') === 1 };
-    $ok ?? ::('Rakupp::Internals::JSON') !! Rakudo::Internals::JSON
-}
-my $engine-json = engine-json-class();
-
-# Which parser is in use: 'native' (the compiled extension), 'engine'
-# (Raku++'s built-in codec, no extension present) or 'JSON::Fast'.
-sub json-backend() {
-    $is-native      ?? 'native'
-    !! $engine-codec ?? 'engine'
-    !!                  'JSON::Fast'
-}
-
-# Same bargain as to-json below: the native parser claims the text plus an
-# optional :immutable, and every OTHER adverb — :allow-jsonc today, whatever
-# JSON::Fast grows tomorrow — goes to JSON::Fast untouched. Refusing an adverb
-# the module it stands in for accepts would make `use JSON::Native` a
-# downgrade, and this used to do exactly that ("Unexpected named argument").
-sub from-json(Str() $text, *%opt) {
-    if %opt.keys (-) <immutable> {
-        return jf-from-json($text, |%opt);
+# ---- Rakudo: NativeCall, and JSON::Fast if it is installed -----------------------------
+my &nc-parse;
+my $nc-decline;
+# (each lookup sits in the same block as its `require`: what a runtime
+# require brings in is visible in that block, and a lookup after it fails)
+sub load-nativecall(--> Bool) {
+    try {
+        require ::('JSON::Native::NativeCall');
+        if ::('&JSON::Native::NativeCall::available')() {
+            &nc-parse   = ::('&JSON::Native::NativeCall::parse');
+            $nc-decline = ::('JSON::Native::NativeCall::Decline');
+        }
     }
-    my $immutable = %opt<immutable>;
-    return native-parse($text, :$immutable) if $is-native;
-    return $engine-json.from-json($text) if $engine-codec && !$immutable;
-    jf-from-json($text, |%opt)
+    so &nc-parse
 }
 
-# The native serialiser handles one value and an optional :pretty, and hands
-# back Nil for anything outside the ABI's vocabulary. Everything else —
-# :sorted-keys, :spacing, a Date, an object with its own .Str — goes to
-# JSON::Fast, whose exact output is the contract both paths have to honour.
+my &jf-from-json;
+my &jf-to-json;
+sub load-json-fast(--> Bool) {
+    try {
+        require ::('JSON::Fast');
+        &jf-from-json = ::('&JSON::Fast::from-json');
+        &jf-to-json   = ::('&JSON::Fast::to-json');
+    }
+    so &jf-from-json
+}
+
+# ---- choosing --------------------------------------------------------------------
 #
-# `($obj, *%opt)` rather than the `(|c)` this used to be: under Raku++ a single
-# Array argument FLATTENS into a capture, so `to-json([1,2,3])` reached
-# JSON::Fast as three arguments and serialised `1`. That is an interpreter bug
-# and it is being fixed, but an explicit signature is the more honest spelling
-# anyway — it says what this sub accepts — and it does not wait for the fix.
-# A bare `$obj` is Any-constrained, which is deliberate: JSON::Fast's own
-# parameter is too, so `to-json(Mu)` must be refused here exactly as it is
-# there. Declaring `Mu $obj` would have been the more permissive-looking
-# choice and would have made the native path answer "null" where JSON::Fast
-# raises — a divergence invented by the fast path, which is the one thing it
-# must never do.
+# Once per process: at load on Raku++, where every probe is a name lookup; at
+# the first call on Rakudo, so a program that never parses never loads
+# NativeCall or JSON::Fast. JSON_NATIVE_BACKEND overrides the order; a backend
+# that is not here is reported, not fatal.
+my Str $PARSE;
+my Str $WRITE;
+sub choose() {
+    my $want = %*ENV<JSON_NATIVE_BACKEND> // '';
+    my %have;
+    if $on-rakupp {
+        %have<engine> = so (&codec-maker || &engine-from-json);
+        %have<native> = load-native() if !&codec-maker || $want eq 'native';
+    }
+    else {
+        %have<nativecall> = load-nativecall() unless $want eq 'json-fast' | 'raku';
+        %have<json-fast>  = load-json-fast()  unless $want eq 'raku';
+    }
+    %have<raku> = True;
+    if $want && !%have{$want} {
+        note "JSON::Native: JSON_NATIVE_BACKEND=$want is not available here; using the usual order";
+        $want = '';
+    }
+    if $want {
+        $PARSE = $want;
+        $WRITE = $want eq 'nativecall' ?? (%have<json-fast> ?? 'json-fast' !! 'raku')
+              !! $want eq 'native' && !&native-write ?? 'raku'
+              !! $want;
+    }
+    elsif $on-rakupp {
+        # the codec routine is the fastest parser and writer there is; without
+        # it, the extension parses faster than the bare primitive, and the
+        # primitive writes faster than the extension
+        $PARSE = &codec-maker ?? 'engine' !! %have<native> ?? 'native' !! %have<engine> ?? 'engine' !! 'raku';
+        $WRITE = %have<engine> ?? 'engine' !! &native-write ?? 'native' !! 'raku';
+    }
+    else {
+        $PARSE = %have<nativecall> ?? 'nativecall' !! %have<json-fast> ?? 'json-fast' !! 'raku';
+        $WRITE = %have<json-fast> ?? 'json-fast' !! 'raku';
+    }
+}
+choose() if $on-rakupp;
+
+# Which path answers a plain call: 'engine', 'native', 'nativecall',
+# 'json-fast' or 'raku' — the parser, or with :write the writer.
+sub json-backend(Bool :$write) {
+    choose() unless $PARSE;
+    $write ?? $WRITE !! $PARSE
+}
+
+# The adverbs are checked with `!%opt` and a lookup rather than a set
+# difference (4.7 µs a call on Rakudo, most of a small parse), and no `try`
+# here `return`s from inside itself (34 µs on Raku++ 5.3, where returning out
+# of a `try` block is slow).
+sub from-json(Str() $text, *%opt) {
+    choose() unless $PARSE;
+    my $parsed;
+    my $ok = False;
+    my $immutable = %opt<immutable>;
+    if !%opt || %opt.elems == 1 && $immutable.defined {
+        if $PARSE eq 'nativecall' {
+            $parsed := nc-parse($text, :immutable(?$immutable));
+            $ok = !($parsed === $nc-decline);
+        }
+        elsif $PARSE eq 'json-fast' {
+            # JSON::Fast's errors are answered by the Raku implementation, so
+            # the exception — X::JSON::Native::AdditionalContent among them —
+            # is the same from every path
+            try { $parsed := jf-from-json($text, :immutable(?$immutable)); $ok = True }
+        }
+        elsif $PARSE eq 'native' {
+            try { $parsed := native-parse($text, :immutable(?$immutable)); $ok = True }
+        }
+        elsif $PARSE eq 'engine' && ($engine-nfc || !$text.contains("\x5Cu")) {
+            try { $parsed := engine-from-json($text, |%opt); $ok = True }
+        }
+        return $parsed if $ok;
+    }
+    elsif $PARSE eq 'json-fast' && %opt.elems <= 2 && !%opt.keys.first({ $_ ne 'immutable' && $_ ne 'allow-jsonc' }).defined {
+        try { $parsed := jf-from-json($text, |%opt); $ok = True }
+        return $parsed if $ok;
+    }
+    raku-from($text, |%opt)
+}
+
+# The extension's writer takes one value and an optional :pretty, and hands
+# back Nil for anything outside its ABI's vocabulary; the engine's takes every
+# adverb but a Callable :sorted-keys and raises for what it does not cover;
+# JSON::Fast takes everything, and its refusals are re-asked of the Raku
+# implementation so the message is the same from every path.
+#
+# `($obj, *%opt)` rather than `(|c)`: under Raku++ a single Array argument
+# FLATTENS into a capture, so `to-json([1,2,3])` once serialised `1`. A bare
+# `$obj` is Any-constrained, which is deliberate: JSON::Fast's own parameter is
+# too, so `to-json(Mu)` must be refused here exactly as it is there.
+my %ENGINE-WRITES = :pretty, :spacing, :sorted-keys, :enums-as-value, :level;
 sub to-json($obj, *%opt) {
-    if &native-write && !(%opt.keys (-) <pretty>) {
+    choose() unless $PARSE;
+    if $WRITE eq 'json-fast' {
+        my $s = try jf-to-json($obj, |%opt);
+        return $s if $s.defined;
+    }
+    elsif $WRITE eq 'engine' {
+        if (!%opt || !%opt.keys.first({ !%ENGINE-WRITES{$_} }).defined) && %opt<sorted-keys> !~~ Callable {
+            my $s = try engine-to-json($obj, |%opt);
+            return $s if $s.defined;
+        }
+    }
+    elsif $WRITE eq 'native' && (!%opt || %opt.elems == 1 && (%opt<pretty>:exists)) {
         my $s = native-write($obj, |%opt);
         return $s if $s.defined;
     }
-    jf-to-json($obj, |%opt)
+    raku-to($obj, |%opt)
 }
 
 # ===========================================================================
@@ -225,8 +324,11 @@ sub to-json($obj, *%opt) {
 sub claimed()  { PROCESS::<%DATA-NATIVE-CLAIMED>  //= {} }
 sub exported() { PROCESS::<%DATA-NATIVE-EXPORTED> //= {} }
 
-my %IMPL = 'from-json'    => &from-json,
-           'to-json'      => &to-json,
+# Where the engine's codec routine parses (or writes), IT is what is handed
+# out — not from-json/to-json above, which would put a Raku frame in front.
+# ($PARSE is only chosen at load on Raku++; on Rakudo it waits for a call.)
+my %IMPL = 'from-json'    => ($on-rakupp && $PARSE eq 'engine' && &codec-from-json ?? &codec-from-json !! &from-json),
+           'to-json'      => ($on-rakupp && $WRITE eq 'engine' && &codec-to-json   ?? &codec-to-json   !! &to-json),
            'json-backend' => &json-backend;
 
 my @NAMES = %IMPL.keys.sort;

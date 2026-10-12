@@ -6,18 +6,20 @@
   "build-depends": [
   ],
   "depends": [
-    "JSON::Fast"
   ],
-  "description": "JSON parsing with a native fast path on Raku++, and JSON::Fast everywhere else",
+  "description": "JSON parsing and writing on the fastest path the machine has — native on Raku++, C through NativeCall on Rakudo, pure Raku everywhere — with JSON::Fast's answers on every one",
   "license": "Artistic-2.0",
   "meta-version": 0,
   "name": "JSON::Native",
   "provides": {
-    "JSON::Native": "lib/JSON/Native.rakumod"
+    "JSON::Native": "lib/JSON/Native.rakumod",
+    "JSON::Native::NativeCall": "lib/JSON/Native/NativeCall.rakumod",
+    "JSON::Native::Raku": "lib/JSON/Native/Raku.rakumod"
   },
   "raku": "6.d",
   "resources": [
-    "libraries/json"
+    "libraries/json",
+    "libraries/json-nc"
   ],
   "source-url": "https://github.com/ash/raku-modules/tree/main/JSON-Native",
   "support": {

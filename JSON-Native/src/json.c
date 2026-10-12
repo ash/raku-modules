@@ -67,6 +67,9 @@ typedef struct {
        read (see jstring). */
     char*  sbuf;
     size_t scap;
+    /* Whether the module's json-native-nfc helper is there to call (see
+       nfc() below) — asked once per parse, not once per string. */
+    int    has_nfc;
 } P;
 
 static RkValue thing(P* s, int depth);
@@ -123,9 +126,39 @@ static void utf8(unsigned cp, char** o) {
     *o = q;
 }
 
+/* Text assembled around an escape can put a combining mark after a
+ * character it did not follow in the source ("a\u0301"), or spell a
+ * character that is not in composed form at all (U+1D15E, which NFC splits
+ * in two). Raku++ builds a Str from UTF-8 without normalising it, while every
+ * Str Rakudo — and so JSON::Fast — hands back is in NFC: the two would look
+ * the same and compare unequal. So a string that had a \u escape AND has
+ * non-ASCII in it is sent through the module's json-native-nfc, and the
+ * normalised bytes replace the decoded ones. Nothing else can need it: ASCII
+ * cannot, text with no escape is the source's own, and the short escapes
+ * (\" \n and the rest) stand for characters nothing composes with.
+ * TOML::Native's tmp_keep is the same fix for the same reason. */
+static long nfc(P* s, char** buf, size_t* cap, long len) {
+    RkValue arg, got;
+    const char* src;
+    size_t n = 0;
+    if (!s->has_nfc) return len;
+    arg = rk_str(s->c, *buf, (size_t)len);
+    got = rk_call(s->c, "json-native-nfc", &arg, 1);
+    if (!got) { rk_clear_error(s->c); return len; }
+    src = rk_str_get(s->c, got, &n);
+    if (n + 8 > *cap) {
+        char* nb = (char*)realloc(*buf, n + 8);
+        if (!nb) { fail(s, "out of memory"); return -1; }
+        *buf = nb; *cap = n + 8;
+    }
+    memcpy(*buf, src, n);
+    return (long)n;
+}
+
 /* Decodes into `buf`, growing it as needed. Returns length, or -1 on failure. */
 static long jstring(P* s, char** buf, size_t* cap) {
     char* o;
+    int uescaped = 0, nonascii = 0;
     if (s->p >= s->end || *s->p != '"') { fail(s, "expected a string"); return -1; }
     s->p++;
     /* The decoded form is never longer than the source span, plus room for one
@@ -174,6 +207,7 @@ static long jstring(P* s, char** buf, size_t* cap) {
                 case 't':  *o++ = '\t'; break;
                 case 'u': {
                     unsigned cp;
+                    uescaped = 1;
                     if (!hex4(s, &cp)) return -1;
                     if (cp >= 0xD800 && cp < 0xDC00) { /* high surrogate */
                         unsigned lo;
@@ -187,6 +221,7 @@ static long jstring(P* s, char** buf, size_t* cap) {
                     } else if (cp >= 0xDC00 && cp < 0xE000) {
                         fail(s, "stray low surrogate"); return -1;
                     }
+                    if (cp >= 0x80) nonascii = 1;
                     utf8(cp, &o);
                     break;
                 }
@@ -196,8 +231,12 @@ static long jstring(P* s, char** buf, size_t* cap) {
             /* RFC 8259: a raw control character is not allowed inside a string */
             fail(s, "unescaped control character in string");
             return -1;
-        } else *o++ = (char)*s->p++;
+        } else {
+            if (ch >= 0x80) nonascii = 1;
+            *o++ = (char)*s->p++;
+        }
     }
+    if (uescaped && nonascii) return nfc(s, buf, cap, (long)(o - *buf));
     return (long)(o - *buf);
 }
 
@@ -351,6 +390,7 @@ static RkValue from_json_native(RkCtx c) {
     s.p = text; s.begin = text; s.end = text + len; s.c = c; s.failed = 0;
     s.immutable = imm ? rk_truthy(c, imm) : 0;
     s.sbuf = NULL; s.scap = 0;
+    s.has_nfc = rk_can(c, "json-native-nfc");
     out = thing(&s, 0);
     if (out) {
         ws(&s);
