@@ -198,33 +198,43 @@ corruptions of them.
 
 ## Performance
 
-A 316 KB document of 1,400 records — integers, decimals, exponent forms,
-escaped and non-ASCII strings — and a 50-byte one, best of several runs,
-measured 2026-10-13 on arm64 macOS:
-
-| | 316 KB parse | 316 KB write | 50 B parse | 50 B write |
-|---|---:|---:|---:|---:|
-| Rakudo v2026.09, JSON::Fast | 45.0 ms | 54.3 ms | 5.4 µs | 10.0 µs |
-| Rakudo, **JSON::Native** | 46.5 ms | 41.6 ms | 7.1 µs | 10.6 µs |
-| Raku++, JSON::Fast | 2.6 ms | 3.0 ms | 0.48 µs | 0.62 µs |
-| Raku++, **JSON::Native** | 2.6 ms | 3.0 ms | 0.49 µs | 0.63 µs |
-| mutsu 2026.07, JSON::Fast | 143 ms | 876 ms | 23 µs | 230 µs |
-| mutsu, **JSON::Native** | 149 ms | 888 ms | 34 µs | 243 µs |
-
-The same measurement on larger files: the medium and large CSV/JSON sample
-data in [benchmarks/sample-data](https://github.com/ash/raku-modules/tree/main/benchmarks/sample-data)
+Measured 2026-10-13 on arm64 macOS, on the CSV/JSON sample data in
+[benchmarks/sample-data](https://github.com/ash/raku-modules/tree/main/benchmarks/sample-data)
 of the [ash/raku-modules](https://github.com/ash/raku-modules) repository on
 GitHub, where this module is developed. The script that took the numbers is
-there too, so they can be re-run. The files hold 10,000 and 100,000 records
-with nested objects, arrays, nulls, `\u` escapes and non-ASCII text. Times are
-the best of three runs; mutsu ran the large file once.
+there too, so they can be re-run. The records hold integers, decimals,
+exponent forms, nested objects, arrays, nulls, `\u` escapes and non-ASCII
+text.
 
-| | 3.6 MB parse | 3.6 MB write | 36 MB parse | 36 MB write |
+| file | records | size |
+|---|---:|---:|
+| `tiny.json` | 1 | 49 B |
+| `small.json` | 100 | 35 KB |
+| `medium.json` | 10,000 | 3.6 MB |
+| `large.json` | 100,000 | 36 MB |
+
+What one call costs, on the small file and on the single-record one. Each run
+repeats the call until it has covered a megabyte, and the table gives one
+call's time, best of five runs:
+
+| | 100 records parse | 100 records write | 1 record parse | 1 record write |
 |---|---:|---:|---:|---:|
-| Rakudo v2026.09, JSON::Fast | 434 ms | 469 ms | 4.67 s | 6.01 s |
-| Rakudo, **JSON::Native** | 446 ms | 378 ms | 4.49 s | 5.11 s |
+| Raku++, JSON::Fast | 185 µs | 230 µs | 0.62 µs | 0.71 µs |
+| Raku++, **JSON::Native** | 197 µs | 233 µs | 0.66 µs | 0.68 µs |
+| Rakudo v2026.09, JSON::Fast | 3.9 ms | 4.5 ms | 5.5 µs | 9.8 µs |
+| Rakudo, **JSON::Native** | 4.0 ms | 3.2 ms | 6.8 µs | 8.5 µs |
+| mutsu 0.25.0, JSON::Fast | 14.6 ms | 105 ms | 27 µs | 239 µs |
+| mutsu, **JSON::Native** | 15.2 ms | 108 ms | 43 µs | 260 µs |
+
+How fast a large document goes, on the medium and large files. Best of three
+runs; mutsu ran the large file once:
+
+| | 10,000 records parse | 10,000 records write | 100,000 records parse | 100,000 records write |
+|---|---:|---:|---:|---:|
 | Raku++, JSON::Fast | 19.4 ms | 22.7 ms | 194 ms | 242 ms |
 | Raku++, **JSON::Native** | 19.9 ms | 22.6 ms | 212 ms | 234 ms |
+| Rakudo v2026.09, JSON::Fast | 434 ms | 469 ms | 4.67 s | 6.01 s |
+| Rakudo, **JSON::Native** | 446 ms | 378 ms | 4.49 s | 5.11 s |
 | mutsu 0.25.0, JSON::Fast | 1.48 s | 10.6 s | 15.3 s | 107 s |
 | mutsu, **JSON::Native** | 1.52 s | 10.9 s | 15.5 s | 111 s |
 

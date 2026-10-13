@@ -12,6 +12,9 @@ places and numbers are made up and contain nobody's data.
 | `medium` | 10,000 | 1,885,731 | 3,593,004 | yes |
 | `large` | 100,000 | 19,193,695 | 36,269,917 | no: generate it |
 
+`tiny.json` is different: it is a single 49-byte JSON document, used for
+timing one call. See [Timing JSON::Native](#timing-jsonnative).
+
 `large` is the size where speed shows. It is left out of git because 55 MB
 would go into every clone forever. Generating it takes about 9 seconds on
 Raku++ and about a minute and a half on Rakudo. Both engines write the same
@@ -26,15 +29,18 @@ rakupp gen.raku 1000000 huge       # any other size: huge.csv and huge.json
 ## Timing JSON::Native
 
 `bench-json.raku` parses one JSON file and writes it back with whichever
-module `-M` loaded, and prints the best of N runs (the default is 3). The
-sample-data table in
-[JSON::Native's README](../../JSON-Native/README.md#performance) comes from
-it:
+module `-M` loaded, and prints the best of N runs (the default is 3). A small
+file is parsed and written enough times in each run to make a megabyte, and
+the time of one call is printed. That is what `tiny.json` is for: a 49-byte
+document, written by hand, that shows what one call costs rather than how
+fast a parser reads. The performance tables in
+[JSON::Native's README](../../JSON-Native/README.md#performance) come from
+this script:
 
 ```sh
 cd JSON-Native
 rakupp -Ilib -MJSON::Native ../benchmarks/sample-data/bench-json.raku ../benchmarks/sample-data/large.json
-raku   -Ilib -MJSON::Fast   ../benchmarks/sample-data/bench-json.raku ../benchmarks/sample-data/large.json
+raku   -Ilib -MJSON::Fast   ../benchmarks/sample-data/bench-json.raku ../benchmarks/sample-data/tiny.json 5
 ```
 
 ## What is in a record
