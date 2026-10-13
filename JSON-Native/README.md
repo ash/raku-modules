@@ -198,7 +198,9 @@ corruptions of them.
 
 ## Performance
 
-Measured 2026-10-13 on arm64 macOS, on the CSV/JSON sample data in
+Measured 2026-10-13 on a MacBook Air (Apple M4: 4 performance and 6
+efficiency cores, 16 GB of memory) under macOS 26.6.2, with Raku++ 5.3.0-85,
+Rakudo v2026.09 and mutsu 0.25.0, on the CSV/JSON sample data in
 [benchmarks/sample-data](https://github.com/ash/raku-modules/tree/main/benchmarks/sample-data)
 of the [ash/raku-modules](https://github.com/ash/raku-modules) repository on
 GitHub, where this module is developed. The script that took the numbers is
@@ -213,34 +215,45 @@ text.
 | `medium.json` | 10,000 | 3.6 MB |
 | `large.json` | 100,000 | 36 MB |
 
-What one call costs, on the small file and on the single-record one. Each run
-repeats the call until it has covered a megabyte, and the table gives one
-call's time, best of five runs:
+Each cell is a range: the fastest and the slowest of five separate runs, with
+the two modules taking turns. A single number means every run gave the same
+result at the precision shown. Where the two modules' ranges overlap, the
+difference between them is noise.
+
+What one call costs, on the small file and on the single-record one. A run
+repeats the call until it has covered a megabyte, and reports one call's time,
+best of five passes:
 
 | | 100 records parse | 100 records write | 1 record parse | 1 record write |
 |---|---:|---:|---:|---:|
-| Raku++, JSON::Fast | 185 µs | 230 µs | 0.62 µs | 0.71 µs |
-| Raku++, **JSON::Native** | 197 µs | 233 µs | 0.66 µs | 0.68 µs |
-| Rakudo v2026.09, JSON::Fast | 3.9 ms | 4.5 ms | 5.5 µs | 9.8 µs |
-| Rakudo, **JSON::Native** | 4.0 ms | 3.2 ms | 6.8 µs | 8.5 µs |
-| mutsu 0.25.0, JSON::Fast | 14.6 ms | 105 ms | 27 µs | 239 µs |
-| mutsu, **JSON::Native** | 15.2 ms | 108 ms | 43 µs | 260 µs |
+| Raku++, JSON::Fast | 188–195 µs | 223–231 µs | 0.61–0.63 µs | 0.67–0.69 µs |
+| Raku++, **JSON::Native** | 187–199 µs | 223–228 µs | 0.63–0.64 µs | 0.67–0.69 µs |
+| Rakudo, JSON::Fast | 4.0 ms | 4.5 ms | 5.39–5.54 µs | 9.72–10.0 µs |
+| Rakudo, **JSON::Native** | 4.0 ms | 3.1–3.2 ms | 6.63–6.84 µs | 8.46–8.80 µs |
+| mutsu, JSON::Fast | 14.3–14.5 ms | 103–106 ms | 26.9–28.1 µs | 237–240 µs |
+| mutsu, **JSON::Native** | 15.1–15.4 ms | 107–109 ms | 43.1–43.6 µs | 259–261 µs |
 
-How fast a large document goes, on the medium and large files. Best of three
-runs; mutsu ran the large file once:
+How fast a large document goes, on the medium and large files. A run reports
+the best of three passes; mutsu ran the large file three times, one pass
+each:
 
 | | 10,000 records parse | 10,000 records write | 100,000 records parse | 100,000 records write |
 |---|---:|---:|---:|---:|
-| Raku++, JSON::Fast | 19.4 ms | 22.7 ms | 194 ms | 242 ms |
-| Raku++, **JSON::Native** | 19.9 ms | 22.6 ms | 212 ms | 234 ms |
-| Rakudo v2026.09, JSON::Fast | 434 ms | 469 ms | 4.67 s | 6.01 s |
-| Rakudo, **JSON::Native** | 446 ms | 378 ms | 4.49 s | 5.11 s |
-| mutsu 0.25.0, JSON::Fast | 1.48 s | 10.6 s | 15.3 s | 107 s |
-| mutsu, **JSON::Native** | 1.52 s | 10.9 s | 15.5 s | 111 s |
+| Raku++, JSON::Fast | 19.3–19.7 ms | 23.4–23.8 ms | 196–206 ms | 245–260 ms |
+| Raku++, **JSON::Native** | 19.2–19.8 ms | 23.5–24.5 ms | 199–211 ms | 244–253 ms |
+| Rakudo, JSON::Fast | 441–446 ms | 482–488 ms | 4.65–4.85 s | 5.86–6.10 s |
+| Rakudo, **JSON::Native** | 433–437 ms | 337–346 ms | 4.58–4.65 s | 4.76–5.18 s |
+| mutsu, JSON::Fast | 1.45–1.48 s | 10.5–10.7 s | 14.7–14.8 s | 105–106 s |
+| mutsu, **JSON::Native** | 1.53–1.56 s | 10.9–11.1 s | 15.5 s | 109–110 s |
 
 The two Raku++ rows match because both modules' calls run on the engine's
 built-in codec (see [On Raku++, JSON::Fast runs on the same
-codec](#on-raku-jsonfast-runs-on-the-same-codec)).
+codec](#on-raku-jsonfast-runs-on-the-same-codec)). On Rakudo and mutsu,
+JSON::Native parses with JSON::Fast's own code: Rakudo's built-in copy of it,
+and the JSON::Fast that mutsu ships. On large documents that parses at
+JSON::Fast's speed, within a few percent either way. On a one-record document
+the extra call in front of it shows: about 1.3 µs a call on Rakudo and 16 µs
+on mutsu. Writing on Rakudo is JSON::Native's own, and is faster.
 
 ## Environment
 
