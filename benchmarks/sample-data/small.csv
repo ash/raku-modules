@@ -1,0 +1,109 @@
+id,name,email,city,country,street,zip,lat,lon,amount,ratio,active,manager_id,tags,note,created
+1,Mateo Kierkegaard,user1@example.com,København,Denmark,18 Main Street,66857,53.280060,-126.012491,80625.38,0.462455,false,1,,plain note 1,2016-08-17T05:50:51Z
+2,Ольга 王,user2@example.com,Kraków,Poland,42 Тверская улица,57687,9.866274,-176.493481,74782.43,0.352172,false,2,alpha,plain note 2,2020-06-11T11:48:01Z
+3,Zoë García,user3@example.com,Москва,Russia,62 Lindenstraße,98907,29.548470,-96.210509,77364.21,0.896210,false,1,"gamma,eu,gamma",plain note 3,2019-02-03T15:32:17Z
+4,Ольга García,user4@example.com,Lagos,Nigeria,212 Тверская улица,93663,55.171978,-4.817329,50376.93,0.709158,false,,"wholesale,trial,new",plain note 4,2025-09-14T02:19:52Z
+5,Ngozi Lovelace,user5@example.com,Bratislava,Slovakia,192 Lindenstraße,15075,5.527838,-156.924181,41231.76,7.98e-16,false,1,alpha,plain note 5,2022-02-15T07:00:17Z
+6,Ngozi Dubois,user6@example.com,Lagos,Nigeria,134 Тверская улица,43879,89.248946,-60.937593,91792.05,0.497422,false,4,"alpha,beta,alpha",plain note 6,2015-02-11T11:24:41Z
+7,Priya Dubois,user7@example.com,Zürich,Switzerland,166 Lindenstraße,48139,45.287430,-24.076765,75364.69,0.850146,false,4,"alpha,returning,alpha","said ""hi"", then left",2023-10-27T23:44:33Z
+8,Ömer 王,user8@example.com,Lagos,Nigeria,216 Тверская улица,58543,5.366938,-32.690049,29688.29,0.592694,false,,"gamma,returning,new",plain note 8,2024-05-26T18:47:36Z
+9,Grace Åberg,user9@example.com,Riga,Latvia,162 Kalnciema iela,91437,15.736496,-142.638799,-32127.32,0.654965,false,3,"eu,apac",plain note 9,2016-04-01T01:10:55Z
+10,Łukasz Torvalds,user10@example.com,Kraków,Poland,136 Main Street,52753,43.520420,-62.157587,13234.31,1.633e5,false,10,,plain note 10,2019-12-01T21:22:03Z
+11,Ольга Dubois,user11@example.com,Amsterdam,Netherlands,242 Тверская улица,00511,65.841546,-0.568753,51686.19,0.833300,false,4,alpha,"line one
+line two",2019-06-23T19:44:37Z
+12,Ольга Dubois,user12@example.com,Москва,Russia,138 Lindenstraße,88675,63.402334,-56.303445,32892.81,0.026938,false,,"alpha,returning,new",plain note 12,2017-05-14T06:47:36Z
+13,Raúl Åberg,user13@example.com,Bratislava,Slovakia,12 Main Street,60865,41.509140,-110.995587,51347.40,0.837129,false,12,"eu,alpha","saved to C:\temp\export, tab:	end",2015-04-01T21:50:03Z
+14,Zoë Lovelace,user14@example.com,São Paulo,Brazil,78 Тверская улица,73903,37.677306,-172.778913,47254.11,0.380164,false,8,wholesale,"said ""hi"", then left",2015-06-19T19:04:21Z
+15,Mateo Åberg,user15@example.com,Москва,Russia,124 Main Street,23209,5.377084,-26.959755,26572.17,1.411e13,false,9,"trial,alpha",plain note 15,2021-12-05T05:06:15Z
+16,Zoë Dubois,user16@example.com,Amsterdam,Netherlands,112 Тверская улица,14647,81.632738,-48.429865,72510.51,0.865516,false,,new,plain note 16,2022-01-14T10:55:48Z
+17,Łukasz Torvalds,user17@example.com,Reykjavík,Iceland,50 Kalnciema iela,94901,1.962936,-74.478583,-8583.64,0.643549,false,8,"vip,wholesale",delivered 📦 on time ✓,2018-08-21T17:02:15Z
+18,Priya Bergström,user18@example.com,São Paulo,Brazil,228 Lindenstraße,30403,65.694014,-56.993653,54458.07,0.860840,false,18,new,plain note 18,2022-06-03T07:24:45Z
+19,Ngozi Lovelace,user19@example.com,Москва,Russia,22 Тверская улица,18503,75.139474,-96.171097,67984.09,0.252014,false,16,"gamma,returning,apac",,2018-02-15T03:52:29Z
+20,Łukasz Torvalds,user20@example.com,Lagos,Nigeria,40 Main Street,57601,23.204628,-42.443203,85604.69,2.315e21,false,,"trial,wholesale",plain note 20,2019-11-28T12:41:42Z
+21,Mateo Петров,user21@example.com,東京,Japan,54 Main Street,63721,59.890460,-166.172011,61873.54,0.620695,false,1,,"said ""hi"", then left",2023-08-13T13:14:43Z
+22,Ngozi Lovelace,user22@example.com,Kraków,Poland,4 Тверская улица,58679,47.352706,-12.128009,49310.19,0.362252,false,16,gamma,"line one
+line two",2021-02-11T19:44:21Z
+23,Ömer García,user23@example.com,Zürich,Switzerland,228 Lindenstraße,56891,47.842454,-128.876653,31988.77,0.378226,false,18,"new,trial,gamma",plain note 23,2020-06-15T07:00:37Z
+24,Ngozi 王,user24@example.com,Zürich,Switzerland,32 Тверская улица,55999,1.693482,-168.469649,16360.45,0.368646,false,,"wholesale,eu,alpha",plain note 24,2023-09-02T18:15:48Z
+25,Ольга Dubois,user25@example.com,Riga,Latvia,156 Lindenstraße,94179,3.482238,-168.933621,-52623.84,2.146e-14,false,15,alpha,plain note 25,2025-10-15T15:04:21Z
+26,Ngozi Lovelace,user26@example.com,Zürich,Switzerland,240 Тверская улица,11463,15.728402,-56.004761,46000.21,0.303726,false,4,"apac,eu,alpha","saved to C:\temp\export, tab:	end",2023-02-07T11:04:45Z
+27,Ömer 王,user27@example.com,Zürich,Switzerland,112 Lindenstraße,37419,29.288998,-32.668669,33284.69,0.740866,false,26,"wholesale,returning,gamma",plain note 27,2017-02-15T07:28:21Z
+28,Zoë Bergström,user28@example.com,Zürich,Switzerland,210 Тверская улица,27407,73.405562,-72.965857,26680.37,0.137750,false,,"alpha,beta,alpha","said ""hi"", then left",2021-09-10T02:15:16Z
+29,美咲 O'Brien,user29@example.com,Bratislava,Slovakia,164 Kalnciema iela,18989,5.264336,-6.271023,-4383.88,0.168597,false,22,"returning,apac",plain note 29,2025-04-09T01:38:03Z
+30,Mateo O'Brien,user30@example.com,Amsterdam,Netherlands,172 Main Street,13649,43.702852,-58.105843,12466.59,5.513e13,false,18,,plain note 30,2021-12-09T13:22:31Z
+31,Ngozi Dubois,user31@example.com,Kraków,Poland,102 Тверская улица,38303,19.996138,-56.039761,60710.59,0.046196,false,17,new,plain note 31,2022-02-07T11:12:01Z
+32,Priya 王,user32@example.com,Zürich,Switzerland,66 Lindenstraße,57987,81.680958,-60.047413,44092.25,0.196442,false,,"wholesale,returning,new",plain note 32,2020-05-18T14:27:12Z
+33,Raúl Петров,user33@example.com,Reykjavík,Iceland,154 Main Street,41281,11.921652,-70.151459,82035.32,0.892777,false,11,"vip,alpha","line one
+line two",2020-08-21T21:34:27Z
+34,Zoë Dubois,user34@example.com,São Paulo,Brazil,118 Тверская улица,62447,83.074138,-176.284225,50422.23,0.469540,false,26,new,delivered 📦 on time ✓,2022-06-03T11:00:53Z
+35,Mateo Åberg,user35@example.com,Lagos,Nigeria,4 Main Street,32105,33.993820,-126.407979,940.05,7.307e11,false,2,"trial,gamma","said ""hi"", then left",2018-08-09T21:38:51Z
+36,Priya 王,user36@example.com,São Paulo,Brazil,206 Тверская улица,46487,15.809282,-92.549449,45918.03,0.369676,false,,gamma,plain note 36,2015-05-18T18:43:36Z
+37,Łukasz O'Brien,user37@example.com,Bratislava,Slovakia,136 Kalnciema iela,61749,19.220376,-98.733655,82375.72,0.628477,false,27,"trial,apac",plain note 37,2015-12-09T17:38:35Z
+38,Priya Bergström,user38@example.com,São Paulo,Brazil,120 Lindenstraße,04867,53.217886,-68.180181,50586.07,0.392840,false,36,new,,2023-02-11T07:52:53Z
+39,Zoë Bergström,user39@example.com,Zürich,Switzerland,20 Тверская улица,46983,49.179378,-80.479673,58448.97,0.553486,false,12,"apac,returning,new","saved to C:\temp\export, tab:	end",2017-02-27T19:20:41Z
+40,Raúl Torvalds,user40@example.com,Lagos,Nigeria,204 Main Street,21249,17.650612,-70.262819,69220.17,1.211e9,false,,"eu,new",plain note 40,2016-03-16T20:37:02Z
+41,Łukasz Torvalds,user41@example.com,東京,Japan,34 Main Street,26409,75.266876,-14.990219,86641.54,0.776823,false,39,,plain note 41,2017-08-21T05:30:19Z
+42,Ömer Dubois,user42@example.com,Amsterdam,Netherlands,38 Тверская улица,71223,37.897762,-44.623593,61630.27,0.643180,false,34,alpha,"said ""hi"", then left",2020-10-03T11:40:33Z
+43,Ольга Bergström,user43@example.com,Zürich,Switzerland,192 Lindenstraße,20635,17.969910,-128.306701,37044.21,0.740434,false,17,"new,trial,wholesale",plain note 43,2017-10-23T23:48:33Z
+44,Ngozi García,user44@example.com,Lagos,Nigeria,64 Тверская улица,62015,31.224842,-104.929905,97224.05,0.950950,false,,"new,returning,apac","line one
+line two",2015-09-02T18:39:16Z
+45,Zoë Bergström,user45@example.com,Riga,Latvia,88 Lindenstraße,55843,55.895006,-4.075733,91183.84,3.554e-2,false,21,wholesale,plain note 45,2018-10-15T07:16:49Z
+46,Ngozi 王,user46@example.com,Lagos,Nigeria,222 Тверская улица,37703,33.982066,-80.612217,240.97,0.851214,false,34,"wholesale,vip,wholesale",plain note 46,2016-02-11T11:24:01Z
+47,Ngozi 王,user47@example.com,Lagos,Nigeria,246 Lindenstraße,19595,69.214918,-144.559965,58628.49,0.065250,false,42,"wholesale,trial,apac",plain note 47,2022-02-03T23:04:17Z
+48,Ömer Bergström,user48@example.com,Москва,Russia,200 Тверская улица,79599,25.142682,-140.517505,56184.69,0.357110,false,,"wholesale,eu,alpha",plain note 48,2020-05-26T02:59:36Z
+49,Raúl Åberg,user49@example.com,Reykjavík,Iceland,192 Kalnciema iela,74477,37.499312,-22.229391,78847.56,0.899445,false,35,"returning,alpha","said ""hi"", then left",2021-12-01T09:46:11Z
+50,Grace O'Brien,user50@example.com,Amsterdam,Netherlands,68 Main Street,02289,65.603044,-10.318419,51954.03,9.713e23,false,16,,plain note 50,2018-12-05T05:22:03Z
+51,Zoë Dubois,user51@example.com,Amsterdam,Netherlands,34 Тверская улица,88031,37.290058,-140.675505,25830.71,0.811988,false,7,alpha,delivered 📦 on time ✓,2023-10-23T03:56:57Z
+52,Ольга 王,user52@example.com,Москва,Russia,162 Lindenstraße,14755,85.600670,-124.306133,77116.45,0.814202,false,,"apac,returning,alpha","saved to C:\temp\export, tab:	end",2020-09-26T06:07:04Z
+53,Raúl Åberg,user53@example.com,Reykjavík,Iceland,110 Main Street,80097,31.205012,-86.409731,66483.76,0.404169,false,36,"beta,gamma",plain note 53,2022-04-01T21:34:31Z
+54,Ngozi Dubois,user54@example.com,São Paulo,Brazil,40 Тверская улица,17935,75.245946,-120.638241,34486.11,0.269956,false,54,apac,plain note 54,2015-06-11T03:48:29Z
+55,Mateo Kierkegaard,user55@example.com,Zürich,Switzerland,128 Main Street,68361,49.676284,-174.580363,96940.41,6.467e7,false,44,"returning,gamma","line one
+line two",2019-08-01T05:38:59Z
+56,Ольга Dubois,user56@example.com,Amsterdam,Netherlands,104 Тверская улица,22519,47.944098,-144.352553,6206.83,0.145772,false,,alpha,"said ""hi"", then left",2015-09-06T18:39:20Z
+57,Grace Torvalds,user57@example.com,Reykjavík,Iceland,194 Kalnciema iela,20789,61.052792,-26.360439,92487.72,0.994525,false,18,"trial,apac",,2021-12-21T09:22:19Z
+58,Ngozi Bergström,user58@example.com,Amsterdam,Netherlands,48 Lindenstraße,94691,1.333950,-172.060661,35738.59,0.316584,false,22,wholesale,plain note 58,2023-02-15T15:44:09Z
+59,Ольга García,user59@example.com,Zürich,Switzerland,48 Тверская улица,58215,37.465042,-88.470873,38960.85,0.155310,false,37,"wholesale,vip,gamma",plain note 59,2017-10-19T03:04:45Z
+60,Łukasz Kierkegaard,user60@example.com,Москва,Russia,102 Main Street,84865,19.341268,-10.142915,56004.21,5.451e25,false,,"trial,gamma",plain note 60,2024-11-16T20:01:42Z
+61,Łukasz Петров,user61@example.com,東京,Japan,142 Main Street,41321,35.174620,-158.618603,89457.02,0.643159,false,26,,plain note 61,2015-12-13T13:02:47Z
+62,Zoë 王,user62@example.com,Amsterdam,Netherlands,132 Тверская улица,69687,75.492738,-164.983241,18046.63,0.704460,false,40,apac,plain note 62,2015-06-27T03:12:29Z
+63,Ngozi Lovelace,user63@example.com,Zürich,Switzerland,166 Lindenstraße,71963,15.014486,-76.714989,62900.21,0.024690,false,27,"wholesale,beta,apac","said ""hi"", then left",2019-02-03T23:48:17Z
+64,Zoë Bergström,user64@example.com,Москва,Russia,34 Тверская улица,17855,25.369770,-8.631505,43208.97,0.977542,false,,"apac,beta,gamma",plain note 64,2024-09-06T02:51:04Z
+65,Ngozi Bergström,user65@example.com,Reykjavík,Iceland,28 Lindenstraße,78211,43.252222,-76.076149,76783.80,2.66e-6,false,9,alpha,"saved to C:\temp\export, tab:	end",2024-06-15T07:28:49Z
+66,Ömer Bergström,user66@example.com,Zürich,Switzerland,30 Тверская улица,89607,73.806098,-88.752857,89456.77,0.256558,false,52,"apac,beta,apac","line one
+line two",2018-10-11T19:36:21Z
+67,Ngozi Bergström,user67@example.com,Lagos,Nigeria,126 Lindenstraße,14571,67.082790,-40.567613,42116.53,0.153666,false,60,"wholesale,beta,wholesale",plain note 67,2016-10-07T15:08:53Z
+68,Zoë García,user68@example.com,Zürich,Switzerland,50 Тверская улица,88431,89.146938,-100.542817,50584.17,0.640790,false,,"wholesale,trial,wholesale",delivered 📦 on time ✓,2017-01-22T02:23:12Z
+69,Łukasz Åberg,user69@example.com,Reykjavík,Iceland,4 Kalnciema iela,27917,9.068880,-10.565615,26207.64,0.697493,false,39,"vip,apac",plain note 69,2021-08-21T17:26:55Z
+70,Raúl O'Brien,user70@example.com,Kraków,Poland,186 Main Street,82289,27.178756,-166.989939,65810.47,7.65e21,false,44,,"said ""hi"", then left",2022-04-21T05:42:19Z
+71,Ольга Lovelace,user71@example.com,Kraków,Poland,126 Тверская улица,77183,41.253866,-148.256209,11718.07,0.058100,false,28,gamma,plain note 71,2024-10-11T03:00:37Z
+72,Ольга García,user72@example.com,Москва,Russia,134 Lindenstraße,42115,37.123454,-76.635701,82044.97,0.235866,false,,"alpha,vip,wholesale",plain note 72,2024-01-18T06:07:48Z
+73,Mateo O'Brien,user73@example.com,Bratislava,Slovakia,52 Main Street,39681,11.747060,-146.757411,23411.96,0.136361,false,37,"beta,new",plain note 73,2024-12-09T21:46:55Z
+74,Ömer Dubois,user74@example.com,Kraków,Poland,212 Тверская улица,56623,65.201562,-140.236289,6070.79,0.106212,false,46,apac,plain note 74,2017-10-11T19:36:45Z
+75,Mateo Kierkegaard,user75@example.com,Zürich,Switzerland,164 Main Street,79305,15.141596,-110.805675,87500.93,9.843e21,false,50,"beta,apac",plain note 75,2022-12-25T05:10:35Z
+76,Zoë Dubois,user76@example.com,São Paulo,Brazil,74 Тверская улица,10743,45.463938,-36.535817,95134.67,0.171468,false,,gamma,,2017-05-26T10:31:44Z
+77,Mateo Torvalds,user77@example.com,Riga,Latvia,100 Kalnciema iela,59957,29.905304,-142.772631,13415.84,0.687741,false,59,"eu,apac","said ""hi"", then left",2016-08-09T01:30:07Z
+78,Ngozi Dubois,user78@example.com,Amsterdam,Netherlands,196 Lindenstraße,51427,71.669854,-44.646869,23994.75,0.917768,false,6,new,"saved to C:\temp\export, tab:	end",2015-06-11T15:36:57Z
+79,Priya García,user79@example.com,Lagos,Nigeria,80 Тверская улица,50791,39.610610,-100.198265,66064.37,0.315726,false,2,"alpha,trial,alpha",plain note 79,2016-06-07T03:40:09Z
+80,Łukasz Åberg,user80@example.com,Zürich,Switzerland,194 Main Street,08577,83.333108,-50.159139,49156.69,9.747e3,false,,"returning,new",plain note 80,2020-11-20T20:33:42Z
+81,Grace Kierkegaard,user81@example.com,Montréal,Canada,64 Main Street,69641,69.092860,-174.937995,95985.30,0.919543,false,59,,plain note 81,2023-04-01T21:14:11Z
+82,Zoë Lovelace,user82@example.com,São Paulo,Brazil,160 Тверская улица,15959,37.488226,-12.617449,44222.51,0.736748,false,18,new,plain note 82,2022-02-15T19:28:13Z
+83,Zoë Dubois,user83@example.com,Zürich,Switzerland,220 Lindenstraße,72987,89.160950,-152.465165,93780.57,0.599442,false,67,"gamma,eu,alpha",plain note 83,2023-10-07T07:44:09Z
+84,Zoë García,user84@example.com,Zürich,Switzerland,202 Тверская улица,66239,41.542218,-136.931697,9288.93,0.521958,false,,"gamma,trial,wholesale","said ""hi"", then left",2015-05-14T10:59:32Z
+85,Ömer Lovelace,user85@example.com,Riga,Latvia,226 Lindenstraße,68771,53.108382,-16.777109,84111.28,6.666e-24,false,81,alpha,delivered 📦 on time ✓,2021-06-15T23:52:21Z
+86,Ömer Dubois,user86@example.com,Zürich,Switzerland,204 Тверская улица,70759,7.806898,-68.343417,36976.89,0.770254,false,42,"apac,returning,apac",plain note 86,2016-06-19T19:56:41Z
+87,Priya Dubois,user87@example.com,Zürich,Switzerland,224 Lindenstraße,71595,11.945926,-112.174237,4676.89,0.630370,false,45,"alpha,beta,alpha",plain note 87,2016-06-23T23:20:25Z
+88,Ömer García,user88@example.com,Москва,Russia,158 Тверская улица,96495,51.862618,-0.614401,65240.09,0.996278,false,,"new,beta,new","line one
+line two",2019-05-18T02:35:20Z
+89,Raúl Torvalds,user89@example.com,Reykjavík,Iceland,230 Kalnciema iela,98637,41.572528,-98.351631,-37375.96,0.111093,false,14,"vip,new",plain note 89,2021-12-09T09:46:07Z
+90,Grace Kierkegaard,user90@example.com,São Paulo,Brazil,84 Main Street,75697,67.134308,-66.528019,82034.75,9.833e17,false,50,,plain note 90,2024-08-25T05:10:11Z
+91,Ngozi García,user91@example.com,Amsterdam,Netherlands,158 Тверская улица,04415,89.293770,-60.485937,67814.95,0.458516,false,59,gamma,"said ""hi"", then left",2024-06-23T11:36:37Z
+92,Ольга Bergström,user92@example.com,Москва,Russia,94 Lindenstraße,19843,75.247006,-72.741525,6460.45,0.594618,false,,"apac,eu,apac",plain note 92,2023-05-10T06:55:16Z
+93,Mateo O'Brien,user93@example.com,Bratislava,Slovakia,144 Main Street,40833,57.551380,-46.910851,33587.96,0.778249,false,91,"vip,alpha",plain note 93,2018-08-05T13:18:47Z
+94,Zoë García,user94@example.com,Kraków,Poland,92 Тверская улица,14991,89.727354,-172.881185,89270.47,0.533316,false,4,wholesale,plain note 94,2025-10-07T11:48:29Z
+95,美咲 Torvalds,user95@example.com,Москва,Russia,226 Main Street,03401,51.304380,-142.142027,43052.93,9.139e9,false,27,"returning,wholesale",,2018-08-13T21:14:19Z
+96,Ömer Bergström,user96@example.com,Amsterdam,Netherlands,122 Тверская улица,66679,55.638498,-40.687017,90174.11,0.072876,false,,apac,plain note 96,2021-09-26T10:27:20Z
+97,Łukasz Åberg,user97@example.com,Reykjavík,Iceland,204 Kalnciema iela,49205,71.711416,-138.887799,-23527.40,0.836189,false,44,"trial,wholesale",plain note 97,2015-08-25T17:18:39Z
+98,Ольга Lovelace,user98@example.com,Kraków,Poland,14 Lindenstraße,55971,71.339902,-176.583541,56026.67,0.486824,false,72,wholesale,"said ""hi"", then left",2022-10-15T23:16:49Z
+99,Zoë Lovelace,user99@example.com,Lagos,Nigeria,124 Тверская улица,76231,25.589522,-76.090201,84688.97,0.845038,false,4,"wholesale,vip,apac","line one
+line two",2016-06-15T19:56:45Z
+100,Grace Åberg,user100@example.com,Lagos,Nigeria,90 Main Street,25409,33.429204,-162.632835,16676.61,5.507e23,false,,"eu,apac",plain note 100,2016-07-20T12:09:14Z
