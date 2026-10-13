@@ -23,6 +23,20 @@ rakupp gen.raku                    # small, medium and large
 rakupp gen.raku 1000000 huge       # any other size: huge.csv and huge.json
 ```
 
+## Timing JSON::Native
+
+`bench-json.raku` parses one JSON file and writes it back with whichever
+module `-M` loaded, and prints the best of N runs (the default is 3). The
+sample-data table in
+[JSON::Native's README](../../JSON-Native/README.md#performance) comes from
+it:
+
+```sh
+cd JSON-Native
+rakupp -Ilib -MJSON::Native ../benchmarks/sample-data/bench-json.raku ../benchmarks/sample-data/large.json
+raku   -Ilib -MJSON::Fast   ../benchmarks/sample-data/bench-json.raku ../benchmarks/sample-data/large.json
+```
+
 ## What is in a record
 
 CSV has one header line and these sixteen columns:
