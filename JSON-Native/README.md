@@ -1,91 +1,175 @@
 # JSON::Native
 
-A drop-in for JSON::Fast — change `use JSON::Fast` to `use JSON::Native` and
-the program keeps working — that takes each engine's fastest exact path:
-**Raku++**'s built-in codec, **Rakudo**'s own copy of JSON::Fast and an
-`nqp::` writer, **mutsu**'s bundled JSON::Fast, and pure Raku everywhere else.
-No dependencies, nothing to compile.
+JSON::Native — read and write JSON from Raku, on whichever engine runs the
+program, as fast as that engine allows.
 
 > Version 0.1.0. The interface below is implemented and tested on Rakudo,
-> Raku++ and mutsu; what it leaves out of JSON::Fast's surface is under Scope.
+> Raku++ and mutsu.
+
+## Synopsis
 
 ```raku
-use JSON::Native;                # or: use JSON::Native <!pretty sorted-keys>;
+use JSON::Native;
 
-my $data = from-json('{"a": [1, 2.5, true, null]}');
-say $data<a>[1].WHAT;            # (Rat) — Raku numerics, not doubles
-say to-json($data, :!pretty);
+my $data = from-json('{"name": "Raku", "versions": [6, 6.5], "ok": true}');
+say $data<versions>[1].WHAT;     # (Rat) — Raku numerics, not doubles
 
-say json-backend;                # which path parses: 'engine', 'rakudo', …
-say json-backend(:write);        # and which one writes
+say to-json($data);              # pretty-printed
+say to-json($data, :!pretty);    # one line
+say to-json($data, :sorted-keys);
+
+say json-backend;                # which path parses on this engine
 ```
 
-## What runs where
+## Description
 
-Each engine loads only what its own row needs. The other modules of the
-distribution are reached by a runtime `require` behind a test of the engine,
-so none of them is even parsed elsewhere:
+JSON::Native converts between JSON text and Raku data. `from-json` turns a
+JSON document into Raku values — integers into `Int`, decimals into exact
+`Rat`, exponent forms into `Num`, objects and arrays into `Hash` and `Array` —
+and `to-json` writes Raku data back as JSON, pretty-printed or on one line.
+
+It runs on any Raku engine, and on each it takes the fastest path that engine
+offers, so the same program is portable and fast without changing a line:
+
+- on **Raku++** the engine's own built-in JSON codec answers, and a Raku++
+  recent enough answers `use JSON::Native` itself — **the module does not even
+  need to be installed there**;
+- on **Rakudo** it parses with the JSON reader Rakudo carries internally and
+  writes with a writer of its own built on `nqp::` ops;
+- on **mutsu** it uses the JSON codec mutsu ships with;
+- anywhere else it runs as plain Raku.
+
+None of that shows in the results: every path gives the same values and the
+same text. It has no dependencies and nothing to compile.
+
+## Installation
+
+```sh
+zef install JSON::Native
+```
+
+On Raku++ there is nothing to install: a Raku++ built from rakupp's sources
+of 2026-10-13 onwards answers `use JSON::Native` from the engine, without
+reading any module file. Installing it there anyway does no harm; the engine
+steps aside only for a newer version than the one it implements.
+
+## Functions
+
+### from-json
+
+```raku
+from-json(Str() $text, :$immutable, :$allow-jsonc)
+```
+
+Parses one JSON document and returns its value:
+
+| JSON | Raku |
+|---|---|
+| integer (`17`, `-3`, `123456789012345678901234567890`) | `Int`, arbitrary precision |
+| decimal (`2.5`, `0.1`) | `Rat`, so `from-json('[0.1,0.2]').sum == 0.3` |
+| exponent form (`1e3`, `2.5E-4`) | `Num` |
+| `true`, `false` | `Bool` |
+| `null` | `Any` |
+| object, array | `Hash`, `Array` — or `Map`, `List` under `:immutable` |
+
+`:allow-jsonc` accepts `//` and `/* */` comments. Malformed input dies;
+content after the document raises `X::JSON::Native::AdditionalContent`,
+whose `parsed`, `parsed-length` and `rest-position` say what was read and
+where the rest begins.
+
+### to-json
+
+```raku
+to-json($value, :$pretty = True, :$spacing = 2, :$sorted-keys,
+        :$enums-as-value, :$level = 0)
+```
+
+Writes a value as JSON text. `:!pretty` writes one line; `:spacing` sets the
+indent; `:sorted-keys` sorts object keys (or pass it a sort key or
+comparator, as `.sort` takes); `:enums-as-value` writes an enum as its value
+rather than its name. Strings are escaped as `\n`, `\t`, `\r`, `\"`, `\\` and
+`\u0008`-style escapes for other controls, astral characters as
+surrogate pairs; NaN and Inf are `null` unless `$*JSON_NAN_INF_SUPPORT` is
+set. Date, Instant, Version, Seq, Pair, sets and allomorphs have their own
+renderings; a value that has none dies.
+
+### json-backend
+
+```raku
+json-backend(:$write)
+```
+
+Names the path that parses on this engine — `engine`, `rakudo`, `json-fast`
+or `raku` — or with `:write`, the one that writes. It is there for
+diagnostics; nothing else depends on it.
+
+### Import options
+
+`use JSON::Native <immutable !pretty sorted-keys enums-as-value>` changes the
+defaults of the subs it hands out (`!` turns an option off); an adverb at the
+call still wins.
+
+## Backends
+
+Each engine loads only what its own path needs. The distribution's other
+modules are reached by a runtime `require` behind a test of the engine, so
+none of them is even parsed on an engine that does not use it:
 
 | engine | parses | writes | reads at `use` |
 |---|---|---|---|
-| Raku++ | the engine's codec | the engine's codec | nothing — the engine answers `use JSON::Native` itself |
-| Rakudo | `Rakudo::Internals::JSON`, Rakudo's own copy of JSON::Fast | `JSON::Native::Rakudo`, an `nqp::` writer | `JSON::Native` |
+| Raku++ | the engine's codec | the engine's codec | nothing — the engine answers `use` |
+| Rakudo | `Rakudo::Internals::JSON` | `JSON::Native::Rakudo`, an `nqp::` writer | `JSON::Native` |
 | mutsu | the JSON::Fast mutsu ships | the same | `JSON::Native` and that JSON::Fast |
 | any other | `JSON::Native::Raku` | `JSON::Native::Raku` | `JSON::Native` |
 
-Anything a fast path does not answer exactly as JSON::Fast does — an adverb it
-does not take, a type outside the JSON ladder, a document it refuses — goes to
-**`JSON::Native::Raku`**, JSON::Fast's behaviour in plain Raku, which is
-loaded by the first call that needs it and by no other. On Raku++ even that
-needs nothing installed: the engine carries its own copy of it.
+`JSON::Native::Raku` is the module's pure-Raku implementation. Besides being
+the whole of it on other engines, it answers whatever a faster path does not
+take — an adverb it lacks, a type outside the JSON ladder, a document it
+refuses — and is loaded by the first call that needs it and by no other. On
+Raku++ the engine carries its own copy of it.
 
-`JSON_NATIVE_BACKEND` names one path to use instead — `engine`, `rakudo`,
-`json-fast` or `raku`. One that is not there is reported on STDERR, and the
-usual choice is used. On Raku++, naming any path but `engine` leaves `use
-JSON::Native` to the installed distribution.
+## JSON::Fast compatibility
 
-```sh
-JSON_NATIVE_BACKEND=raku raku my-program.raku
+JSON::Fast is Raku's established JSON module, and JSON::Native implements its
+interface exactly: the same two functions, the same adverbs, the same import
+options, and the same answers — the same values and types
+from `from-json`, the same text from `to-json` byte for byte, down to its
+quirks (an empty array pretty-printed as `"[\n]"`, a raw TAB refused inside a
+string while other raw control characters pass, a `//` comment running into
+the end of the text read as content after the document). So a program written
+for JSON::Fast switches by changing one line:
+
+```raku
+use JSON::Fast;      # before
+use JSON::Native;    # after
 ```
 
-## The contract
+What runs underneath is not JSON::Fast, and on most engines nothing of it
+needs to be installed:
 
-JSON::Fast's, which this module used to depend on and now does not.
+- **Rakudo** carries a copy of JSON::Fast inside itself, as
+  `Rakudo::Internals::JSON` — it is what zef reads `META6.json` with — and
+  JSON::Native parses with it, at JSON::Fast's own speed. Its *writer* is an
+  older one that is wrong outside plain JSON data, so writing is
+  JSON::Native's own `nqp::` writer, which is faster than JSON::Fast's.
+- **mutsu** ships JSON::Fast as part of its standard batteries and runs it
+  quickly, so there JSON::Native forwards both directions to that copy,
+  loaded when the module is.
+- **Raku++** answers both directions with its own codec, the same one it
+  already runs JSON::Fast's calls on.
 
-`from-json` returns what JSON::Fast returns — same values *and* same Raku
-types:
-
-- integer token → `Int`, arbitrary precision
-- decimal → `Rat`, so `from-json('[0.1,0.2]').sum == 0.3`
-- exponent form → `Num`
-- `true`/`false` → `Bool`, `null` → `Any`
-- objects and arrays → `Hash`/`Array`, or `Map`/`List` under `:immutable`
-
-It takes JSON::Fast's adverbs, `:immutable` and `:allow-jsonc`, and refuses
-what JSON::Fast refuses, quirks included: a raw TAB or LF inside a string is
-an error, any other raw control character is not; a `//` comment that runs to
-the very end of the text reads as content after the document.
-
-`to-json` writes what JSON::Fast writes, **byte for byte**. The same adverbs
-(`:pretty`, `:spacing`, `:sorted-keys`, `:enums-as-value`, `:level`), the same
-layout down to an empty array pretty-printing as `"[\n]"`, the same escapes
-down to backspace as `\u0008` rather than `\b`, astral characters as
-surrogate pairs, NaN and Inf as `null` unless `$*JSON_NAN_INF_SUPPORT` says
-otherwise, and the same rules for every type outside the JSON ladder — Date,
-Instant, Version, Seq, Pair, sets, enums, allomorphs.
-
-JSON::Fast's import options work as they do there: `use JSON::Native
-<immutable !pretty sorted-keys enums-as-value>` changes the defaults of the
-subs it hands out, and an adverb at the call still wins.
+Where a forwarded call does not match JSON::Fast exactly, JSON::Native does
+not forward it: those calls go to `JSON::Native::Raku`, which reproduces
+JSON::Fast's behaviour in plain Raku. The one difference a program can see
+is the exception class for content after the document — see Limitations.
 
 The test suite holds JSON::Fast's answers for some 125 documents and 440
 value-and-adverb combinations, written down by JSON::Fast itself, and checks
-every one through both `JSON::Native` and `JSON::Native::Raku` on every
-backend of every engine; where JSON::Fast is installed, `t/04-json-fast.t`
-asks it live as well, over 600 random documents and random corruptions of
-them.
+every one on every engine and path; where JSON::Fast is installed,
+`t/04-json-fast.t` also asks it live over 600 random documents and random
+corruptions of them.
 
-## Measured
+## Performance
 
 A 316 KB document of 1,400 records — integers, decimals, exponent forms,
 escaped and non-ASCII strings — and a 50-byte one, best of several runs,
@@ -94,35 +178,43 @@ measured 2026-10-13 on arm64 macOS:
 | | 316 KB parse | 316 KB write | 50 B parse | 50 B write |
 |---|---:|---:|---:|---:|
 | Rakudo v2026.09, JSON::Fast | 45.0 ms | 54.3 ms | 5.4 µs | 10.0 µs |
-| Rakudo, **`rakudo`** | **46.5 ms** | **41.6 ms** | 7.1 µs | 10.6 µs |
-| Rakudo, `raku` | 136 ms | 96 ms | 23 µs | 49 µs |
+| Rakudo, **JSON::Native** | **46.5 ms** | **41.6 ms** | 7.1 µs | 10.6 µs |
 | Raku++, JSON::Fast | 2.6 ms | 3.0 ms | 0.48 µs | 0.62 µs |
-| Raku++, **`engine`** | **2.6 ms** | **3.0 ms** | **0.49 µs** | **0.63 µs** |
-| Raku++, `raku` | 357 ms | 235 ms | 94 µs | 83 µs |
+| Raku++, **JSON::Native** | **2.6 ms** | **3.0 ms** | **0.49 µs** | **0.63 µs** |
 | mutsu 2026.07, JSON::Fast | 143 ms | 876 ms | 23 µs | 230 µs |
-| mutsu, **`json-fast`** | **149 ms** | **888 ms** | 34 µs | 243 µs |
-| mutsu, `raku` | 1,046 ms | 733 ms | 264 µs | 310 µs |
+| mutsu, **JSON::Native** | **149 ms** | **888 ms** | 34 µs | 243 µs |
+| Rakudo, pure Raku (`raku`) | 136 ms | 96 ms | 23 µs | 49 µs |
+| Raku++, pure Raku (`raku`) | 357 ms | 235 ms | 94 µs | 83 µs |
+| mutsu, pure Raku (`raku`) | 1,046 ms | 733 ms | 264 µs | 310 µs |
 
-On Rakudo the module parses with JSON::Fast's own code, so the two tie, and
-writes faster than it. On Raku++ JSON::Fast's calls run on the engine's codec
-too, which is why those rows match: there is nothing faster to reach. The
-Raku++ rows are a 5.3.0 development build carrying rakupp's
-`json-native-builtin` changes; an older Raku++ answers through the same codec
-from this module's file, at 14 ms to parse this document.
+On Raku++ JSON::Fast's calls run on the engine's codec too, which is why
+those two rows match: there is nothing faster to reach. The Raku++ rows are a
+5.3.0 development build from 2026-10-13; an older Raku++ answers through the
+same codec from the module's own file, at 14 ms to parse this document. The
+`raku` rows are the plain-Raku implementation, for comparison: it is what
+answers on an engine none of the above covers.
 
-## Requirements
+## Environment
 
-Nothing. No dependency, no build step, no C compiler.
+`JSON_NATIVE_BACKEND` names one path to use instead of the engine's usual
+one: `engine`, `rakudo`, `json-fast` or `raku`. One that is not available is
+reported on STDERR, and the usual path is used. On Raku++, naming any path
+but `engine` leaves `use JSON::Native` to the installed distribution. It is
+meant for testing and diagnosis:
 
-## Scope
+```sh
+JSON_NATIVE_BACKEND=raku raku my-program.raku
+```
 
-- **`X::JSON::Native::AdditionalContent`** is this module's class for content
-  after the document, with JSON::Fast's `parsed`, `parsed-length` and
-  `rest-position`; JSON::Fast's is `X::JSON::AdditionalContent`. A `CATCH`
-  naming JSON::Fast's class needs this name instead: two distributions cannot
-  both declare one global class, and Rakudo and mutsu do not export a class
-  under another name lexically. Its type is visible once `JSON::Native::Raku`
-  is loaded — `need JSON::Native::Raku;` makes it nameable.
+## Limitations
+
+- **The exception class differs from JSON::Fast's.** Content after the
+  document raises `X::JSON::Native::AdditionalContent`, with the same
+  attributes as JSON::Fast's `X::JSON::AdditionalContent`; a `CATCH` naming
+  JSON::Fast's class needs this name instead. Two distributions cannot both
+  declare one global class, and Rakudo and mutsu do not export a class under
+  another name. The class is visible once `JSON::Native::Raku` is loaded —
+  `need JSON::Native::Raku;` makes it nameable.
 - **`JSON::Native::Raku` exports nothing.** It can be used on its own by full
   name (`JSON::Native::Raku::from-json`); exporting would let a runtime load
   of it put its subs over a program's own on an engine whose `require`
@@ -140,21 +232,28 @@ Nothing. No dependency, no build step, no C compiler.
 | mutsu | 2026.07 | `raku` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 |
 
 Counts are from runs with `JSON_NATIVE_BACKEND` and
-`JSON_NATIVE_REQUIRE_BACKEND` set to the backend; the same counts come from a
-Raku++ build carrying the `json-native-builtin` engine changes, which also
-passes 01 and 02 with the engine itself answering `use JSON::Native`.
-`t/04-json-fast.t` needs JSON::Fast, and skips itself on Raku++, where
-JSON::Fast's subs are the engine's own codec and would only compare the engine
-with itself. No version is an established floor.
+`JSON_NATIVE_REQUIRE_BACKEND` set to the backend; a Raku++ build from
+2026-10-13 gives the same counts, and passes 01 and 02 with the engine itself
+answering `use JSON::Native`. `t/04-json-fast.t` needs JSON::Fast, and skips
+itself on Raku++, where JSON::Fast's subs are the engine's own codec and would
+only compare the engine with itself. No version is an established floor.
 
-Three engine faults the module steps around, each fixed or reported where it
-lives: Raku++ 5.3's codec handed back text that is not in NFC (`"a\u0301"`
-decoded to an `a` and a separate combining mark), so a document with a `\u`
-escape goes to the Raku implementation there; Raku++ 5.3 made a variable bound
-to a routine's native-int result an int slot, which the Raku implementation
-sidesteps by never rebinding one; and mutsu 2026.07's runtime `require`
-imports what it loads into the program, which is why mutsu loads its
-JSON::Fast at `use` time and `JSON::Native::Raku` exports nothing.
+Three engine faults the module steps around: Raku++ 5.3's codec handed back
+text that is not in NFC (`"a\u0301"` decoded to an `a` and a
+separate combining mark), so there a document with a `\u` escape goes to the
+Raku implementation; Raku++ 5.3 made a variable bound to a routine's
+native-int result an int slot, which the Raku implementation sidesteps by
+never rebinding one; and mutsu 2026.07's runtime `require` imports what it
+loads into the program, which is why mutsu loads its JSON::Fast at `use` time
+and `JSON::Native::Raku` exports nothing.
+
+## See also
+
+- [JSON::Fast](https://github.com/timo/json_fast) — the module whose
+  interface this one implements.
+- [Raku++](https://github.com/ash/rakupp) and
+  [mutsu](https://github.com/tokuhirom/mutsu) — the other engines it is
+  tested on.
 
 ## Author
 
