@@ -142,10 +142,25 @@ was already fixed at HEAD (#154). Measured on 5.3.0-83 and still open, on a
 
 The module avoids `.substr-eq` (a `substr` and an `eq` say the same thing) and
 `.indices`; the other two are why the Raku implementation parses at 350 ms
-there. Also found, both cosmetic for this module: a `Bool` pair inside a `Map`
-is `.raku`'d as `:f(Bool::False)` where Rakudo writes `:!f`, and the engine's
-JSON::Fast replacement writes a Capture as an array where JSON::Fast refuses
-it.
+there.
+
+Found later, and more serious: **a variable bound to a routine's native-int
+result became a native-int slot.** After `$v := f()`, with f returning a
+`my int` variable, every later `$v := …` was coerced to an integer — `[7, 8]`
+became 2, `"s"` became 0. The Raku parser rebinds one variable per object
+pair, so on Raku++ an object's values after its first number came back as
+their own `.elems`; the suite had no such object and said nothing. The module
+now assigns each value straight into its container, and the engine branch
+drops a returned value's native tags (`native-return-value-is-not-a-
+container.raku`). The cost of not looking: two Raku++ differential runs were
+written off as "the engine's codec is wrong" before the minimal case showed
+the Raku port was.
+
+Also found: `return` from inside a `try` block costs 34 µs on Raku++ 5.3 (the
+module's own from-json did it on every call), a Capture does Associative and
+Positional there (it does neither in Rakudo), and JSON::Fast's own nom-comment
+runs to a different position there; and cosmetically, a `Bool` pair inside a
+`Map` is `.raku`'d as `:f(Bool::False)` where Rakudo writes `:!f`.
 
 ## Why the extension was faster than the engine's codec
 
@@ -153,12 +168,12 @@ It was not, in general. Per token type, on Raku++ 5.3.0:
 
 | 200-850 KB of only | extension | engine codec before | engine codec after |
 |---|---:|---:|---:|
-| strings | 3.1 ms | 2.4 ms | 2.4 ms |
-| true/false/null | 0.9 ms | 0.7 ms | 0.7 ms |
-| integers | 3.5 ms | 18.0 ms | 1.2 ms |
-| decimals | 8.9 ms | 65.5 ms | 5.7 ms |
-| exponent forms | 2.0 ms | 60.4 ms | 2.1 ms |
-| the mixed 316 KB document | 4.1 ms | 13.5 ms | 5.3 ms |
+| strings | 3.0 ms | 2.4 ms | 2.5 ms |
+| true/false/null | 0.8 ms | 0.7 ms | 0.75 ms |
+| integers | 3.3 ms | 18.0 ms | 1.1 ms |
+| decimals | 9.0 ms | 65.5 ms | 3.4 ms |
+| exponent forms | 2.1 ms | 60.4 ms | 2.0 ms |
+| the mixed 316 KB document | 3.8 ms | 13.5 ms | 2.6 ms |
 
 The whole gap was numbers. The codec typed every number token with
 `numifyStr`, which is all of `Str.Numeric` — radix forms, `1/3`, `2*10**3`,
@@ -167,8 +182,123 @@ Unicode digits, and up to four `std::regex` matches per token. The fix, on the
 18 digits, and any exponent form, with the constructors `numifyStr` itself
 uses for them, and sends every other token to it unchanged; its regression
 test runs each case through both and requires the same type, value and
-`.raku`. Since then the codec is as fast as the extension or faster on every
-token type, and within 1.3x of it on the mixed document.
+`.raku`. A second pass built longer decimals the same way (the mixed
+document's 19-digit ones still reached the regexes), reduced a decimal's
+fraction in machine words instead of through BigInt's gcd and two divisions,
+and moved values into their containers instead of copying a 392-byte Value
+each time. Since then the codec is faster than the extension on every shape
+of document.
+
+The same branch makes the codec exact where it answers — NFC on the way in and
+out, a comment running into the end of the text fails, a Capture is not
+written — found by running it and the Raku port side by side over 27,000
+random calls; and adds `rakupp-json-codec`, the codec as a routine with a
+fallback built in, which is how JSON::Native exports it.
+
+## The final shape (2026-10-13)
+
+Two requirements, stated outright, decided it. **JSON::Native is a drop-in
+for JSON::Fast** — swapping the `use` line keeps a program working, import
+options and all. And **an engine loads only what it uses**: on Raku++ a `use
+JSON::Native` reads no module file, compiled or cached.
+
+So the C went, all of it. The NativeCall tokenizer needed a compiler at
+install time, and it turned out not to be needed for speed:
+`Rakudo::Internals::JSON` — the copy of JSON::Fast that Rakudo carries for
+zef — parses exactly as JSON::Fast does (6,000 documents, accepted and
+refused) at JSON::Fast's speed. Its *writer* is an older one and wrong outside
+plain JSON data (a Set's keys unquoted, an enum written bare, an object as
+`{"0":"null"}`), and 1.6-2x slower besides, so writing on Rakudo is
+`JSON::Native::Rakudo`: JSON::Native::Raku's writer with the escape scan, the
+buffer and the type tests in `nqp::` ops, faster than JSON::Fast on every
+document measured once the scan was written as `nqp::while` (in ordinary
+`while` and `<` it cost 1.5 µs a string). Raku++'s C extension went too: the
+engine's codec had overtaken it everywhere.
+
+Rakudo only ever sees the `nqp::` file through a runtime `require` behind
+`$*RAKU.compiler.name eq 'rakudo'`, and a deliberately unparseable stand-in
+proved Raku++ never opens it. On Raku++ the engine answers `use JSON::Native`
+itself (the Data::Native mechanism, `dataNativeUse`), handing out the codec as
+routines whose fallback is JSON::Native::Raku — and rakupp now carries its own
+copy of that file as a *bundled* module, found only when nothing installed or
+on `-I` provides one, so the answer needs nothing installed. The engine steps
+aside when an installed JSON::Native is newer than the interface it claims
+(0.1.0), when `-I` names one, or when `JSON_NATIVE_BACKEND` asks for another
+path — the last being how this suite tests the distribution on Raku++.
+
+That bundled copy is a second copy of `lib/JSON/Native/Raku.rakumod`, in
+rakupp's `rakulib/JSON/Native/`. **The two must be kept equal**: change one,
+copy it to the other, and bump the claimed interface version when the
+surface changes.
+
+## mutsu
+
+mutsu answers `Rakudo::Internals::JSON` with its own Rust codec — 2.5 ms for
+the mixed document — and it is not exact: large negative integers come back as
+rounded Nums, and 619 of 6,000 parses differ from JSON::Fast. It also ships
+JSON::Fast as a bundled "battery" and runs it fast (143 ms), so mutsu parses
+and writes with that. Three mutsu faults turned up, each worked around in the
+module and worth reporting upstream:
+
+- `my int @a = $str.NFD` refuses to fill a native array from a Uni (`.list`
+  works), and `.chrs` and `.join` do not compose (`a` and U+0301 stay two
+  codepoints); the Raku implementation now says `.NFD.list` and `.NFC.Str`.
+- A `qq//` holding both `\{` and a `{…}` interpolation does not parse, and a
+  nested destructuring `my (($a, $b), $c) = …` is not unpacked: the tests no
+  longer write either.
+- **A runtime `require` imports what it loads into the program.** JSON::Native
+  loading JSON::Fast at its first call put JSON::Fast's `from-json` over the
+  one `use JSON::Native` had handed out, so every later call bypassed the
+  module — which a benchmark caught only because the "raku" row ran at
+  JSON::Fast's speed. mutsu now loads its JSON::Fast at `use` time, before
+  JSON::Native's EXPORT runs, and JSON::Native::Raku exports nothing at all;
+  `t/03-backends.t` checks the imported routine survives a fallback load.
+
+The one interface gap left: a `CATCH` naming JSON::Fast's
+`X::JSON::AdditionalContent`. Declaring that class globally would collide with
+JSON::Fast whenever both are loaded (which on mutsu this module does itself),
+and Rakudo and mutsu refuse a qualified name in a lexical export — Raku++
+alone accepts it.
+
+## The NativeCall backend on Rakudo (built, measured, removed)
+
+Rakudo has no API for C to build a Raku value, which looked like the end of
+it. Measured, it was not: building a 316 KB document's values in Raku, with no
+parsing at all, costs 11 ms; the Raku parser's 118 ms was nearly all reading
+characters. So C reads (one call, 0.5 ms) and writes two buffers — a tape of
+tagged 64-bit words, one per value, and every decoded string NUL-separated —
+and Raku decodes the strings with one `.decode.split` and walks the tape.
+
+Things that mattered, in order:
+
+- **The first benchmark measured JSON::Fast against itself.** `use JSON::Fast
+  ()` still imports `from-json`; its EXPORT ignores an empty list. The numbers
+  matched to the tenth of a millisecond, which is what gave it away.
+- **`buf8.read-int64` is a third of what indexing a `Buf[int64]` costs** (61
+  ns against 156), and a tag in the low four bits makes most values one word.
+- **Strings, small integers and literals are made in the container's own
+  loop**, not by a call per value: Rakudo's no-JIT arm64 build pays ~0.2 µs a
+  call.
+- **`Buf.decode` drops a leading U+FEFF** as a byte order mark, so a first
+  string starting with one lost it: the buffer starts with a separator.
+- **Exponent forms are `strtod`'s double.** That is right only while
+  Rakudo's `.Numeric` gives the same double; it did on 60,015 forms, edge
+  cases included, and `t/01-parse.t` keeps asking over 2,010 of them.
+
+The result parsed the mixed document in 35.5 ms against JSON::Fast's 44.3,
+decimals at a third of its time — and a 50-byte document in 12 µs against its
+5, the per-call buffers and decode being most of a small call. It was removed
+a day later, for the reasons in the next section; the `strtod` finding and
+the tape design are kept here because a C tokenizer may be wanted again.
+
+## Per-call cost
+
+Large-document benchmarks hid the cost of a call entirely. On a 50-byte
+document JSON::Native's from-json took 46 µs on Raku++ (JSON::Fast: 0.39) and
+18 µs on Rakudo (4.6): a `return` out of a `try` block, 34 µs on Raku++, and a
+`(-)` set difference to check the adverbs, 4.7 µs on Rakudo. Both are gone.
+What was left on Raku++ was the Raku sub itself, 2 µs in front of a 0.4 µs
+codec — hence `rakupp-json-codec`, and exporting the codec's routine.
 
 ## The tests
 
@@ -180,4 +310,7 @@ Parse results are compared by `.raku`, which sees itemisation that `eqv` does
 not, with one spelling normalised (the Bool-pair difference above). Where
 JSON::Fast is installed, `t/04-json-fast.t` asks it live over 600 random
 documents; it skips itself on Raku++, where JSON::Fast's subs are the engine's
-codec and the comparison would be the engine against itself.
+codec and the comparison would be the engine against itself. The suite runs
+once per backend, chosen by `JSON_NATIVE_BACKEND` and confirmed by
+`JSON_NATIVE_REQUIRE_BACKEND` — six runs on the two engines, nine with a
+Raku++ build from before the engine changes beside one from after.

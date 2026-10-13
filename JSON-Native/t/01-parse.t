@@ -284,7 +284,8 @@ is-deeply from-json(42), 42, 'a non-Str argument is coerced to Str';
 # A document of a few hundred kilobytes, so the parse is seen to be linear
 # rather than assumed to be.
 {
-    my $doc = '[' ~ (^20000).map({ qq/\{"id":$_,"name":"user $_ é","score":{$_ / 4}\}/ }).join(',') ~ ']';
+    # concatenated, not one qq// with \{ and {…} in it: mutsu 2026.07 cannot parse that
+    my $doc = '[' ~ (^20000).map({ '{"id":' ~ $_ ~ ',"name":"user ' ~ $_ ~ ' é","score":' ~ ($_ / 4) ~ '}' }).join(',') ~ ']';
     my $got = from-json($doc);
     ok $got.elems == 20000 && $got[19999]<name> eq 'user 19999 é' && $got[3]<score> == 0.75,
        "a {($doc.chars / 1024).round} KB document parses";

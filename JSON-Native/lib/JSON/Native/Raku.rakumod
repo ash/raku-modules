@@ -4,12 +4,13 @@
 
 The pure-Raku half of JSON::Native: a JSON parser and serialiser with no
 dependencies, which JSON::Native loads only when its native paths stand aside.
-It can also be used on its own.
+It can also be used on its own, by full name — it exports nothing, so that
+loading it at run time can never put its subs over a program's own:
 
-    use JSON::Native::Raku;
+    need JSON::Native::Raku;
 
-    my $data = from-json('{"a": [1, 2.5, true, null]}');
-    say to-json($data, :!pretty);
+    my $data = JSON::Native::Raku::from-json('{"a": [1, 2.5, true, null]}');
+    say JSON::Native::Raku::to-json($data, :!pretty);
 
 Its contract is JSON::Fast's, exactly — not "parses JSON and writes JSON" but
 "returns what JSON::Fast returns and writes what JSON::Fast writes", down to
@@ -81,7 +82,9 @@ module JSON::Native::Raku {
             elsif $code >= 0x10000 { @out.append: |to-surrogate-pair($code).ords }
             else                   { @out.push: $code }
         }
-        @out.chrs
+        # .NFC.Str: the text rebuilt from codepoints must come back composed,
+        # as JSON::Fast's strfromcodes does, and mutsu's .chrs does not
+        @out.chrs.NFC.Str
     }
 
     our sub to-json(
@@ -91,7 +94,7 @@ module JSON::Native::Raku {
       Int  :$spacing        = 2,
            :$sorted-keys    = False,
       Bool :$enums-as-value = False,
-    ) is export {
+    ) {
         my str @out;
         my str $spaces = ' ' x $spacing;
 
@@ -317,7 +320,8 @@ module JSON::Native::Raku {
     # characters pass — JSON::Fast's rule, not RFC 8259's), a \u escape takes
     # exactly four hex digits, and a surrogate pair is joined.
     my sub unescape-string(str $s, int $pos) {
-        my int @codes = $s.NFD;
+        # (.list: mutsu 2026.07 cannot fill a native array from a Uni directly)
+        my int @codes = $s.NFD.list;
         my int $n = @codes.elems;
         my int $i = 1;   # past the quote itself
         my int @out;
@@ -376,7 +380,7 @@ module JSON::Native::Raku {
                 @out.push: $c;
             }
         }
-        @out.chrs
+        @out.chrs.NFC.Str   # composed; see str-escape
     }
 
     # A digit is any Unicode decimal digit, tested on the base codepoint, as
@@ -415,6 +419,7 @@ module JSON::Native::Raku {
     # JSON::Fast does and raises what JSON::Fast raises.
     my sub unescape-plain(str $s) {
         my @parts;
+        my int $u = 0;   # a \u escape was decoded: the join must be put in NFC
         my int $p = 0;
         my int $len = $s.chars;
         my $b;
@@ -425,11 +430,14 @@ module JSON::Native::Raku {
             $b = $s.index('\\', $p);
             without $b {
                 @parts.push: $s.substr($p) if $p < $len;
-                return @parts.join;
+                # composed where an escape may have made a combining pair:
+                # Rakudo's join composes on its own, mutsu's does not
+                return $u ?? @parts.join.NFC.Str !! @parts.join;
             }
             @parts.push: $s.substr($p, $b - $p) if $b > $p;
             $e = $b + 1 < $len ?? $s.substr($b + 1, 1) !! '';
             if $e eq 'u' {
+                $u = 1;
                 $cp = hex4($s, $b + 2);
                 return Nil if $cp < 0;
                 $p = $b + 6;
@@ -458,7 +466,7 @@ module JSON::Native::Raku {
     # through every call. Declarations sit outside loop bodies on purpose: a
     # block that declares nothing is flattened into its routine, one that
     # does is a frame entered per iteration.
-    our sub from-json(Str() $text, :$immutable, :$allow-jsonc) is export {
+    our sub from-json(Str() $text, :$immutable, :$allow-jsonc) {
         my str $t = $text;
         my int $n = $t.chars;
         my int $pos = 0;
