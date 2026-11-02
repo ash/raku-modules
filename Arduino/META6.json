@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A stub: `use Arduino` is built into Raku++, which runs the program against a simulated board and compiles it for a real one; on any other Raku it stops the program and says so",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Arduino",
+  "provides": {
+    "Arduino": "lib/Arduino.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Arduino",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Arduino"
+  },
+  "tags": [
+    "arduino",
+    "microcontroller",
+    "firmware",
+    "embedded",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}
