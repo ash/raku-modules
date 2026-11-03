@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A stub: `use Arduino::LEDMatrix` is built into Raku++, which draws the Uno R4 WiFi's LED matrix on a simulated board and compiles the program for a real one; on any other Raku it stops the program and says so",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Arduino::LEDMatrix",
+  "provides": {
+    "Arduino::LEDMatrix": "lib/Arduino/LEDMatrix.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Arduino-LEDMatrix",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Arduino-LEDMatrix"
+  },
+  "tags": [
+    "arduino",
+    "led-matrix",
+    "uno-r4",
+    "microcontroller",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

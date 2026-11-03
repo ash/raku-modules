@@ -26,6 +26,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Text::Diff::Native](Text-Diff-Native) — line and unified diffs (Myers O(ND)), native on Raku++, pure Raku elsewhere | 0.0.1 | 643/643 | 1265/1265 |
 | [YAML::Native](YAML-Native) — YAML 1.2 parsing and writing, native on Raku++, pure Raku elsewhere | 0.0.1 | 237/237 | 461/461 |
 | [Arduino](Arduino) — a stub: `use Arduino` is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
+| [Arduino::LEDMatrix](Arduino-LEDMatrix) — a stub: the Uno R4 WiFi's LED matrix is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -77,13 +78,13 @@ TOML::Native and Text::Diff::Native were tried on Rakudo v2026.08 and Raku++
 versions their counts come from — not established floors, since no older
 engine has been tried.
 
-‖ `Arduino` is the one distribution here not meant to work on every Raku, and
-it has no code to work with. `use Arduino` is built into Raku++ (planned in
-rakupp's `docs/dev/plans/ARDUINO-PLAN.md`), and on any other Raku this module
-stops the program and says it needs Raku++. Measured on Rakudo `v2026.09` and
-Raku++ `5.5.0-360`, neither of them a floor. Until a rakupp release answers
-`use Arduino` itself, the Raku++ column runs the suite's "older Raku++"
-branch.
+‖ `Arduino` and `Arduino::LEDMatrix` are the two distributions here not meant
+to work on every Raku, and they have no code to work with. Both names are
+built into Raku++ (planned in rakupp's `docs/dev/plans/ARDUINO-PLAN.md`), and
+on any other Raku these modules stop the program and say it needs Raku++.
+Measured on Rakudo `v2026.09` and Raku++ `5.5.0-360`, neither of them a
+floor. Until a rakupp release answers the names itself, the Raku++ column
+runs the suites' "older Raku++" branch.
 
 ## Layout
 

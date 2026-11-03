@@ -73,3 +73,20 @@ Not decided. Uploading now claims the raku.land page before anyone else's
 `Arduino`, but the two commands in the message do not work until a rakupp
 ships `--target=arduino`. Uploading with that release keeps the message true
 from the first day.
+
+## Arduino::LEDMatrix
+
+The second stub, added 2026-11-03, the same shape for the same reasons. Raku++
+answers `use Arduino::LEDMatrix` with the Uno R4 WiFi's 12×8 LED matrix: a
+`frame` sub that packs a picture into the core library's three 32-bit words
+while building, and a `LEDMatrix` with `begin`, `show` and `clear` that the
+emitter turns into Arduino_LED_Matrix calls. A board-specific part gets a
+module of its own, rather than more names in `Arduino`, so that a program
+says what it needs and a sketch includes the library only when asked.
+
+Its test is the Arduino one with the name changed, and has the same three
+outcomes: on Rakudo v2026.09 it is told the program needs Raku++; on a Raku++
+from before the name it is told to upgrade (checked against a build of
+2026-11-02); and on one that answers the name the program runs (checked
+against rakupp's `claude/arduino-ledmatrix` branch). rakupp's
+`tools/install.raku` lists it in `SHADOWED` beside `Arduino`.
