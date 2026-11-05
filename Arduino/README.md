@@ -34,6 +34,19 @@ rakupp fade.raku                       # on the simulated board
 rakupp --target=arduino fade.raku      # the sketch for a real one
 ```
 
+## Getting started
+
+- **A walkthrough**, from a blinking LED to the Uno R4 WiFi's LED matrix,
+  with a program for each step:
+  [examples/arduino](https://github.com/ash/rakupp/tree/main/examples/arduino).
+- **On the web:** [raku.online/arduino](https://raku.online/arduino/).
+- **The full reference:**
+  [docs/guide/ARDUINO.md](https://github.com/ash/rakupp/blob/main/docs/guide/ARDUINO.md),
+  with every type, function and construct a board program can use.
+
+No board is needed to start: every program runs on Raku++'s simulated board,
+which prints the serial port and every pin change.
+
 ## Why a stub
 
 First of all, to reserve the name and make sure the program is accepted by other Raku engines. This also helps to avoid any future conflicts in the module space. (Well, Raku allows tagging module versions with `auth`, so that's not a complete blocker.)
@@ -52,15 +65,18 @@ change what a Raku++ program gets.
 
 ## Install
 
-```
-rakupp install Arduino
-```
+With Raku++ there is nothing to install: `use Arduino` is built in, and
+`rakupp install Arduino` says so and skips it.
 
-Alternatively:
+For other Raku implementations, install this stub with zef:
 
 ```
 zef install Arduino
 ```
+
+A program that says `use Arduino` then stops at that line with a message
+that names rakupp and the command to run it with, instead of
+`Could not find Arduino`.
 
 
 ## Author

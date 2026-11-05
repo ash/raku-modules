@@ -48,6 +48,16 @@ rakupp --target=arduino heart.raku      # the sketch for a real one
 gets only those twelve bytes. On the simulated board, each new picture is
 drawn on stderr with `#` and `.`.
 
+## Getting started
+
+The walkthrough in
+[examples/arduino](https://github.com/ash/rakupp/tree/main/examples/arduino)
+ends with the matrix, drawing RA over KU as on the Learn Raku app's icon; it
+is also at [raku.online/arduino](https://raku.online/arduino/). The full
+reference is the
+[LED matrix section](https://github.com/ash/rakupp/blob/main/docs/guide/ARDUINO.md#the-led-matrix-uno-r4-wifi)
+of the Raku++ Arduino guide.
+
 ## Why a stub
 
 For the same reasons as the
@@ -69,15 +79,17 @@ nothing installed under the name can change what a Raku++ program gets.
 
 ## Install
 
-```
-rakupp install Arduino::LEDMatrix
-```
+With Raku++ there is nothing to install: `use Arduino::LEDMatrix` is built
+in, and `rakupp install Arduino::LEDMatrix` says so and skips it.
 
-Alternatively:
+For other Raku implementations, install this stub with zef:
 
 ```
 zef install Arduino::LEDMatrix
 ```
+
+A program that says `use Arduino::LEDMatrix` then stops at that line with a
+message that names rakupp, instead of `Could not find Arduino::LEDMatrix`.
 
 ## Author
 
