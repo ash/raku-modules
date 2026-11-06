@@ -1,0 +1,35 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A stub: `use Arduino::WiFi` is built into Raku++, which joins the Uno R4 WiFi's network on a simulated board and compiles the program for a real one; on any other Raku it stops the program and says so",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "Arduino::WiFi",
+  "provides": {
+    "Arduino::WiFi": "lib/Arduino/WiFi.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/Arduino-WiFi",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/Arduino-WiFi"
+  },
+  "tags": [
+    "arduino",
+    "wifi",
+    "uno-r4",
+    "microcontroller",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

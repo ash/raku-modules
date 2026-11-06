@@ -90,3 +90,23 @@ from before the name it is told to upgrade (checked against a build of
 2026-11-02); and on one that answers the name the program runs (checked
 against rakupp's `claude/arduino-ledmatrix` branch). rakupp's
 `tools/install.raku` lists it in `SHADOWED` beside `Arduino`.
+
+## Arduino::WiFi
+
+The third stub, added 2026-11-06, the same shape for the same reasons. Raku++
+answers `use Arduino::WiFi` with the Uno R4 WiFi's network: a `WiFi` with
+`begin`, `status`, `localIP` and `disconnect`, and the `WL_*` statuses, which
+the emitter turns into calls of the core's WiFiS3 library; the name and
+password are constants the build reads, and both simulated boards simulate
+the network. It is a module of its own for the reason the matrix is.
+
+A WiFi program says `use Arduino` before `use Arduino::WiFi`, so on another
+Raku the Arduino stub already stops it. This one is for a program that names
+only the network, and for the name on raku.land.
+
+Its test is the LEDMatrix one with the name changed, and has the same three
+outcomes: on Rakudo v2026.09 it is told the program needs Raku++; on a Raku++
+without the name it is told to upgrade (checked against main of 2026-11-06,
+before the merge); and on one that answers the name the program runs (checked
+against rakupp's `claude/arduino-wifi` merged into main). rakupp's
+`tools/install.raku` lists it in `SHADOWED` beside the other two.
