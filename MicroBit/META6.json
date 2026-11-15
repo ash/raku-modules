@@ -1,0 +1,37 @@
+{
+  "auth": "zef:ash",
+  "authors": [
+    "Andrew Shitov"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A stub: `use MicroBit` is built into Raku++, which runs the program on a simulated BBC micro:bit and compiles it for a real one; on any other Raku it stops the program and says so",
+  "license": "Artistic-2.0",
+  "meta-version": 0,
+  "name": "MicroBit",
+  "provides": {
+    "MicroBit": "lib/MicroBit.rakumod"
+  },
+  "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://github.com/ash/raku-modules/tree/main/MicroBit",
+  "support": {
+    "source": "https://github.com/ash/raku-modules/tree/main/MicroBit"
+  },
+  "tags": [
+    "microbit",
+    "micro:bit",
+    "microcontroller",
+    "firmware",
+    "embedded",
+    "education",
+    "Raku++"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.0.1"
+}

@@ -28,6 +28,7 @@ everywhere Rakudo does, so anything published from here has to run on both.
 | [Arduino](Arduino) — a stub: `use Arduino` is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
 | [Arduino::LEDMatrix](Arduino-LEDMatrix) — a stub: the Uno R4 WiFi's LED matrix is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
 | [Arduino::WiFi](Arduino-WiFi) — a stub: the Uno R4 WiFi's network is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
+| [MicroBit](MicroBit) — a stub: `use MicroBit`, the BBC micro:bit, is built into Raku++, and anywhere else it says so | 0.0.1 | 6/6 ‖ | 6/6 ‖ |
 
 † Measured on Rakudo `v2026.08` and Raku++ `3.25.0`, which is also their floor:
 both reach the extension ABI through `rakupp-ext-load`. The two Raku++ counts
@@ -79,15 +80,17 @@ TOML::Native and Text::Diff::Native were tried on Rakudo v2026.08 and Raku++
 versions their counts come from — not established floors, since no older
 engine has been tried.
 
-‖ `Arduino`, `Arduino::LEDMatrix` and `Arduino::WiFi` are the three
-distributions here not meant to work on every Raku, and they have no code to
-work with. The names are built into Raku++ (planned in rakupp's
-`docs/dev/plans/ARDUINO-PLAN.md`), and on any other Raku these modules stop
-the program and say it needs Raku++. Measured on Rakudo `v2026.09` and Raku++
-`5.5.0-360`, neither of them a floor; `Arduino::WiFi` on Rakudo `v2026.09` and
-on a Raku++ `5.6.3` without the name and one with it. Until a rakupp release
-answers the names itself, the Raku++ column runs the suites' "older Raku++"
-branch.
+‖ `Arduino`, `Arduino::LEDMatrix`, `Arduino::WiFi` and `MicroBit` are the
+four distributions here not meant to work on every Raku, and they have no
+code to work with. The names are built into Raku++ (planned in rakupp's
+`docs/dev/plans/ARDUINO-PLAN.md` and `MICROBIT-PLAN.md`), and on any other
+Raku these modules stop the program and say it needs Raku++. Measured on
+Rakudo `v2026.09` and Raku++ `5.5.0-360`, neither of them a floor;
+`Arduino::WiFi` on Rakudo `v2026.09` and on a Raku++ `5.6.3` without the name
+and one with it; `MicroBit` on Rakudo `v2026.09`, on a Raku++ `5.7.0-98`
+without the name and on `5.8.0-171`, rakupp's main, with it. Until a rakupp
+release answers the names itself, the Raku++ column runs the suites' "older
+Raku++" branch.
 
 ## Layout
 
@@ -131,6 +134,7 @@ installing the module has to read past:
 - [notes/TOML-Native.md](notes/TOML-Native.md)
 - [notes/Text-Diff-Native.md](notes/Text-Diff-Native.md)
 - [notes/Arduino.md](notes/Arduino.md)
+- [notes/MicroBit.md](notes/MicroBit.md)
 
 The two `**::Native` distributions added for the `Data::Native` campaign each
 carry their conformance vectors INSIDE `t/vectors/`, together with the
