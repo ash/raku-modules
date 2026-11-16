@@ -27,7 +27,7 @@ part in.
 
 =head2 The five tags
 
-=item C<json> — C<from-json> C<to-json> C<json-backend>
+=item C<json> — C<from-json> C<to-json> C<from-jsonl> C<to-jsonl> C<json-backend>
 =item C<csv> — C<from-csv> C<to-csv> C<csv-backend>
 =item C<digest> — C<md5 sha1 sha224 sha256 sha384 sha512>, their C<-hex> twins,
 C<hmac> C<hmac-hex>, C<digest-backend>
@@ -36,7 +36,7 @@ C<adler32> C<zlib-backend>
 =item C<random> — C<crypt_random_buf> C<crypt_random> C<crypt_random_uniform>
 C<random-backend>
 
-Twenty-seven functions and five C<*-backend> subs. Every signature is the
+Twenty-nine functions and five C<*-backend> subs. Every signature is the
 reference interface's, character for character, so a program moves between
 C<use Data::Native E<lt>digestE<gt>> and C<use Digest::Native> — or
 C<use Digest::SHA2; use Digest::HMAC;> — by editing one line, in either
@@ -112,6 +112,50 @@ gives you the engine's CSV and C<JSON::Native>'s JSON, as it should.
 
 my (&f-from-json, &f-to-json);
 { use JSON::Fast; &f-from-json = &from-json; &f-to-json = &to-json; }
+
+# JSON Lines has no reference module but JSON::Native's: its contract is
+# JSON::Native::Raku's from-jsonl / to-jsonl, and X::JSON::Native::Line is
+# declared there. `need`, as for CSV::Native::Core: JSON::Native::Raku exports
+# nothing and claims nothing, where `use JSON::Native` would. The lines
+# themselves go through JSON::Fast, as from-json here does.
+need JSON::Native::Raku;
+sub f-blank-line(Str $l --> Bool) {
+    !$l.chars || ($l.trim eq '' && $l !~~ / <-[\ \t]> /)
+}
+sub f-jsonl-value(Str $l, Int $line, $immutable) {
+    CATCH { default { X::JSON::Native::Line.new(:$line, :exception($_)).throw } }
+    f-from-json($l, :$immutable)
+}
+my &f-from-jsonl = sub from-jsonl($source, :$immutable) {
+    my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source.Str;
+    my @values;
+    my int $line = 0;
+    for $text.lines -> $l {
+        $line = $line + 1;
+        @values.push: f-jsonl-value($l, $line, $immutable) unless f-blank-line($l);
+    }
+    $immutable ?? @values.List !! @values
+};
+my &f-to-jsonl = sub to-jsonl(@values, :$pretty, :$sorted-keys = False, Bool :$enums-as-value = False) {
+    die "to-jsonl: JSON Lines has one layout, a value a line; :pretty does not apply" if $pretty;
+    my str @out;
+    for @values -> \v {
+        @out.push: f-to-json(v, :!pretty, :$sorted-keys, :$enums-as-value);
+        @out.push: "\n";
+    }
+    @out.join
+};
+# Where the engine has a JSON Lines codec, IT answers — as a routine whose
+# fallback is the pair above, so a refused line is numbered on every engine.
+# Its bare primitives (rakupp-from-jsonl) raise X::AdHoc instead, which is why
+# answers-contract below adopts neither name.
+sub jsonl-codec(Str $name, &fallback) {
+    my &maker = try &::('rakupp-json-codec');
+    my $c = &maker ?? (try maker($name, &fallback)) !! Nil;
+    $c ~~ Callable ?? $c !! &fallback
+}
+&f-from-jsonl = jsonl-codec('from-jsonl', &f-from-jsonl);
+&f-to-jsonl   = jsonl-codec('to-jsonl',   &f-to-jsonl);
 
 # `need`, not `use`: CSV::Native is on the claim protocol, and `use` would run
 # its EXPORT into THIS file's scope, leaving an announcement in the registry
@@ -298,9 +342,10 @@ my constant @DIGEST-NAMES =
 
 my %TAGS =
     json => {
-        names => <from-json to-json>,
+        names => <from-json to-json from-jsonl to-jsonl>,
         needs => 'JSON::Fast',
-        via   => { 'from-json' => &f-from-json, 'to-json' => &f-to-json },
+        via   => { 'from-json' => &f-from-json, 'to-json' => &f-to-json,
+                   'from-jsonl' => &f-from-jsonl, 'to-jsonl' => &f-to-jsonl },
         back  => sub () { 'JSON::Fast' },
     },
     csv => {

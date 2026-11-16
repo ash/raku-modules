@@ -127,6 +127,24 @@ That is what makes them composable at all.
   `to-csv([['a,b']])` arrives as a row of loose fields. Bit the test, not the
   module.
 
+## JSON Lines in the json tag (0.0.2, 2026-11-16)
+
+`from-jsonl` and `to-jsonl` joined the json tag with JSON::Native 0.2.0, so a
+program that takes its JSON from `use Data::Native <json>` has them on every
+engine — the engine's own answer to that `use` already did. Two things in how
+they are wired differ from the rest of the tag:
+
+- **The reference is JSON::Native's**, there being no other: the contract is
+  `JSON::Native::Raku`'s pair, and `X::JSON::Native::Line` is declared there.
+  It is reached with `need`, as CSV::Native::Core is — it exports nothing and
+  claims nothing — and the lines themselves go through JSON::Fast, as this
+  tag's `from-json` does.
+- **The engine's bare primitives are not adopted.** `rakupp-from-jsonl` raises
+  X::AdHoc for a refused line, where every other path raises
+  `X::JSON::Native::Line` with its number. On an engine with
+  `rakupp-json-codec('from-jsonl', …)` the codec routine answers instead, with
+  this module's pair as its fallback, so the refused line is numbered there.
+
 ## What is not tested yet
 
 The `core` row. No engine implements the `rakupp-*` primitives, so

@@ -25,11 +25,11 @@ use Data::Native <json csv>;         # or name the tags
 The spelling is `<json csv>`, **not** `:json` — Rakudo routes `:tag` through the
 `is export(:tag)` machinery, which a `sub EXPORT` module has no part in.
 
-## The five tags — 27 functions and 5 backend subs
+## The five tags — 29 functions and 5 backend subs
 
 | tag | names | reference interface |
 |---|---|---|
-| `json` | `from-json` `to-json` | `JSON::Fast` |
+| `json` | `from-json` `to-json`, and `from-jsonl` `to-jsonl` for JSON Lines | `JSON::Fast`; `JSON::Native` 0.2.0 for the JSON Lines pair |
 | `csv` | `from-csv` `to-csv` | `CSV::Native` — no usable reference existed |
 | `digest` | `md5 sha1 sha224 sha256 sha384 sha512`, their `-hex` twins, `hmac` `hmac-hex` | `Digest` + `Digest::HMAC`, with bduggan's `-hex` spelling |
 | `zlib` | `compress` `uncompress` `gzslurp` `gzspurt` `crc32` `adler32` | `Compress::Zlib` |
@@ -128,7 +128,7 @@ our own module is the reference should be shaped the same way.
 
 ## Status
 
-0.0.1. Not published — see the repository's standing rule.
+0.0.2 (0.0.1 and `from-jsonl` / `to-jsonl`). Not published — see the repository's standing rule.
 
 No engine implements the `rakupp-*` primitives yet, so `*-backend()` reports the
 reference module everywhere today and the `core` row is untested against a real

@@ -1,4 +1,5 @@
 use lib $?FILE.IO.parent.parent.parent.add('CSV-Native/lib').Str;
+use lib $?FILE.IO.parent.parent.parent.add('JSON-Native/lib').Str;   # JSON::Native::Raku, for JSON Lines
 use Test;
 use Data::Native;
 
@@ -18,6 +19,20 @@ use Data::Native;
     nok $data<a>[3].defined,  'null is undefined';
     is to-json({ a => 1 }, :!pretty), '{"a":1}', 'to-json round-trips a hash';
     is from-json(to-json($data))<b>, 'x', 'and the two compose';
+}
+
+# ---- json: JSON Lines ------------------------------------------------------
+# (the whole contract is JSON::Native's t/06-lines.t; this is the tag's share)
+
+{
+    is-deeply from-jsonl("\{\"a\":1}\r\n\n  \n[2,3]".encode), [{a => 1}, [2, 3]],
+        'from-jsonl: a value a line, CRLF and blank lines taken in stride';
+    isa-ok from-jsonl("[1]", :immutable)[0], List, 'and :immutable';
+    my $e = do { try from-jsonl("1\n[2,"); $! };
+    isa-ok $e, X::JSON::Native::Line, 'a refused line raises X::JSON::Native::Line';
+    is $e.line, 2, 'naming the line';
+    is to-jsonl([{a => 1}, [2], Any]), qq<\{"a":1}\n[2]\nnull\n>, 'to-jsonl: a compact value a line';
+    dies-ok { to-jsonl([1], :pretty) }, 'and :pretty is refused';
 }
 
 # ---- csv -----------------------------------------------------------------

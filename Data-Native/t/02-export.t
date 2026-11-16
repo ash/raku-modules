@@ -66,7 +66,7 @@ sub run-raku(Str $code) {
 
 {
     my @names = <
-        from-json to-json from-csv to-csv
+        from-json to-json from-jsonl to-jsonl from-csv to-csv
         md5 sha1 sha224 sha256 sha384 sha512
         md5-hex sha1-hex sha224-hex sha256-hex sha384-hex sha512-hex
         hmac hmac-hex
@@ -74,11 +74,11 @@ sub run-raku(Str $code) {
         crypt_random_buf crypt_random crypt_random_uniform
         json-backend csv-backend digest-backend zlib-backend random-backend
     >;
-    is @names.elems, 32, 'the tag table is twenty-seven functions and five backends';
+    is @names.elems, 34, 'the tag table is twenty-nine functions and five backends';
 
     my $prog = 'use Data::Native; my @m = <' ~ @names.join(' ') ~ q[>.grep({ !::('&' ~ $_).defined }); say @m ?? 'MISSING ' ~ @m.join(' ') !! 'all present'];
     my ($rc, $out, $err) = run-raku($prog);
-    is $rc, 0, 'a program can ask for all thirty-two names' or diag $err;
+    is $rc, 0, 'a program can ask for all thirty-four names' or diag $err;
     is $out, 'all present', 'and every one of them is exported';
 }
 

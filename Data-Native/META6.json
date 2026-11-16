@@ -7,6 +7,7 @@
   ],
   "depends": [
     "JSON::Fast",
+    "JSON::Native:ver<0.2.0+>",
     "CSV::Native",
     "Digest:auth<zef:grondilu>",
     "Digest::SHA1::Native:auth<zef:bduggan>",
@@ -41,5 +42,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "0.0.1"
+  "version": "0.0.2"
 }
