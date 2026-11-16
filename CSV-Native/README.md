@@ -5,7 +5,7 @@
 CSV parsing and writing with a native fast path on **Raku++**, and pure Raku
 everywhere else. No dependencies. The same program runs on both engines.
 
-> Version 0.0.1. The interface below is implemented and tested on both
+> Version 0.1.0. The interface below is implemented and tested on both
 > engines; what it leaves out is under Scope.
 
 ```raku
@@ -19,6 +19,10 @@ say to-csv([[1, "two", "3,4"]]);                     # 1,two,"3,4"
 say to-csv(@recs, :headers<name id>);                # a header line, then rows
 
 say csv-backend();                                   # 'native' or 'raku'
+
+# a file too big to hold: one window at a time, bounded memory
+csv-each("huge.csv".IO, :headers, on-chunk => -> @recs { ... });
+for csv-stream("huge.csv".IO, :headers) -> %rec { ... }
 ```
 
 ```bash
@@ -218,12 +222,161 @@ with `index`, because on Raku++ an `index` costs the whole string on every
 call; the first version scanned that way and took 12 s for a thousand rows
 there. Both implementations are linear in the input.
 
+## Streaming
+
+`from-csv` reads the whole text and returns the whole table, which is the
+right shape for a file you can hold and the wrong one for a file you cannot.
+The ceiling is not the disk, it is the multiple between a file and its parsed
+form:
+
+| peak memory ÷ file size | rows | `:headers` |
+|---|---:|---:|
+| Raku++, extension | ~12x | ~15–20x |
+| Rakudo | ~24x | ~30x |
+
+The multiple depends on the shape of a row — many narrow columns cost more per
+byte of file than few wide ones — so treat these as the order of the thing and
+not a constant. So a 2 GB export read as records wants tens of GB on Raku++
+and half again as much on Rakudo, and a 10 GB one is out of reach on any
+machine you have.
+
+`csv-each` reads a window at a time and parses it on its own. What is alive at
+once is one window of text and one window of records, whatever the file's
+size — the file's size stops being the question.
+
+```raku
+my %by-country;
+csv-each("huge.csv".IO, :headers, on-chunk => -> @recs {
+    %by-country{.<Country>}++ for @recs;     # totals accumulate, records do not
+});
+```
+
+`csv-stream` is the same reading as a lazy sequence of records, for when a
+loop over records reads better than a loop over windows. On Raku++ 5.8.0 it is
+*not* bounded — a `Seq` there retains every record it yields ([#263][i263]), so
+use `csv-each` for a file you cannot hold:
+
+```raku
+for csv-stream("huge.csv".IO, :headers) -> %rec { ... }
+my $first = csv-stream("huge.csv".IO, :headers).first(*<Notes> eq 'VIP');
+```
+
+Both take `from-csv`'s options — `:sep`, `:quote`, `:headers`, `:strict` — and
+two of their own:
+
+| option | default | meaning |
+|---|---|---|
+| `:bytes` | 64Ki | bytes read at a time: the window |
+| `:workers` | 1 | windows parsed in parallel (Raku++) |
+
+The records are the ones `from-csv` returns for the same source, and a
+malformed file fails with the same message naming the same line. `t/04-stream.t`
+holds both to that for every window size from one byte up, which is where the
+reader's real bugs live: a multi-byte character split across two reads, a CRLF
+split down the middle, a record longer than the window, a quoted field
+spanning windows. The default window finds none of them.
+
+`:strict` measures every record against the first record of the **file**, not
+of the window it falls in, and `:headers` names the columns from the first
+window even when the header line itself spans lines — neither is something a
+window can work out for itself, so both are passed down.
+
+A source may be a `Str`, an `IO::Path` or an `IO::Handle`. A handle the caller
+opened stays the caller's; only a path the reader opened is closed by it, and
+`csv-each` closes it on every way out, including through an exception the
+consumer itself raised. A `csv-stream` sequence abandoned part way — `.first`,
+or `last` in a loop over it — cannot know it was abandoned, so its file waits
+for the collector; `csv-each` is the one to reach for when that matters.
+
+One input defeats the window: an unterminated quoted field near the start of a
+huge file. Everything after it is inside a quoted field as far as any reader
+can tell, so no record boundary is ever found, the leftover grows to the whole
+file and each window rescans it from the beginning. The error, when it comes,
+is the right error at the right line — but a file malformed that way is read
+quadratically rather than linearly.
+
+### Measured
+
+arm64 Mac, Raku++ 5.8.0. `t/mock-customers.csv` repeated to 851 MB —
+5,550,000 records of twelve columns, quoted fields and multi-line notes among
+them — every record read with `:headers` and one field of it read:
+
+| 851 MB, 5.55M records | time | peak memory |
+|---|---:|---:|
+| `from-csv`, whole table | 16.3 s | **12.33 GiB** |
+| `csv-each` | **12.4 s** | **31 MiB** |
+| `csv-stream` | 18.1 s | 8.79 GiB |
+
+**Memory is flat in the file's size** — 31 MiB on 85 MB of CSV and 31 MiB on
+851 MB — and that is the point: four hundred times less memory than the whole
+table, and quicker as well, because nothing is kept that has to be allocated,
+grown and collected.
+
+#### The window and the workers pull against each other
+
+With a cheap consumer, so that the figures are the reader's and not the
+caller's:
+
+| `:bytes` | `:workers(1)` | `:workers(2)` | `:workers(4)` |
+|---|---:|---:|---:|
+| 64Ki (the default) | **9.9 s** / 33 MiB | 9.3 s / 52 MiB | 10.2 s / 57 MiB |
+| 1Mi | 11.2 s / 147 MiB | 9.1 s / 194 MiB | 9.3 s / 245 MiB |
+| 4Mi | 11.7 s / 450 MiB | 8.8 s / 573 MiB | **8.2 s** / 736 MiB |
+
+A small window is quickest on one thread — its text and records stay in cache,
+and every pass over them is cheaper — but it gives each worker too little to
+do to pay for handing the work over. A large window is the other way round.
+The default is chosen for the single-threaded case and for memory, which is
+what a streaming reader is for; **if you raise `:workers`, raise `:bytes` with
+it**, or the extra threads will not earn their keep. The best time here, 4Mi
+across four workers, costs twenty-two times the memory of the default to save
+a sixth of the time.
+
+Note also that workers divide the *parsing* only. The consumer's own work runs
+on one thread, and in the first table above it is most of the cost — which is
+why `:workers` is absent from it: at two and four workers that read takes
+13.0 s and 12.6 s, no better than one.
+
+### Two engine findings the reader is built around
+
+Both were measured on Raku++ 5.8.0 and both change what a streaming reader can
+be made of:
+
+- **Text-mode handle reads are O(the file)** ([rakupp #262][i262]). Reading an
+  851 MB file in windows and discarding every one peaks at 29.6 GB, whatever
+  the window size — about 35 bytes per character read, held for the lifetime of
+  the handle; `.read` on the same loop peaks at 83 MB. `get` has the same shape
+  at about 6 B/char. So the reader is binary and decodes each window itself.
+  (On Rakudo, `get` is flat and `readchars` plateaus.) Decoding a window is
+  only safe where the encoding agrees, and a record terminator is ASCII — so
+  cutting at one can never split a codepoint,
+  and the leftover is carried as bytes. On Raku++ the read, the decode, the
+  CRLF normalisation and the cut are one C pass; doing them in Raku cost more
+  than the parsing they feed, which left `:workers` nothing to divide.
+- **A `Seq` retains every value it yields**, for as long as the `Seq` is alive
+  ([rakupp #263][i263]) — about 280 bytes a value. It is the `Seq`, not the
+  consumer: `gather`/`take`, `Seq.new`, and `.map` all do it, and so do both
+  `for` and draining `.iterator` by hand, while the same `Iterator` drained
+  directly with no `Seq` around it is flat (13 MiB against 1082 MiB for four
+  million one-key hashes). That is why `csv-stream` is a hand-rolled iterator
+  rather than a `gather`; but `csv-stream` still hands the records back as a
+  `Seq`, so on Raku++ 5.8.0 it is bounded only by the file, and **for a file
+  you cannot hold, use `csv-each` there**. `csv-stream` is flat on Rakudo
+  (466 MB at both 85 MB and 851 MB).
+
+[i262]: https://github.com/ash/rakupp/issues/262
+[i263]: https://github.com/ash/rakupp/issues/263
+
+CRLF: a file read whole goes through the engine's text decoding, which turns
+CRLF into LF — inside quoted fields too — while a byte read does not. The
+reader normalises CRLF to LF to match, and leaves a lone CR alone, which is
+also what the engine does. That is why a streamed read of a CRLF file agrees
+with `from-csv` line ending for line ending.
+
 ## Scope
 
 Left out of 0.0.1 on purpose:
 
-- **Streaming.** `from-csv` reads the whole text and returns the whole table.
-  A lazy row iterator over a handle is the natural next feature.
 - **Loose quotes** (`5" pipe,x`), an escape character other than doubling,
   comment lines, `:skip-empty-rows`.
 - **Typed fields.** An opt-in allomorph mode may come; a guessing parser will
@@ -239,15 +392,18 @@ implementation.
 
 ## Compatibility
 
-| engine | version | `t/01-parse.t` | `t/02-write.t` | `t/03-mock-file.t` |
-|---|---|---:|---:|---:|
-| Rakudo | v2026.08 | 73/73 | 55/55 | 17/17 |
-| Raku++, extension | 3.24.0 | 139/139 | 93/93 | 19/19 |
-| Raku++, `CSV_NATIVE_BACKEND=raku` | 3.24.0 | 73/73 | 55/55 | 17/17 |
+| engine | version | `t/01-parse.t` | `t/02-write.t` | `t/03-mock-file.t` | `t/04-stream.t` |
+|---|---|---:|---:|---:|---:|
+| Rakudo | v2026.05 | 73/73 | 55/55 | 17/17 | 86/86 |
+| Raku++, extension | 5.8.0 | 139/139 | 93/93 | 19/19 | 86/86 |
+| Raku++, `CSV_NATIVE_BACKEND=raku` | 5.8.0 | 73/73 | 55/55 | 17/17 | 86/86 |
 
 The Raku++ counts are higher because every case runs through both
 implementations there. Neither version is an established floor; the
-extension needs a Raku++ with extension ABI 2.
+extension needs a Raku++ with extension ABI 2 for parsing and writing, and
+ABI 3 for the one-pass streaming reader, which hands raw bytes across the
+boundary — ABI 3's addition. Against an ABI-2 header the reader compiles out
+and streaming reads through Raku; parsing keeps its fast path either way.
 
 Two engine differences worth knowing: CRLF is one character in Raku
 (`"a\r\nb".chars` is 3, and `.index("\n")` does not find it); and Rakudo

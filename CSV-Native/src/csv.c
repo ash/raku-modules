@@ -221,6 +221,14 @@ static RkValue from_csv_native(RkCtx c) {
     RkValue vquo = rk_named(c, "quote");
     RkValue vhdr = rk_named(c, "headers");
     RkValue vstr = rk_named(c, "strict");
+    /* Streaming options. A chunk parsed on its own is a slice of a bigger
+       file, so three facts the whole-file call could assume no longer hold:
+       the first line is not line 1, the record width was fixed by a record in
+       an EARLIER chunk, and only the chunk at offset 0 may carry a BOM. Each
+       is an option rather than an inference, because a chunk cannot tell. */
+    RkValue vfl  = rk_named(c, "first-line");
+    RkValue vexp = rk_named(c, "expect");
+    RkValue vbom = rk_named(c, "bom");
     P s;
     RkValue rows;
     RkValue* cells = 0;      /* the current record's fields */
@@ -236,7 +244,7 @@ static RkValue from_csv_native(RkCtx c) {
     s.c = c;
     s.sep = rk_str_get(c, vsep, &s.sepl);
     s.quo = rk_str_get(c, vquo, &s.quol);
-    s.line = 1;
+    s.line = vfl ? (long)rk_int_get(c, vfl) : 1;
     strict = vstr ? rk_truthy(c, vstr) : 0;
     /* The Raku side validates the dialect before calling; these two are
        repeated because an empty needle matches everywhere and a scan that
@@ -255,8 +263,15 @@ static RkValue from_csv_native(RkCtx c) {
     }
     else if (ht == RK_BOOL && rk_truthy(c, vhdr)) want_header = 1;
 
+    /* The width the FILE's first record set, handed to a later chunk. Ignored
+       when header names are in play: their count already is the width. */
+    if (!have_expected && vexp && rk_type(c, vexp) == RK_INT) {
+        have_expected = 1; expected = (size_t)rk_int_get(c, vexp);
+    }
+
     /* A UTF-8 byte-order mark is Excel's signature, not a field. */
-    if (len >= 3 && (unsigned char)text[0] == 0xEF && (unsigned char)text[1] == 0xBB &&
+    if ((!vbom || rk_truthy(c, vbom)) &&
+        len >= 3 && (unsigned char)text[0] == 0xEF && (unsigned char)text[1] == 0xBB &&
         (unsigned char)text[2] == 0xBF) { text += 3; len -= 3; }
     s.p = text; s.end = text + len;
 
@@ -485,14 +500,183 @@ static RkValue to_csv_native(RkCtx c) {
     return out;
 }
 
+/* ---- cutting a buffer at a record boundary (streaming) --------------------
+ *
+ * The one thing a streaming reader cannot do for itself. A fixed-size read
+ * ends wherever it ends — mid-record, and worse, possibly inside a quoted
+ * field where a line ending is CONTENT and not a record end. This answers
+ * where the buffer's last complete record ends, so the caller can parse that
+ * much and carry the remainder into the next read.
+ *
+ * `first` asks for the FIRST boundary instead, which is how the header line
+ * is taken off the front of a file whose header may itself span lines.
+ *
+ * Returns [ready, rest, terminators-in-ready]. The split is handed back as
+ * two strings rather than an offset on purpose: the host counts a Str in
+ * GRAPHEMES ("\r\n" is one) and this scanner counts bytes, so an index would
+ * have to be translated between the two and "\r\n" is exactly where that
+ * translation goes wrong. Strings cross the boundary already decoded.
+ *
+ * The terminator count is free here and dear on the Raku side: it is what
+ * lets a later chunk name file-global line numbers in its errors. */
+static RkValue csv_cut_native(RkCtx c) {
+    size_t len = 0;
+    const char* text = rk_str_get(c, rk_arg(c, 0), &len);
+    RkValue vquo   = rk_named(c, "quote");
+    RkValue vfirst = rk_named(c, "first");
+    size_t quol = 0;
+    const char* quo = vquo ? rk_str_get(c, vquo, &quol) : 0;
+    int want_first = vfirst ? rk_truthy(c, vfirst) : 0;
+    int inq = 0;
+    size_t i = 0, cut = 0;
+    long terms = 0, cut_terms = 0;
+    RkValue out;
+
+    if (!quo || quol == 0) {
+        rk_die(c, "CSV::Native: quote must be exactly one character, not ''");
+        return 0;
+    }
+
+    while (i < len) {
+        /* A quote toggles the state, and a doubled quote toggles it twice —
+           which leaves it where it was, so parity alone is the whole rule. */
+        if (len - i >= quol && memcmp(text + i, quo, quol) == 0) {
+            inq = !inq; i += quol; continue;
+        }
+        if (inq) { i++; continue; }
+        if (text[i] == '\r') {
+            i += (i + 1 < len && text[i + 1] == '\n') ? 2 : 1;
+            terms++; cut = i; cut_terms = terms;
+            if (want_first) break;
+            continue;
+        }
+        if (text[i] == '\n') {
+            i++; terms++; cut = i; cut_terms = terms;
+            if (want_first) break;
+            continue;
+        }
+        i++;
+    }
+
+    out = rk_array(c);
+    rk_push(c, out, rk_str(c, text, cut));
+    rk_push(c, out, rk_str(c, text + cut, len - cut));
+    rk_push(c, out, rk_int(c, cut_terms));
+    rk_list(c, out);
+    return out;
+}
+
+#if RAKUPP_EXT_ABI >= 3
+/* ---- the streaming reader's one call (Raku++ only) -----------------------
+ *
+ * Bytes in, text out, and the cut made in the same pass. The Raku side reads
+ * a window with `.read` and hands it straight here; what comes back is the
+ * text of whole records, the bytes left over, and how many record terminators
+ * the text holds.
+ *
+ * Doing it here rather than in Raku is the difference between a reader that
+ * costs more than the parser and one that does not. The Raku path has to
+ * decode the window, normalise CRLF with a substitution, concatenate the
+ * leftover onto the front and then split to find the boundary — four passes
+ * and four copies of four megabytes. This is one pass.
+ *
+ * TWO THINGS MAKE IT SAFE. A record terminator is ASCII, so a cut after one
+ * can never land inside a UTF-8 sequence — the caller needs no codepoint
+ * arithmetic, and the leftover is handed back as raw bytes. And CRLF is
+ * collapsed to LF right here, because that is what the engine's own text
+ * decoding does to a file read whole: without it a streamed read of a CRLF
+ * file would disagree with `from-csv` on every line ending, inside quoted
+ * fields included. A LONE CR is left alone, which is also what the engine
+ * does.
+ *
+ * `eof` says the input is spent, so the window is the file's tail: everything
+ * is text, terminated or not. */
+static RkValue csv_read_native(RkCtx c) {
+    size_t len = 0;
+    const unsigned char* b = rk_blob_get(c, rk_arg(c, 0), &len);
+    RkValue vquo = rk_named(c, "quote");
+    RkValue veof = rk_named(c, "eof");
+    size_t quol = 0;
+    const char* quo = vquo ? rk_str_get(c, vquo, &quol) : 0;
+    int eof = veof ? rk_truthy(c, veof) : 0;
+    int inq = 0;
+    size_t i = 0, cut = 0, j, n;
+    long terms = 0, cut_terms = 0;
+    char* text;
+    RkValue out;
+
+    if (!b && len == 0) {
+        /* not a Buf: nothing to read from */
+        rk_die(c, "CSV::Native: csv-read-native wants a Buf");
+        return 0;
+    }
+    if (!quo || quol == 0) {
+        rk_die(c, "CSV::Native: quote must be exactly one character, not ''");
+        return 0;
+    }
+
+    while (i < len) {
+        if (len - i >= quol && memcmp(b + i, quo, quol) == 0) {
+            inq = !inq; i += quol; continue;      /* a doubled quote toggles twice */
+        }
+        if (inq) { i++; continue; }
+        if (b[i] == '\r') {
+            /* A CR as the window's LAST byte is held back, not counted: its LF
+               may be the first byte of the next read, and a CRLF split down
+               the middle would decode as two line endings and invent a record
+               that is not there. Only at end of input is it really a lone CR.
+               (This is the one thing the byte reader gets wrong if it is
+               forgotten, and only for windows that happen to end there — it
+               passed every window of four million bytes and failed every
+               window of one, three and a thousand.) */
+            if (i + 1 >= len && !eof) break;
+            i += (i + 1 < len && b[i + 1] == '\n') ? 2 : 1;
+            terms++; cut = i; cut_terms = terms;
+            continue;
+        }
+        if (b[i] == '\n') { i++; terms++; cut = i; cut_terms = terms; continue; }
+        i++;
+    }
+    if (eof) { cut = len; cut_terms = terms; }
+
+    /* The text, with CRLF collapsed. One allocation, and never larger than
+       the window it came from. */
+    text = (char*)malloc(cut ? cut : 1);
+    if (!text) { rk_die(c, "CSV::Native: out of memory"); return 0; }
+    for (j = 0, n = 0; j < cut; j++) {
+        if (b[j] == '\r' && j + 1 < cut && b[j + 1] == '\n') continue;
+        text[n++] = (char)b[j];
+    }
+
+    out = rk_array(c);
+    rk_push(c, out, rk_str(c, text, n));
+    rk_push(c, out, rk_blob(c, b + cut, len - cut));
+    rk_push(c, out, rk_int(c, cut_terms));
+    rk_list(c, out);
+    free(text);
+    return out;
+}
+#endif /* RAKUPP_EXT_ABI >= 3 */
+
 static const RkSubDef subs[] = {
     {"from-csv-native", from_csv_native},
     {"to-csv-native",   to_csv_native},
+    {"csv-cut-native",  csv_cut_native},
+#if RAKUPP_EXT_ABI >= 3
+    /* Guarded, and the whole file must still COMPILE against an ABI-2 header:
+       `rk_blob_get` does not exist there, so an unguarded reader would fail
+       the build — and a failed build costs the native `from-csv` as well,
+       turning a missing optimisation into a lost one. The Raku side probes
+       this sub separately and reads through Raku when it is absent. */
+    {"csv-read-native", csv_read_native},
+#endif
     {0, 0}
 };
 static const RkModule mod = { RAKUPP_EXT_ABI, "CSV::Native", subs };
 
 RAKUPP_EXT_EXPORT const RkModule* rakupp_ext_init(unsigned host_abi) {
-    /* ABI 2 for the O(1) sequential hash walk the writer leans on. */
+    /* ABI 3: the writer leans on the O(1) sequential hash walk (ABI 2), and
+       the streaming reader takes a window of raw bytes through rk_blob_get,
+       which arrived with 3. */
     return host_abi >= RAKUPP_EXT_ABI ? &mod : 0;
 }

@@ -53,10 +53,20 @@ sub exported() { PROCESS::<%DATA-NATIVE-EXPORTED> //= {} }
 # malformed lookup on Rakudo, and a literal table is checked at compile time.
 my %IMPL = 'from-csv'    => &CSV::Native::Core::from-csv,
            'to-csv'      => &CSV::Native::Core::to-csv,
-           'csv-backend' => &CSV::Native::Core::csv-backend;
+           'csv-backend' => &CSV::Native::Core::csv-backend,
+           'csv-each'    => &CSV::Native::Core::csv-each,
+           'csv-stream'  => &CSV::Native::Core::csv-stream;
 
 my @NAMES = %IMPL.keys.sort;
 my $KNOWN = @NAMES.Set;
+
+# The names Data::Native's `csv` tag also exports, and so the only ones there
+# is anything to stand aside from. The streaming pair is NOT among them: this
+# distribution is the only place it exists, nobody else can be exporting it,
+# and yielding it along with the contested three would lose `csv-each` to a
+# program that happens to load Data::Native first — function surrendered to
+# settle a collision that was never there.
+my $CONTESTED = set <from-csv to-csv csv-backend>;
 
 sub EXPORT(*@names) {
     my $stand-aside = ?claimed()<csv>;
@@ -68,7 +78,8 @@ sub EXPORT(*@names) {
       ~ @unknown.map({ "'$_'" }).join(', ')
         if @unknown;
 
-    return Map.new() if $stand-aside;
+    @want = @want.grep({ !$CONTESTED{$_} }) if $stand-aside;
+    return Map.new() unless @want;
 
     Map.new(@want.map({ "&$_" => %IMPL{$_} }))
 }
