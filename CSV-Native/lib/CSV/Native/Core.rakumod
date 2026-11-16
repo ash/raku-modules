@@ -76,6 +76,8 @@ sub probe-symbol(Str $name) {
 my &ext-load = probe-symbol('rakupp-ext-load');
 my &native-parse;
 my &native-write;
+my &native-cut;
+my &native-read;
 
 # Where the compiled half might be. %?RESOURCES is the installed answer and
 # works on both engines; the CWD form covers a git checkout tested with -Ilib.
@@ -101,6 +103,11 @@ sub load-native(--> Bool) {
         # The loader installs the extension's subs into THIS scope.
         &native-parse = try &::('from-csv-native');
         &native-write = try &::('to-csv-native');
+        # The cutter arrived with streaming. An extension built from older C
+        # source will not have it, so it is probed separately and the streaming
+        # reader falls back to the Raku cutter rather than to no streaming.
+        &native-cut  = try &::('csv-cut-native');
+        &native-read = try &::('csv-read-native');
         return True if &native-parse && &native-write;
     }
     False
@@ -184,14 +191,20 @@ our sub from-csv($src, Str:D :$sep = ',', Str:D :$quote = '"', :$headers,
 # and `contains` are linear on both engines, and this never asks either for a
 # position except to name the line of an error.
 our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$headers,
-                   Bool:D :$strict = False) {
+                   Bool:D :$strict = False,
+                   # Streaming. A chunk is a slice of a bigger file, so three
+                   # things the whole-file call assumes stop holding: its first
+                   # line is not line 1, its record width was fixed by a record
+                   # in an earlier chunk, and only the chunk at offset 0 may
+                   # carry a BOM. A chunk cannot infer any of the three.
+                   Int:D :$first-line = 1, Int :$expect, Bool:D :$bom = True) {
     # from-csv validates the whole dialect; these two are repeated here because
     # an empty needle is found at every position, and a split that produces
     # nothing but empty pieces is not an answer — a direct caller deserves the
     # error.
     die "CSV::Native: sep must not be empty"   unless $sep.chars;
     die "CSV::Native: quote must be exactly one character, not '$quote'" unless $quote.chars == 1;
-    my $s = $text.starts-with("\x[FEFF]") ?? $text.substr(1) !! $text;
+    my $s = ($bom && $text.starts-with("\x[FEFF]")) ?? $text.substr(1) !! $text;
 
     # The lines. A text with no CR in it — every file read through .slurp,
     # which turns CRLF into LF — is one plain `split`, and the terminator
@@ -230,6 +243,7 @@ our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$header
         when Positional { @names = .list; check-dups(@names); $expected = @names.elems }
         when Bool       { $want-header = $_ }
     }
+    $expected = $expect if !$expected.defined && $expect.defined;
 
     my @rows;
     my sub emit(Int $row-line, @cells) {
@@ -258,7 +272,7 @@ our sub parse-raku(Str:D $text, Str:D :$sep = ',', Str:D :$quote = '"', :$header
 
     my int $n = @pieces.elems;
     my int $i = 0;
-    my int $line = 1;
+    my int $line = $first-line;
     while $i < $n {
         my $text = @pieces[$i];
         # the text after the last terminator is a record only if there is one
@@ -429,4 +443,434 @@ our sub write-raku(@rows, Str:D :$sep = ',', Str:D :$quote = '"', Str:D :$eol = 
         @out.push(@cells.map(&cell).join($sep) ~ $eol);
     }
     @out.join
+}
+
+# ---- streaming --------------------------------------------------------------
+#
+# `from-csv` reads the whole text and builds the whole table. That is the right
+# shape for a file you can hold, and the wrong one for a file you cannot: 85 MB
+# of CSV becomes about 1.6 GB of Raku values, so the ceiling is not the disk but
+# the multiple — roughly 15x — between a file and its parsed form.
+#
+# `csv-each` reads a window at a time and parses it on its own, so what is alive
+# at once is one window of text and one window of records, whatever the file's
+# size. Reading is `readchars`, never `lines`: a byte-or-character read of an
+# 851 MB file peaks at 8 MB, while walking it with `lines` or `get` peaks at
+# 332 MB, because every line becomes a Str the parser then has to be handed
+# again. One `readchars` of four million characters costs one Str.
+#
+# The hard part is not the reading, it is WHERE TO CUT. A fixed-size read ends
+# wherever it ends — mid-record, and worse, possibly inside a quoted field,
+# where a line ending is content and not a record end. Cutting on a line is
+# wrong for the same reason, and wrong silently: splitting `t/mock-customers.csv`
+# every 1,000 lines fails with `unterminated quoted field starting at line
+# 1000`, and splitting it every 20,000 lines happened to work, which is worse.
+# So `cut-chunk` finds the last line ending that sits OUTSIDE a quoted field,
+# and that is always a record boundary.
+
+# Line endings in a stretch of text, counted the way the reader counts them:
+# CRLF is one, and so is a lone CR or LF. Three splits rather than the
+# character walk `count-lines` does, because a chunk is megabytes: CRLF is one
+# grapheme, so `split("\n")` does not see it and `split("\r")` does not either,
+# which makes the three counts disjoint and their sum the answer.
+sub count-terms(Str:D $s) {
+    return 0 unless $s.contains("\n") || $s.contains("\r");
+    my $n = $s.split("\n").elems - 1;
+    $n += ($s.split("\r\n").elems - 1) + ($s.split("\r").elems - 1) if $s.contains("\r");
+    $n
+}
+
+# Where the buffer's last complete record ends: ($ready, $rest, $terminators).
+# `:first` asks for the FIRST boundary instead, which is how the header line
+# comes off the front of a file whose header may itself span lines.
+#
+# The pure-Raku half splits ONCE on the quote. The pieces at even indices are
+# the text outside quoted fields — a doubled quote toggles the state twice and
+# so leaves it alone, which makes parity the whole rule — so a line ending in
+# an even piece ends a record, and one in an odd piece is field content. Only
+# the pieces actually examined have their offsets computed, from whichever end
+# the search runs: the answer is usually in the first or last piece, and a
+# chunk of 50,000 quoted rows has 200,000 pieces whose offsets nobody needs.
+sub cut-raku(Str:D $buf, Str:D $quote, Bool :$first = False) {
+    my @q = $buf.split($quote);
+    my $cut;
+    if $first {
+        my int $off = 0;
+        for @q.kv -> $i, $p {
+            if $i %% 2 {
+                with first-eol($p) { $cut = $off + $_ + 1; last }
+            }
+            $off = $off + $p.chars + 1;      # the piece, and the quote after it
+        }
+    }
+    else {
+        my int $tail = 0;                    # characters after this piece ends
+        for (^@q.elems).reverse -> $i {
+            my $p = @q[$i];
+            if $i %% 2 {
+                with last-eol($p) { $cut = $buf.chars - $tail - $p.chars + $_ + 1; last }
+            }
+            $tail = $tail + $p.chars + 1;    # the piece, and the quote before it
+        }
+    }
+    return ('', $buf, 0) without $cut;
+    my $ready = $buf.substr(0, $cut);
+    ($ready, $buf.substr($cut), count-terms($ready))
+}
+
+# The first and last line ending in a piece. "\r\n" is one grapheme, so a
+# search for "\n" does not find it and a search for "\r" does not either —
+# all three spellings have to be asked for, and the index that comes back is
+# the whole ending's, which is why `+ 1` past it is right for CRLF too.
+sub first-eol(Str:D $p) {
+    my @i = ($p.index("\n"), $p.index("\r"), $p.index("\r\n")).grep(*.defined);
+    @i ?? @i.min !! Nil
+}
+sub last-eol(Str:D $p) {
+    my @i = ($p.rindex("\n"), $p.rindex("\r"), $p.rindex("\r\n")).grep(*.defined);
+    @i ?? @i.max !! Nil
+}
+
+sub cut-chunk(Str:D $buf, Str:D $quote, Bool :$first = False) {
+    &native-cut
+        ?? native-cut($buf, :$quote, :$first).List
+        !! cut-raku($buf, $quote, :$first)
+}
+
+# One chunk, through whichever implementation is in play. The three streaming
+# options are what make a slice of a file parse as that slice: its errors name
+# file-global lines, its record width is the one the file's first record set,
+# and only the chunk at offset 0 is allowed to drop a byte-order mark.
+sub parse-chunk(Str:D $text, Str:D :$sep!, Str:D :$quote!, :$headers!,
+                Bool:D :$strict!, Int:D :$first-line!, Int :$expect,
+                Bool:D :$bom!) {
+    $is-native
+        ?? native-parse($text, :$sep, :$quote, :$headers, :$strict,
+                        :$first-line, :$expect, :$bom)
+        !! parse-raku($text, :$sep, :$quote, :$headers, :$strict,
+                      :$first-line, :$expect, :$bom)
+}
+
+# Bytes in, text out. The reader is binary and NOT `readchars`, and that is the
+# single most consequential line in this file: on Raku++ 5.8.0, reading an
+# 85 MB file with `readchars` and discarding every window peaks at 2.9 GB, and
+# the same loop over 851 MB peaks at 29.6 GB — O(the file), whatever the window
+# size, which is exactly the thing streaming exists to avoid. The same loop on
+# `.read` peaks at 83 MB for 851 MB. (Rakudo's `readchars` is better behaved but
+# still six times the file.) So this reads bytes and decodes each window itself.
+#
+# Decoding a window is only safe at a boundary the encoding agrees with, and
+# there are two:
+#
+#  * A multi-byte UTF-8 sequence must not be split, or the window ends in a
+#    replacement character and the next one begins with another.
+#  * A CRLF must not be split, because the two halves would decode as two
+#    separate line endings — and a record boundary where there is none is a
+#    wrong answer rather than a slow one.
+#
+# `utf8-cut` answers where the window may end, and whatever it holds back is
+# carried into the next read.
+# Plain `Int`, not `int`: a native integer used to index a Buf is "This
+# container does not reference a native integer" on Rakudo, and this runs once
+# per window — four million bytes apart — so the declaration buys nothing.
+sub utf8-cut(Buf:D $b --> Int) {
+    my Int $n = $b.elems;
+    return 0 if $n == 0;
+    my Int $cut = $n;
+    # A trailing CR is held back: its LF may be the next read's first byte.
+    $cut = $cut - 1 if $b.read-uint8($cut - 1) == 0x0D;
+    return 0 if $cut == 0;
+    # Walk back over continuation bytes (10xxxxxx) to the sequence's lead byte.
+    my Int $i = $cut - 1;
+    while $i >= 0 && ($b.read-uint8($i) +& 0xC0) == 0x80 { $i = $i - 1 }
+    return $cut if $i < 0;
+    my Int $lead = $b.read-uint8($i);
+    return $cut if $lead < 0x80;          # the window ends on an ASCII byte
+    my Int $need = $lead >= 0xF0 ?? 4 !! ($lead >= 0xE0 ?? 3 !! ($lead >= 0xC0 ?? 2 !! 1));
+    $i + $need <= $cut ?? $cut !! $i      # an incomplete sequence waits
+}
+
+# A window of bytes as the text `from-csv` would have seen. Reading a file
+# through `slurp` or `readchars` goes through the engine's line-ending
+# handling, which turns CRLF into LF — inside quoted fields too — while
+# `decode` does not; a lone CR is left alone by both. So the normalisation is
+# exactly CRLF to LF, and with it a streamed read of a CRLF file gives the
+# same records, byte for byte, as reading the whole of it.
+sub decode-window(Buf:D $b --> Str) {
+    my $t = $b.decode('utf-8');
+    $t.contains("\r\n") ?? $t.subst("\r\n", "\n", :g) !! $t
+}
+# The reader, as a source that is PULLED rather than one that pushes. Both
+# public spellings are this one generator: `csv-each` calls it in a loop, and
+# `csv-stream` wraps it in an iterator. It answers the next Array of records,
+# or Nil when the input is spent.
+#
+# Pulled rather than push-only because `csv-stream` cannot be built on `gather`
+# and `take`. Taking is lazy on both engines, but on Raku++ 5.8.0 what has been
+# taken is never released: five million takes of a one-key hash peak at 2.0 GB,
+# and the same loop without the gather peaks at 3.7 MB. A lazy sequence built
+# that way would stream the file and still hold all of it, which is the bug
+# this module is meant to fix rather than relocate.
+sub chunk-source($src, Str:D :$sep!, Str:D :$quote!, :$headers!, Bool:D :$strict!,
+                 Int:D :$bytes!, Int:D :$workers!) {
+    my $names-opt = header-names($headers);
+
+    # A Str source has nothing to stream: it is already whole in memory, and
+    # the window machinery below takes it as one buffer that never refills.
+    # Accepted so a program can hand over either without branching.
+    my $fh = do given $src {
+        when IO::Path   { .open(:bin) }
+        when IO::Handle { $_ }       # `.read` answers on a text handle too
+        default         { Nil }
+    };
+    my Bool $close-it = $src ~~ IO::Path;
+    my Str  $buf      = $fh ?? '' !! $src.Str;
+    my Bool $drained  = !$fh.defined;
+    my Buf  $carry    = Buf.new;     # bytes held back from the last window
+
+    my @names = $names-opt ~~ Positional ?? $names-opt.list !! ();
+    check-dups(@names) if @names;
+    my Int  $expect;
+    my Int  $line     = 1;
+    my Bool $at-start = True;        # only the first window may carry a BOM
+    my Bool $primed   = False;
+    my Bool $spent    = False;
+    my Bool $closed   = False;
+    my @pending;
+
+    my sub close-input() {
+        return if $closed;
+        $closed = True;
+        $fh.close if $close-it && $fh;
+    }
+
+    # The next window of whole records, as ($text, $terminators), or () when
+    # the input is spent. A window holding no complete record is not an
+    # answer — it is a record longer than the window, so the loop reads more
+    # rather than cutting where there is no boundary.
+    # Raku++ with the extension: the window of bytes goes straight to C, which
+    # decodes it, collapses CRLF and cuts it at the last record boundary in ONE
+    # pass. Nothing becomes a Raku string until it is the text of whole
+    # records, and the leftover stays bytes. That matters more than it sounds:
+    # with the reading done in Raku it cost MORE than the parsing it feeds, so
+    # `:workers` had almost nothing to divide.
+    my sub next-text-native() {
+        loop {
+            my $got = $drained ?? Nil !! $fh.read($bytes);
+            if $got.defined && $got.elems {
+                my $b = $carry.elems ?? ($carry ~ $got) !! $got;
+                my ($ready, $rest, $terms) = native-read($b, :$quote).List;
+                $carry = $rest;
+                next unless $ready.chars;      # no whole record in hand yet
+                return ($ready, $terms);
+            }
+            unless $drained { $drained = True; close-input() }
+            return () unless $carry.elems;
+            # The tail: everything left is text, terminated or not.
+            my ($ready, $rest, $terms) = native-read($carry, :$quote, :eof).List;
+            $carry = Buf.new;
+            return $ready.chars ?? ($ready, $terms) !! ();
+        }
+    }
+
+    my sub next-text-raku() {
+        loop {
+            if !$drained {
+                my $got = $fh.read($bytes);
+                if $got.defined && $got.elems {
+                    my $b   = $carry.elems ?? ($carry ~ $got) !! $got;
+                    my $cut = utf8-cut($b);
+                    $carry  = $cut < $b.elems ?? Buf.new($b[$cut ..^ $b.elems]) !! Buf.new;
+                    $buf ~= decode-window($b.subbuf(0, $cut)) if $cut;
+                }
+                else {
+                    # End of the file. What was held back can only be a
+                    # trailing CR or a truncated sequence, and both are text.
+                    if $carry.elems { $buf ~= decode-window($carry); $carry = Buf.new }
+                    $drained = True;
+                    close-input();
+                }
+            }
+            if $drained {
+                return () unless $buf.chars;
+                my $all = $buf;
+                $buf = '';
+                return ($all, count-terms($all));   # the tail, newline or not
+            }
+            my ($ready, $rest, $terms) = cut-chunk($buf, $quote);
+            next unless $ready.chars;
+            $buf = $rest;
+            return ($ready, $terms);
+        }
+    }
+
+    # A Str source has no handle to read, so it always takes the Raku path,
+    # which hands the whole buffer over as one window.
+    my &next-text = ($fh && &native-read) ?? &next-text-native !! &next-text-raku;
+
+    my sub parse-at(Str $text, Int $first-line, Bool $bom) {
+        parse-chunk($text, :$sep, :$quote, :$strict, :$expect, :$bom,
+                    :first-line($first-line),
+                    :headers(@names ?? @names.List !! False))
+    }
+
+    # A broken promise nobody awaits is an unhandled exception at exit, and by
+    # then the error that matters has already been raised.
+    my sub drain-unawaited() {
+        for @pending { try await $_ }
+        @pending = ();
+    }
+
+    sub next-records() {
+        return Nil if $spent;
+        # On the way out through an exception: no worker is left holding a
+        # broken promise nobody awaited, and the handle does not wait for the
+        # collector. A normal return leaves the source open for the next pull.
+        CATCH { default { $spent = True; drain-unawaited(); close-input(); .rethrow } }
+
+        loop {
+            my ($text, $terms) = next-text();
+            unless $text.defined {
+                # Input spent: hand back whatever the workers still hold,
+                # oldest first, so a malformed window reports in file order.
+                return await @pending.shift if @pending;
+                $spent = True;
+                close-input();
+                return Nil;
+            }
+
+            # The header line comes off the first window before anything is
+            # read as data: every later window, and every worker, needs the
+            # names. It may itself span lines, so it is cut at the first
+            # boundary and not at the first newline.
+            if !$primed && $names-opt ~~ Bool && $names-opt {
+                my ($hrec, $hrest, $ht) = cut-chunk($text, $quote, :first);
+                # A header with no line ending after it is the whole window,
+                # which is also the whole file: a header-only file has no
+                # data records.
+                ($hrec, $hrest, $ht) = ($text, '', $terms) unless $hrec.chars;
+                @names = parse-chunk($hrec, :$sep, :$quote, :headers(False),
+                                     :strict(False), :first-line($line),
+                                     :bom($at-start))[0].List;
+                check-dups(@names);
+                $at-start = False;
+                $line    += $ht;
+                $text     = $hrest;
+                $terms   -= $ht;
+            }
+
+            my $first-line = $line;
+            $line += $terms;
+            unless $text.chars { $primed = True; next }
+
+            # The first data window is parsed HERE, in this thread, whatever
+            # `:workers` says: under `:strict` it is what fixes the record
+            # width for the file, and a worker cannot be handed a width that
+            # has not been established yet.
+            if !$primed || $workers == 1 {
+                my @recs = parse-at($text, $first-line, $at-start);
+                $expect   = @recs[0].elems if $strict && !@names && !$primed && @recs;
+                $at-start = False;
+                $primed   = True;
+                return @recs;
+            }
+
+            @pending.push(start { parse-at($text, $first-line, False) });
+            # At most two windows per worker are ever outstanding. Starting
+            # every window up front would put the whole file back in memory,
+            # which is the thing this avoids.
+            next if @pending.elems < 2 * $workers;
+            return await @pending.shift;
+        }
+    }
+
+    # Handed back beside the generator, because the generator only learns
+    # about ITS own failures. A consumer that dies — or stops pulling, which
+    # `last` in a loop over the records does — would otherwise leave the
+    # handle for the collector and leave a worker holding a promise nobody
+    # awaits, which surfaces as an unhandled exception at exit. Idempotent, so
+    # the LEAVE that normally runs after the input is spent costs nothing.
+    my sub close-all() {
+        $spent = True;
+        drain-unawaited();
+        close-input();
+    }
+
+    (&next-records, &close-all)
+}
+
+#| Read a CSV source a window at a time, calling `&on-chunk` with an Array of
+#| records per window, in file order. What is alive at once is one window of
+#| text and one window of records, whatever the file's size: 851 MB of CSV and
+#| ten million records go through in 150 MB, where `from-csv` on the same file
+#| would need about 16 GB.
+#|
+#| Options are `from-csv`'s — `:sep`, `:quote`, `:headers`, `:strict` — plus:
+#|
+#|   :bytes    bytes read at a time (default 4Mi) — the window
+#|   :workers  windows parsed in parallel (default 1, serial)
+#|
+#| The records are the ones `from-csv` returns for the same source, and an
+#| error carries the same message and the same line number, which is what the
+#| test suite holds this to.
+# 64 KiB rather than something bigger, because bigger is slower AS WELL AS
+# heavier: a window's decoded text and its parsed records are walked several
+# times over, and once the window stops fitting in cache every pass pays for
+# it. On a 204 MB file with :headers this default reads in 1.70s and 31 MiB
+# where a 4 MiB window took 1.97s and 385 MiB — a tenth of the memory and
+# faster with it. Below about 32 KiB the per-window overhead starts to show
+# instead (2.13s at 8 KiB), so this sits just past that.
+our sub csv-each($src, :&on-chunk!, Str:D :$sep = ',', Str:D :$quote = '"',
+                 :$headers, Bool:D :$strict = False,
+                 Int:D :$bytes = 1 +< 16, Int:D :$workers = 1) {
+    check-dialect($sep, $quote);
+    die "CSV::Native: bytes must be at least 1"   if $bytes   < 1;
+    die "CSV::Native: workers must be at least 1" if $workers < 1;
+    my (&next-records, &close-all) = chunk-source($src, :$sep, :$quote,
+                                                  :$headers, :$strict,
+                                                  :$bytes, :$workers);
+    # On every way out, including one through `&on-chunk`'s own exception.
+    LEAVE close-all();
+    loop {
+        my $recs = next-records();
+        last without $recs;
+        on-chunk($recs);
+    }
+    True
+}
+
+#| The same reading, as a lazy sequence of records:
+#|
+#|     for csv-stream("huge.csv".IO, :headers) -> %rec { ... }
+#|
+#| Bounded the same way as `csv-each` as long as the caller does not keep the
+#| records — `.Array` on the result is `from-csv` with extra steps. A hand-rolled
+#| iterator and not `gather`/`take`: see `chunk-source` for why that matters.
+#|
+#| A sequence ABANDONED part way — `.first`, or `last` in a loop over it —
+#| cannot know it was abandoned, so the file it opened is closed by the
+#| collector rather than there and then. `csv-each` closes deterministically;
+#| prefer it when that matters.
+our sub csv-stream($src, Str:D :$sep = ',', Str:D :$quote = '"', :$headers,
+                   Bool:D :$strict = False,
+                   Int:D :$bytes = 1 +< 16, Int:D :$workers = 1) {
+    check-dialect($sep, $quote);
+    die "CSV::Native: bytes must be at least 1"   if $bytes   < 1;
+    die "CSV::Native: workers must be at least 1" if $workers < 1;
+    my (&next-records, &close-all) = chunk-source($src, :$sep, :$quote,
+                                                  :$headers, :$strict,
+                                                  :$bytes, :$workers);
+    Seq.new(class :: does Iterator {
+        has @!recs;
+        has Int $!i = 0;
+        method pull-one() {
+            loop {
+                return @!recs[$!i++] if $!i < @!recs.elems;
+                my $next = next-records();
+                return IterationEnd without $next;
+                @!recs := @$next;
+                $!i = 0;
+            }
+        }
+    }.new)
 }

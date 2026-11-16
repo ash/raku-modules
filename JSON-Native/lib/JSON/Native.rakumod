@@ -170,7 +170,23 @@ sub json-backend(Bool :$write) {
 # The adverbs are checked with `!%opt` and a lookup rather than a set
 # difference (4.7 µs a call on Rakudo, most of a small parse), and no `try`
 # here `return`s from inside itself (34 µs on Raku++ 5.3).
-sub from-json(Str() $text, *%opt) {
+# `Mu $input` rather than `Str() $text` directly: an IO::Path or an IO::Handle
+# is READ, so `from-json($path.IO)` parses the file rather than its name. The
+# Str() coercion used to turn a path into a one-token document, and the error
+# pointed at a letter of the filename ("at 0: expected a json object", `→w←`),
+# which is the least helpful thing it could have said. CSV::Native's from-csv
+# has always taken a path or a handle, so this also makes the two agree.
+#
+# Everything else still binds through `parse-text`'s own `Str() $text`, so the
+# coercions and the refusals — including the type-check message naming '$text'
+# — are exactly what they were.
+sub from-json(Mu $input, *%opt) {
+    return parse-text($input.slurp, |%opt)
+        if $input ~~ IO::Path:D || $input ~~ IO::Handle:D;
+    parse-text($input, |%opt)
+}
+
+sub parse-text(Str() $text, *%opt) {
     choose() unless $PARSE;
     my $parsed;
     my $ok = False;
@@ -224,6 +240,38 @@ sub to-json($obj, *%opt) {
     raku-to($obj, |%opt)
 }
 
+# ---- JSON Lines: the one shape that can be read a piece at a time -----------
+#
+# from-json holds the whole document because a JSON document is ONE value.
+# JSONL is one document per line, so it can be handed back a window at a time,
+# and these two do. The reader lives in its own module and is loaded by the
+# first call that needs it — a program that never streams never parses it.
+#
+# Whichever parser this engine chose is passed in, so a streamed value is the
+# same value from-json would have returned for the same line.
+my &lines-each;
+my &lines-stream;
+sub load-lines() {
+    require ::('JSON::Native::Lines');
+    &lines-each   = ::('&JSON::Native::Lines::json-each');
+    &lines-stream = ::('&JSON::Native::Lines::json-stream');
+}
+#   `%IMPL<from-json>` cannot be read here — it is declared further down, and a
+#   `my` is not visible above its declaration — so both it and this share
+#   parse-impl() rather than spelling the choice twice.
+sub parse-impl() {
+    $PARSE && $PARSE eq 'engine' && &codec-from-json ?? &codec-from-json !! &from-json
+}
+
+sub json-each($src, :&on-chunk!, *%opt) {
+    load-lines() unless &lines-each;
+    lines-each($src, :&on-chunk, parse => parse-impl(), |%opt)
+}
+sub json-stream($src, *%opt) {
+    load-lines() unless &lines-stream;
+    lines-stream($src, parse => parse-impl(), |%opt)
+}
+
 # ===========================================================================
 # What `use` hands out.
 #
@@ -242,12 +290,15 @@ sub exported() { PROCESS::<%DATA-NATIVE-EXPORTED> //= {} }
 
 # Where the engine's codec routine parses (or writes), IT is what is handed out
 # — not from-json/to-json above, which would put a Raku frame in front.
-my %IMPL = 'from-json'    => ($PARSE && $PARSE eq 'engine' && &codec-from-json ?? &codec-from-json !! &from-json),
+my %IMPL = 'from-json'    => parse-impl(),
            'to-json'      => ($WRITE && $WRITE eq 'engine' && &codec-to-json   ?? &codec-to-json   !! &to-json),
-           'json-backend' => &json-backend;
+           'json-backend' => &json-backend,
+           'json-each'    => &json-each,
+           'json-stream'  => &json-stream;
 
 my @NAMES = %IMPL.keys.sort;
 my $KNOWN = @NAMES.Set;
+my $CONTESTED = set <from-json to-json json-backend>;
 my %OPTIONS = 'immutable' => 'immutable', 'pretty' => 'pretty',
               'sorted-keys' => 'sorted-keys', 'enums-as-value' => 'enums-as-value';
 
@@ -270,13 +321,20 @@ sub EXPORT(*@args) {
       ~ @unknown.map({ "'$_'" }).join(', ')
         if @unknown;
 
-    return Map.new() if $stand-aside;
+    # Standing aside yields only the names the other module also exports.
+    # Data::Native's `json` tag hands out from-json, to-json and json-backend;
+    # it has no streaming pair, so yielding json-each and json-stream too would
+    # lose a caller its reader to a collision that never existed.
+    @want = @want.grep({ !$CONTESTED{$_} }) if $stand-aside;
+    return Map.new() unless @want;
 
     my %subs = %IMPL;
     if %default<immutable>:exists {
         my $immutable = %default<immutable>;
         my &f = %IMPL<from-json>;
-        %subs<from-json> = sub from-json(Str() $text, *%opt) { f($text, :$immutable, |%opt) };
+        # `Mu $input`, so an import-time :immutable default does not take the
+        # path or handle back off from-json again.
+        %subs<from-json> = sub from-json(Mu $input, *%opt) { f($input, :$immutable, |%opt) };
     }
     if (%default<pretty>:exists) || (%default<sorted-keys>:exists) || (%default<enums-as-value>:exists) {
         my %d = %default<pretty sorted-keys enums-as-value>:p;
