@@ -262,41 +262,41 @@ sub to-json($obj, *%opt) {
 
 # ---- JSON Lines ---------------------------------------------------------------
 #
-# Off Raku++, a window is from-json for each line — so each line takes this
-# engine's fastest parse — and to-json(:!pretty) for each value. A line that
-# from-json refuses is numbered here; anything else unusual (an adverb, a
-# source that is neither Blob nor Str) is the Raku implementation's to answer,
-# so its refusals are the same on every path. On Raku++ the codec routine is
-# handed out instead (%IMPL), and none of this runs.
-
-# Blank is spaces and tabs only: .trim alone would also take U+00A0, which
-# from-json refuses. It decides only when the exact test needs to run.
-sub blank-line(Str $l --> Bool) {
-    !$l.chars || ($l.trim eq '' && $l !~~ / <-[\ \t]> /)
-}
-# The CATCH in a sub of its own, so the loop enters no extra frame per line.
-sub jsonl-value(Str $l, Int $line, %opt) {
-    CATCH {
-        default {
-            load-raku() unless &raku-from-jsonl;
-            ::('X::JSON::Native::Line').new(:$line, :exception($_)).throw
-        }
-    }
-    from-json($l, |%opt)
-}
+# Off Raku++, a window is this engine's own parser for each line, and its own
+# writer for each value. The parser is chosen ONCE, before the loop — not
+# through from-json per line, whose backend dispatch and `try` were the whole
+# of what from-jsonl cost over a plain loop — and the loop runs inside one
+# `try`. Anything that loop does not answer cleanly (a refused line, an adverb,
+# a source that is neither Blob nor Str) goes WHOLE to JSON::Native::Raku's
+# pair, which numbers a refused line in X::JSON::Native::Line: the same answer
+# on every path, and the same hand-over the Raku++ codec makes. On Raku++ the
+# codec routine is handed out instead (%IMPL), and none of this runs.
 
 sub from-jsonl($source, *%opt) {
     choose() unless $PARSE;
-    return raku-from-lines($source, |%opt)
-      if $PARSE eq 'raku' || $source !~~ Blob|Str || (%opt && (%opt.elems > 1 || !(%opt<immutable>:exists)));
-    my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source;
-    my @values;
-    my int $line = 0;
-    for $text.lines -> $l {
-        $line = $line + 1;
-        @values.push: jsonl-value($l, $line, %opt) unless blank-line($l);
+    # Rakudo's parser takes no adverbs; JSON::Fast takes :immutable
+    my $parse = $PARSE eq 'rakudo'    && !%opt ?? -> $l { $RAKUDO-JSON.from-json($l) }
+              !! $PARSE eq 'json-fast' && (!%opt || %opt.elems == 1 && (%opt<immutable>:exists))
+                                                 ?? (%opt<immutable> ?? -> $l { jf-from-json($l, :immutable) } !! &jf-from-json)
+              !! $PARSE eq 'engine'    && (!%opt || %opt.elems == 1 && (%opt<immutable>:exists))
+                                                 ?? -> $l { from-json($l, |%opt) }   # a Raku++ without the JSON Lines codec
+              !! Nil;
+    return raku-from-lines($source, |%opt) unless $parse.defined && $source ~~ Blob|Str;
+    my $values;
+    try {
+        my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source;
+        my @v;
+        for $text.lines -> $l {
+            # blank is spaces and tabs only; .trim (cheap) decides when the
+            # exact test runs, as it would also take U+00A0
+            next unless $l.chars;
+            next if $l.trim eq '' && $l !~~ / <-[\ \t]> /;
+            @v.push: $parse($l);
+        }
+        $values := @v;
     }
-    %opt<immutable> ?? @values.List !! @values
+    return raku-from-lines($source, |%opt) unless $values.defined;
+    %opt<immutable> ?? $values.List !! $values
 }
 
 sub to-jsonl(@values, *%opt) {
@@ -305,12 +305,20 @@ sub to-jsonl(@values, *%opt) {
       if $WRITE eq 'raku' || %opt<pretty> || %opt.keys.first({ $_ ne 'pretty' && !%WRITES{$_} }).defined
          || (%opt<spacing>:exists) || (%opt<level>:exists);
     %opt<pretty>:delete;
-    my str @out;
-    for @values -> \v {
-        @out.push: to-json(v, :!pretty, |%opt);
-        @out.push: "\n";
+    load-rakudo-writer() if $WRITE eq 'rakudo' && !&rakudo-to-json;
+    my &write := $WRITE eq 'rakudo'    ?? &rakudo-to-json
+              !! $WRITE eq 'json-fast' ?? &jf-to-json
+              !! &to-json;
+    my $text;
+    try {
+        my str @out;
+        for @values -> \v {
+            @out.push: write(v, :!pretty, |%opt) // die;
+            @out.push: "\n";
+        }
+        $text = @out.join;
     }
-    @out.join
+    $text // raku-to-lines(@values, |%opt)
 }
 
 # ===========================================================================

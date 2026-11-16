@@ -119,22 +119,23 @@ my (&f-from-json, &f-to-json);
 # nothing and claims nothing, where `use JSON::Native` would. The lines
 # themselves go through JSON::Fast, as from-json here does.
 need JSON::Native::Raku;
-sub f-blank-line(Str $l --> Bool) {
-    !$l.chars || ($l.trim eq '' && $l !~~ / <-[\ \t]> /)
-}
-sub f-jsonl-value(Str $l, Int $line, $immutable) {
-    CATCH { default { X::JSON::Native::Line.new(:$line, :exception($_)).throw } }
-    f-from-json($l, :$immutable)
-}
+# One `try` around the loop, not a CATCH per line: anything it does not
+# answer cleanly goes WHOLE to JSON::Native::Raku's from-jsonl, which numbers
+# a refused line — the hand-over JSON::Native and the Raku++ codec make too.
 my &f-from-jsonl = sub from-jsonl($source, :$immutable) {
-    my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source.Str;
-    my @values;
-    my int $line = 0;
-    for $text.lines -> $l {
-        $line = $line + 1;
-        @values.push: f-jsonl-value($l, $line, $immutable) unless f-blank-line($l);
+    my $values;
+    try {
+        my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source.Str;
+        my @v;
+        for $text.lines -> $l {
+            next unless $l.chars;
+            next if $l.trim eq '' && $l !~~ / <-[\ \t]> /;   # blank: spaces and tabs only
+            @v.push: f-from-json($l, :$immutable);
+        }
+        $values := @v;
     }
-    $immutable ?? @values.List !! @values
+    return JSON::Native::Raku::from-jsonl($source, :$immutable) unless $values.defined;
+    $immutable ?? $values.List !! $values
 };
 my &f-to-jsonl = sub to-jsonl(@values, :$pretty, :$sorted-keys = False, Bool :$enums-as-value = False) {
     die "to-jsonl: JSON Lines has one layout, a value a line; :pretty does not apply" if $pretty;

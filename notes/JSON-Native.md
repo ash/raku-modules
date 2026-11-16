@@ -327,6 +327,15 @@ engine).
   not written.
 - **A round trip** is byte-identical on Raku++, whose hashes keep insertion
   order; on Rakudo the keys come back in hash order, as with `to-json`.
+- **Tuned the same day.** The first off-Raku++ version called this module's
+  own `from-json` per line through two helper subs, one with a CATCH, and was
+  3% slower than a plain loop on Rakudo and 16% on mutsu. Choosing the
+  backend's parser once and wrapping the loop in one `try` — a refused line
+  sends the whole window to `JSON::Native::Raku`, which numbers it — made it
+  the faster of the two: 100,000 lines in 3.0 s against 3.14 s for the loop on
+  Rakudo (3.24 s before), 5.1 s against 6.1 s on mutsu (7.1 s before).
+  `to-jsonl` gained 7% on Rakudo the same way. On mutsu it stays ~560 µs a
+  value, JSON::Fast's writer and the Raku one alike: that is mutsu's.
 
 ## The tests
 
