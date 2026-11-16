@@ -5,7 +5,7 @@ program, as fast as that engine allows.
 
 ## Version
 
-**0.1.0** 
+**0.2.0** — adds `from-jsonl` and `to-jsonl`, for JSON Lines.
 
 The interface below is implemented and tested on Rakudo, Raku++ and mutsu.
 
@@ -22,6 +22,10 @@ say to-json($data, :!pretty);    # one line
 say to-json($data, :sorted-keys);
 
 say json-backend;                # which path parses on this engine
+
+# JSON Lines: a window of complete lines in, one value a line out
+my @records = from-jsonl('events.jsonl'.IO.slurp(:bin));
+spurt 'copy.jsonl', to-jsonl(@records);
 ```
 
 ## Description
@@ -31,7 +35,8 @@ JSON::Native converts between JSON text and Raku data.
 - `from-json` turns a
 JSON document into Raku values. Integers are converted into `Int`, decimals into exact
 `Rat`, exponent forms into `Num`, objects and arrays into `Hash` and `Array`;
-- `to-json` writes Raku data back as JSON, pretty-printed or on one line.
+- `to-json` writes Raku data back as JSON, pretty-printed or on one line;
+- `from-jsonl` and `to-jsonl` do the same for JSON Lines, one value a line.
 
 It runs on any Raku engine, and on each it takes the fastest path that engine
 offers, so the same program is portable and fast without changing a line:
@@ -53,7 +58,7 @@ offers, so the same program is portable and fast without changing a line:
 rakupp install JSON::Native
 ```
 
-Under Raku++ 5.4.0 and newer, there is no need to install the module, actually. The engine answers to `use JSON::Native` itself. It steps aside only for a newer module version than the one it implements.
+Under Raku++ 5.4.0 and newer, there is no need to install the module, actually. The engine answers to `use JSON::Native` itself. It steps aside only for a newer module version than the one it implements. `from-jsonl` and `to-jsonl` are answered by Raku++ releases newer than 5.8.0; on 5.8.0 and older, installing 0.2.0 brings them, and they run as `from-json` and `to-json` for each line.
 
 ### Rakudo or Raku++
 
@@ -107,6 +112,42 @@ surrogate pairs; NaN and Inf are `null` unless `$*JSON_NAN_INF_SUPPORT` is
 set. Date, Instant, Version, Seq, Pair, sets and allomorphs have their own
 renderings; a value that has none dies.
 
+### from-jsonl
+
+```raku
+from-jsonl($source, :$immutable)
+```
+
+Parses JSON Lines: one JSON value a line. `$source` is a `Blob`, decoded as
+UTF-8, or a `Str`, and is split into lines as `.lines` splits it — at `\n`,
+`\r\n` or a lone `\r` — so CRLF files need no preparing. A line of nothing
+but spaces and tabs yields nothing. Every other line gives exactly what
+`from-json` gives for it, so the result is an `Array` of those values, or a
+`List` of `Map`s and `List`s under `:immutable`.
+
+A line `from-json` refuses raises `X::JSON::Native::Line`: `.line` is its
+number (blank lines counted), `.exception` is what `from-json` raised, and the
+message is `line N: ` followed by that exception's message.
+
+It takes a window of complete lines; finding the boundary between reads, when
+a file is read a block at a time, is the caller's. On Raku++ the whole window
+is one pass inside the engine — decode, line split and parse — and costs about
+what parsing the same records as one document does: on 700,000 lines, 0.64 s
+against 1.40 s for a loop calling `from-json` on each line.
+
+### to-jsonl
+
+```raku
+to-jsonl(@values, :$sorted-keys, :$enums-as-value)
+```
+
+Writes each value as `to-json(:!pretty)` writes it, followed by a newline, and
+returns the whole as one `Str`; an empty list is `""`. A string holding a
+newline is written with `\n`, so a value is always one line. `:pretty` is
+refused, since JSON Lines has one layout. Note that a single hash in brackets
+flattens, as any list argument does: write `to-jsonl([%h,])`, not
+`to-jsonl([%h])`.
+
 ### json-backend
 
 ```raku
@@ -121,7 +162,9 @@ diagnostics; nothing else depends on it.
 
 `use JSON::Native <immutable !pretty sorted-keys enums-as-value>` changes the
 defaults of the subs it hands out (`!` turns an option off); an adverb at the
-call still wins.
+call still wins. `immutable` reaches `from-jsonl` too, and `sorted-keys` and
+`enums-as-value` reach `to-jsonl`; `pretty` does not, as JSON Lines has one
+layout.
 
 ## Backends
 

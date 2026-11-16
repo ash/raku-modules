@@ -15,6 +15,26 @@ No dependencies.
     say json-backend;            # which path parses here
     say json-backend(:write);    # and which one writes
 
+    # JSON Lines: a window of complete lines in, one value a line out
+    my @records = from-jsonl('data.jsonl'.IO.slurp(:bin));
+    spurt 'out.jsonl', to-jsonl(@records);
+
+=head2 JSON Lines
+
+C<from-jsonl($source, :$immutable)> takes a C<Blob> (UTF-8) or a C<Str> and
+returns one value for each of its lines, as C<.lines> splits them; a line of
+nothing but spaces and tabs yields nothing. Each value is what C<from-json>
+returns for that line, and a line it refuses raises C<X::JSON::Native::Line>,
+whose C<.line> says which (blank lines counted) and whose C<.exception> is what
+C<from-json> raised. C<to-jsonl(@values, :$sorted-keys, :$enums-as-value)> is
+each value as C<to-json(:!pretty)> writes it, followed by a newline;
+C<:pretty> is refused. A single hash in brackets flattens, as any list
+argument does: write C<to-jsonl([%h,])>.
+
+On Raku++ the engine does the whole window in one pass — the line split, the
+decode and the parse — at about the cost of parsing the same records as one
+document. Elsewhere it is C<from-json> and C<to-json> for each line or value.
+
 =head2 Backends
 
 =item B<Raku++> answers with its own codec (C<engine>). An engine that knows
@@ -65,10 +85,14 @@ sub probe-symbol(Str $name) {
 # implementation refuses what JSON::Fast refuses, with its own messages.
 my &raku-from-json;
 my &raku-to-json;
+my &raku-from-jsonl;
+my &raku-to-jsonl;
 sub load-raku() {
     require ::('JSON::Native::Raku');
-    &raku-to-json   = ::('&JSON::Native::Raku::to-json');
-    &raku-from-json = ::('&JSON::Native::Raku::from-json');
+    &raku-to-json    = ::('&JSON::Native::Raku::to-json');
+    &raku-from-json  = ::('&JSON::Native::Raku::from-json');
+    &raku-to-jsonl   = ::('&JSON::Native::Raku::to-jsonl');
+    &raku-from-jsonl = ::('&JSON::Native::Raku::from-jsonl');
 }
 sub raku-from(Mu \text, *%opt) {
     load-raku() unless &raku-from-json;
@@ -77,6 +101,14 @@ sub raku-from(Mu \text, *%opt) {
 sub raku-to(Mu \obj, *%opt) {
     load-raku() unless &raku-to-json;
     raku-to-json(obj, |%opt)
+}
+sub raku-from-lines(Mu \source, *%opt) {
+    load-raku() unless &raku-from-jsonl;
+    raku-from-jsonl(source, |%opt)
+}
+sub raku-to-lines(Mu \values, *%opt) {
+    load-raku() unless &raku-to-jsonl;
+    raku-to-jsonl(values, |%opt)
 }
 
 # ---- Raku++: the engine's codec ------------------------------------------------
@@ -92,6 +124,10 @@ my &engine-from-json = $ENGINE eq 'Raku++' ?? probe-symbol('rakupp-from-json')  
 my &engine-to-json   = $ENGINE eq 'Raku++' ?? probe-symbol('rakupp-to-json')    !! Nil;
 my &codec-from-json  = &codec-maker ?? codec-maker('from-json', &raku-from) !! Nil;
 my &codec-to-json    = &codec-maker ?? codec-maker('to-json',   &raku-to)   !! Nil;
+# JSON Lines, from Raku++ 5.9: an older engine's codec-maker refuses the name
+sub codec-or-nil(Str $name, &fallback) { my $c = try codec-maker($name, &fallback); $c ~~ Callable ?? $c !! Nil }
+my &codec-from-jsonl = &codec-maker ?? codec-or-nil('from-jsonl', &raku-from-lines) !! Nil;
+my &codec-to-jsonl   = &codec-maker ?? codec-or-nil('to-jsonl',   &raku-to-lines)   !! Nil;
 
 sub engine-normalises(--> Bool) {
     my $s = try engine-from-json("\"a\x5Cu0301\"");
@@ -224,6 +260,59 @@ sub to-json($obj, *%opt) {
     raku-to($obj, |%opt)
 }
 
+# ---- JSON Lines ---------------------------------------------------------------
+#
+# Off Raku++, a window is from-json for each line — so each line takes this
+# engine's fastest parse — and to-json(:!pretty) for each value. A line that
+# from-json refuses is numbered here; anything else unusual (an adverb, a
+# source that is neither Blob nor Str) is the Raku implementation's to answer,
+# so its refusals are the same on every path. On Raku++ the codec routine is
+# handed out instead (%IMPL), and none of this runs.
+
+# Blank is spaces and tabs only: .trim alone would also take U+00A0, which
+# from-json refuses. It decides only when the exact test needs to run.
+sub blank-line(Str $l --> Bool) {
+    !$l.chars || ($l.trim eq '' && $l !~~ / <-[\ \t]> /)
+}
+# The CATCH in a sub of its own, so the loop enters no extra frame per line.
+sub jsonl-value(Str $l, Int $line, %opt) {
+    CATCH {
+        default {
+            load-raku() unless &raku-from-jsonl;
+            ::('X::JSON::Native::Line').new(:$line, :exception($_)).throw
+        }
+    }
+    from-json($l, |%opt)
+}
+
+sub from-jsonl($source, *%opt) {
+    choose() unless $PARSE;
+    return raku-from-lines($source, |%opt)
+      if $PARSE eq 'raku' || $source !~~ Blob|Str || (%opt && (%opt.elems > 1 || !(%opt<immutable>:exists)));
+    my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source;
+    my @values;
+    my int $line = 0;
+    for $text.lines -> $l {
+        $line = $line + 1;
+        @values.push: jsonl-value($l, $line, %opt) unless blank-line($l);
+    }
+    %opt<immutable> ?? @values.List !! @values
+}
+
+sub to-jsonl(@values, *%opt) {
+    choose() unless $PARSE;
+    return raku-to-lines(@values, |%opt)
+      if $WRITE eq 'raku' || %opt<pretty> || %opt.keys.first({ $_ ne 'pretty' && !%WRITES{$_} }).defined
+         || (%opt<spacing>:exists) || (%opt<level>:exists);
+    %opt<pretty>:delete;
+    my str @out;
+    for @values -> \v {
+        @out.push: to-json(v, :!pretty, |%opt);
+        @out.push: "\n";
+    }
+    @out.join
+}
+
 # ===========================================================================
 # What `use` hands out.
 #
@@ -242,8 +331,10 @@ sub exported() { PROCESS::<%DATA-NATIVE-EXPORTED> //= {} }
 
 # Where the engine's codec routine parses (or writes), IT is what is handed out
 # — not from-json/to-json above, which would put a Raku frame in front.
-my %IMPL = 'from-json'    => ($PARSE && $PARSE eq 'engine' && &codec-from-json ?? &codec-from-json !! &from-json),
-           'to-json'      => ($WRITE && $WRITE eq 'engine' && &codec-to-json   ?? &codec-to-json   !! &to-json),
+my %IMPL = 'from-json'    => ($PARSE && $PARSE eq 'engine' && &codec-from-json  ?? &codec-from-json  !! &from-json),
+           'to-json'      => ($WRITE && $WRITE eq 'engine' && &codec-to-json    ?? &codec-to-json    !! &to-json),
+           'from-jsonl'   => ($PARSE && $PARSE eq 'engine' && &codec-from-jsonl ?? &codec-from-jsonl !! &from-jsonl),
+           'to-jsonl'     => ($WRITE && $WRITE eq 'engine' && &codec-to-jsonl   ?? &codec-to-jsonl   !! &to-jsonl),
            'json-backend' => &json-backend;
 
 my @NAMES = %IMPL.keys.sort;
@@ -277,11 +368,17 @@ sub EXPORT(*@args) {
         my $immutable = %default<immutable>;
         my &f = %IMPL<from-json>;
         %subs<from-json> = sub from-json(Str() $text, *%opt) { f($text, :$immutable, |%opt) };
+        my &fl = %IMPL<from-jsonl>;
+        %subs<from-jsonl> = sub from-jsonl($source, *%opt) { fl($source, :$immutable, |%opt) };
     }
     if (%default<pretty>:exists) || (%default<sorted-keys>:exists) || (%default<enums-as-value>:exists) {
         my %d = %default<pretty sorted-keys enums-as-value>:p;
         my &t = %IMPL<to-json>;
         %subs<to-json> = sub to-json($obj, *%opt) { t($obj, |%d, |%opt) };
+        # JSON Lines has one layout: <pretty> does not reach to-jsonl
+        my %dl = %default<sorted-keys enums-as-value>:p;
+        my &tl = %IMPL<to-jsonl>;
+        %subs<to-jsonl> = sub to-jsonl(@values, *%opt) { tl(@values, |%dl, |%opt) };
     }
     Map.new(@want.map({ "&$_" => %subs{$_} }))
 }
