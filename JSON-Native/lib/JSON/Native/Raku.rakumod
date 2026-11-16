@@ -466,7 +466,15 @@ module JSON::Native::Raku {
     # through every call. Declarations sit outside loop bodies on purpose: a
     # block that declares nothing is flattened into its routine, one that
     # does is a frame entered per iteration.
-    our sub from-json(Str() $text, :$immutable, :$allow-jsonc) {
+    # A path or a handle is read, not stringified — the same interface the
+    # module's own from-json offers, since this one is documented to match it
+    # exactly and is what other engines get as the whole module.
+    our proto from-json(|) {*}
+
+    multi from-json(IO::Path:D $path, *%opt)   { from-json($path.slurp, |%opt) }
+    multi from-json(IO::Handle:D $fh, *%opt)   { from-json($fh.slurp,   |%opt) }
+
+    multi from-json(Str() $text, :$immutable, :$allow-jsonc) {
         my str $t = $text;
         my int $n = $t.chars;
         my int $pos = 0;

@@ -5,7 +5,9 @@ program, as fast as that engine allows.
 
 ## Version
 
-**0.1.0** 
+**0.3.0** — `json-each` and `json-stream` read JSON Lines a window at a time,
+in bounded memory. `from-json` reads an `IO::Path` or `IO::Handle` instead of
+stringifying it (0.2.0).
 
 The interface below is implemented and tested on Rakudo, Raku++ and mutsu.
 
@@ -22,6 +24,13 @@ say to-json($data, :!pretty);    # one line
 say to-json($data, :sorted-keys);
 
 say json-backend;                # which path parses on this engine
+
+my $conf = from-json('config.json'.IO);   # a path is read, not stringified
+
+# JSON Lines, a window at a time: memory set by the window, not the file
+json-each('events.jsonl'.IO, on-chunk => -> @events {
+    .<status>.say for @events;
+});
 ```
 
 ## Description
@@ -72,10 +81,16 @@ mzef install JSON::Native
 ### from-json
 
 ```raku
-from-json(Str() $text, :$immutable, :$allow-jsonc)
+from-json(Str() $text,     :$immutable, :$allow-jsonc)
+from-json(IO::Path $file,  :$immutable, :$allow-jsonc)   # read, not stringified
+from-json(IO::Handle $fh,  :$immutable, :$allow-jsonc)   # left open for its owner
 ```
 
-Parses one JSON document and returns its value:
+Parses one JSON document and returns its value. A path or a handle is read —
+`from-json($file.IO)` parses the file rather than its name — which is what
+CSV::Native's `from-csv` takes too. Anything else still coerces through
+`Str()`, so `from-json(42)` is `42` and `from-json(Mu)` is a type-check
+failure, unchanged.
 
 | JSON | Raku |
 |---|---|
@@ -122,6 +137,85 @@ diagnostics; nothing else depends on it.
 `use JSON::Native <immutable !pretty sorted-keys enums-as-value>` changes the
 defaults of the subs it hands out (`!` turns an option off); an adverb at the
 call still wins.
+
+## Streaming JSON Lines
+
+`from-json` has to hold a whole document, because a JSON document is one
+value. [JSON Lines](https://jsonlines.org) — one document per line — is the
+shape that *can* be read a piece at a time, and `json-each` reads it a window
+at a time, so memory is set by the window rather than by the file:
+
+```raku
+# a file too big to hold: one window at a time, bounded memory
+json-each("events.jsonl".IO, on-chunk => -> @events {
+    for @events -> %e { %count{%e<status>}++ }
+});
+
+# or as a lazy sequence of values
+for json-stream("events.jsonl".IO) -> %e { ... }
+my $first = json-stream("events.jsonl".IO).first(*<status> == 500);
+```
+
+Both take a `Str`, an `IO::Path` or an `IO::Handle`, pass `:immutable` and
+`:allow-jsonc` through to the parser, and add two options of their own:
+
+| option | default | meaning |
+|---|---|---|
+| `:bytes` | 64Ki | bytes read at a time: the window |
+| `:workers` | 1 | windows parsed in parallel |
+
+Each value is what `from-json` returns for that line, parsed by whichever
+backend this engine chose. A malformed line fails with a message naming its
+line number. Blank and whitespace-only lines are skipped, CRLF endings are
+accepted, and a file need not end with a newline.
+
+### Measured
+
+200 MB of JSONL, 1,398,000 records, counting one field per record. Raku++
+5.8.0, arm64 macOS.
+
+| | time | peak |
+|---|---:|---:|
+| whole file (`slurp`, wrap in an array, `from-json`) | 3.5s | 2743 MiB |
+| `json-each` | 4.8s | **30 MiB** |
+| `json-each :workers(2)` | **2.4s** | 57 MiB |
+| `json-each :workers(4)` | 2.2s | 67 MiB |
+| `json-stream` | 6.4s | 1913 MiB |
+
+`json-each` is flat in the file: 29 MiB at 100 MB against 30 MiB at 200 MB,
+where the whole-file read doubles. From two workers up it is also faster in
+wall time than reading the whole file, on **one fiftieth** of the memory.
+
+Two things paid for most of that, and neither is what it looks like from the
+code:
+
+- **The window wants to be small.** 64 KiB is both quicker and lighter than
+  4 MiB — 4.8s/30 MiB against 5.0s/284 MiB on one thread — because a window's
+  decoded text and the lines split out of it are walked several times, and once
+  they stop fitting in cache every pass pays. Below about 32 KiB per-window
+  overhead takes over instead. A bigger window does parallelise better, though,
+  so **raise `:bytes` if you raise `:workers` a long way**; at these sizes two
+  workers is already most of the gain.
+- **Framing cost more than parsing.** Splitting a window and picking the
+  documents out of it took 1.8s against 1.1s to parse them, for 699,000 lines.
+  `parse-window` in `JSON::Native::Lines` carries the measurements; the short
+  version is that on Raku++ a `for` loop beats an indexed `while`, `.trim`
+  beats reading the first codepoint with `.ord`, and `:=` costs more than `=`.
+
+**`json-stream` is not bounded on Raku++ 5.8.0.** It reads in windows, but
+hands the values back as a `Seq`, and a `Seq` there retains every value it
+yields ([rakupp #263](https://github.com/ash/rakupp/issues/263)) — which is
+why the table above shows it tracking the file. It is flat on Rakudo. For a
+file you cannot hold on Raku++, use `json-each`.
+
+### What it does not do
+
+A document whose top level is a single array (`[{…},{…},…]`, all one value,
+newlines or not) is **not** JSONL and is not streamed — `json-each` would see
+one malformed line. Splitting such a file needs an incremental parser that
+can yield at each element, which this does not have; `from-json` holds it
+whole. The distinction is whether a newline ends a document, and in JSONL it
+always does, because JSON forbids a raw newline inside a string.
 
 ## Backends
 
@@ -280,17 +374,38 @@ JSON_NATIVE_BACKEND=raku raku my-program.raku
   name (`JSON::Native::Raku::from-json`); exporting would let a runtime load
   of it put its subs over a program's own on an engine whose `require`
   imports.
+- **`from-json` holds the whole document.** A JSON document is one value, so
+  it cannot be handed back a piece at a time; `from-json` returns the complete
+  structure or nothing. For JSON **Lines** — one document per line — there is
+  `json-each`, which is bounded; see [Streaming JSON Lines](#streaming-json-lines).
+  A single huge document, including one whose top level is an array, still has
+  to be held, and peak memory is a multiple of the file:
+
+  | file | Raku++ (`engine`) | Rakudo (`rakudo`) |
+  |---|---:|---:|
+  | 100 MB | 1120 MiB (~11×) | 2060 MiB (~20×) |
+  | 200 MB | 2179 MiB (~11×) | 3966 MiB (~20×) |
+
+  Reading alone accounts for part of it — `.slurp` of the 200 MB file is
+  780 MiB on Raku++ and 1492 MiB on Rakudo — and the parsed structure is the
+  rest. So budget roughly ten to twenty times the file. (Measured on arm64
+  macOS, Raku++ 5.8.0 and Rakudo v2026.05, on an array of 1.2 million small
+  objects.)
 
 ## Compatibility
 
-| engine | version | backend | 01-parse | 02-write | 03-backends | 04-json-fast | 05-drop-in |
-|---|---|---|---:|---:|---:|---:|---:|
-| Rakudo | v2026.09 | `rakudo` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 |
-| Rakudo | v2026.09 | `raku` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 |
-| Raku++ | 5.3.0-83 | `engine` | 24/24 | 28/28 | 7/7 | skipped | 6/6 |
-| Raku++ | 5.3.0-83 | `raku` | 24/24 | 28/28 | 7/7 | skipped | 6/6 |
-| mutsu | 2026.07 | `json-fast` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 |
-| mutsu | 2026.07 | `raku` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 |
+| engine | version | backend | 01-parse | 02-write | 03-backends | 04-json-fast | 05-drop-in | 06-io | 07-lines |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Rakudo | v2026.05 | `rakudo` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 | 13/13 | 92/92 |
+| Rakudo | v2026.05 | `raku` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 | 13/13 | 92/92 |
+| Raku++ | 5.8.0 | `engine` | 24/24 | 28/28 | 7/7 | skipped | 6/6 | 13/13 | 92/92 |
+| Raku++ | 5.8.0 | `raku` | 24/24 | 28/28 | 7/7 | skipped | 6/6 | 13/13 | 92/92 |
+| mutsu | 2026.07 | `json-fast` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 | — | — |
+| mutsu | 2026.07 | `raku` | 24/24 | 28/28 | 7/7 | 8/8 | 6/6 | — | — |
+
+The Rakudo and Raku++ rows are from the versions named, on arm64 macOS. The
+mutsu rows are from an earlier run on 2026.07 and predate `t/06-io.t` and
+`t/07-lines.t`.
 
 ## See also
 

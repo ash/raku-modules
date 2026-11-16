@@ -13,6 +13,7 @@
   "name": "JSON::Native",
   "provides": {
     "JSON::Native": "lib/JSON/Native.rakumod",
+    "JSON::Native::Lines": "lib/JSON/Native/Lines.rakumod",
     "JSON::Native::Raku": "lib/JSON/Native/Raku.rakumod",
     "JSON::Native::Rakudo": "lib/JSON/Native/Rakudo.rakumod"
   },
@@ -32,5 +33,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "0.1.0"
+  "version": "0.3.0"
 }
