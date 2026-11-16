@@ -203,10 +203,19 @@ sub json-backend(Bool :$write) {
     $write ?? $WRITE !! $PARSE
 }
 
+# A path is READ, and a handle read to its end and left open for its owner;
+# anything else binds through Str(), as JSON::Fast takes it — so from-json(Mu)
+# is still the failure naming $text. from-json("doc.json".IO) used to parse
+# the NAME and point its error at a letter of it (rakupp issue 267), where
+# CSV::Native's from-csv has always read a path.
+sub from-json(Mu \source, *%opt) {
+    from-json-text(source ~~ IO::Path | IO::Handle ?? source.slurp !! source, |%opt)
+}
+
 # The adverbs are checked with `!%opt` and a lookup rather than a set
 # difference (4.7 µs a call on Rakudo, most of a small parse), and no `try`
 # here `return`s from inside itself (34 µs on Raku++ 5.3).
-sub from-json(Str() $text, *%opt) {
+sub from-json-text(Str() $text, *%opt) {
     choose() unless $PARSE;
     my $parsed;
     my $ok = False;
@@ -272,8 +281,11 @@ sub to-json($obj, *%opt) {
 # on every path, and the same hand-over the Raku++ codec makes. On Raku++ the
 # codec routine is handed out instead (%IMPL), and none of this runs.
 
-sub from-jsonl($source, *%opt) {
+sub from-jsonl($input, *%opt) {
     choose() unless $PARSE;
+    # a path or handle is read here, once — a handle cannot be read twice, so
+    # any hand-over below gets what was read, never the handle
+    my $source = $input ~~ IO::Path ?? $input.slurp(:bin) !! $input ~~ IO::Handle ?? $input.slurp !! $input;
     # Rakudo's parser takes no adverbs; JSON::Fast takes :immutable
     my $parse = $PARSE eq 'rakudo'    && !%opt ?? -> $l { $RAKUDO-JSON.from-json($l) }
               !! $PARSE eq 'json-fast' && (!%opt || %opt.elems == 1 && (%opt<immutable>:exists))
@@ -375,7 +387,7 @@ sub EXPORT(*@args) {
     if %default<immutable>:exists {
         my $immutable = %default<immutable>;
         my &f = %IMPL<from-json>;
-        %subs<from-json> = sub from-json(Str() $text, *%opt) { f($text, :$immutable, |%opt) };
+        %subs<from-json> = sub from-json(Mu \text, *%opt) { f(text, :$immutable, |%opt) };
         my &fl = %IMPL<from-jsonl>;
         %subs<from-jsonl> = sub from-jsonl($source, *%opt) { fl($source, :$immutable, |%opt) };
     }

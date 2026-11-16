@@ -112,6 +112,12 @@ gives you the engine's CSV and C<JSON::Native>'s JSON, as it should.
 
 my (&f-from-json, &f-to-json);
 { use JSON::Fast; &f-from-json = &from-json; &f-to-json = &to-json; }
+# A path is READ, and a handle read to its end and left open, as JSON::Native's
+# from-json and the engine's codec read them (rakupp issue 267): JSON::Fast's
+# Str() would parse the path's NAME. Anything else is JSON::Fast's, unchanged.
+my &f-from-json-io = sub from-json(Mu \source, *%opt) {
+    f-from-json(source ~~ IO::Path | IO::Handle ?? source.slurp !! source, |%opt)
+};
 
 # JSON Lines has no reference module but JSON::Native's: its contract is
 # JSON::Native::Raku's from-jsonl / to-jsonl, and X::JSON::Native::Line is
@@ -122,7 +128,9 @@ need JSON::Native::Raku;
 # One `try` around the loop, not a CATCH per line: anything it does not
 # answer cleanly goes WHOLE to JSON::Native::Raku's from-jsonl, which numbers
 # a refused line — the hand-over JSON::Native and the Raku++ codec make too.
-my &f-from-jsonl = sub from-jsonl($source, :$immutable) {
+my &f-from-jsonl = sub from-jsonl($input, :$immutable) {
+    # read once, so a hand-over gets what a handle gave, never the handle
+    my $source = $input ~~ IO::Path ?? $input.slurp(:bin) !! $input ~~ IO::Handle ?? $input.slurp !! $input;
     my $values;
     try {
         my Str $text = $source ~~ Blob ?? $source.decode('utf-8') !! $source.Str;
@@ -345,7 +353,7 @@ my %TAGS =
     json => {
         names => <from-json to-json from-jsonl to-jsonl>,
         needs => 'JSON::Fast',
-        via   => { 'from-json' => &f-from-json, 'to-json' => &f-to-json,
+        via   => { 'from-json' => &f-from-json-io, 'to-json' => &f-to-json,
                    'from-jsonl' => &f-from-jsonl, 'to-jsonl' => &f-to-jsonl },
         back  => sub () { 'JSON::Fast' },
     },

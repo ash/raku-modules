@@ -77,10 +77,16 @@ mzef install JSON::Native
 ### from-json
 
 ```raku
-from-json(Str() $text, :$immutable, :$allow-jsonc)
+from-json(Str() $text,    :$immutable, :$allow-jsonc)
+from-json(IO::Path $file, :$immutable, :$allow-jsonc)   # read, not stringified
+from-json(IO::Handle $fh, :$immutable, :$allow-jsonc)   # read to its end, left open
 ```
 
-Parses one JSON document and returns its value:
+Parses one JSON document and returns its value. A path is read and a handle
+read to its end, as `from-csv` reads them, and the handle stays open for its
+owner; anything else is taken through `Str()`, as JSON::Fast takes it. (JSON::Fast
+itself would parse a path's *name*, so `from-json($file.IO)` is the one call
+where the two differ.)
 
 | JSON | Raku |
 |---|---|
@@ -119,7 +125,8 @@ from-jsonl($source, :$immutable)
 ```
 
 Parses JSON Lines: one JSON value a line. `$source` is a `Blob`, decoded as
-UTF-8, or a `Str`, and is split into lines as `.lines` splits it — at `\n`,
+UTF-8, a `Str`, or an `IO::Path` or `IO::Handle`, read as `from-json` reads
+them, and is split into lines as `.lines` splits it — at `\n`,
 `\r\n` or a lone `\r` — so CRLF files need no preparing. A line of nothing
 but spaces and tabs yields nothing. Every other line gives exactly what
 `from-json` gives for it, so the result is an `Array` of those values, or a
