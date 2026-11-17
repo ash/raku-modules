@@ -1,12 +1,13 @@
-# Writes the shared sample data: the same records as <name>.csv and
-# <name>.json, for small (100), medium (10,000) and large (100,000) records.
+# Writes the shared sample data: the same records as <name>.csv,
+# <name>.json and <name>.jsonl (JSON Lines: one object a line), for small
+# (100), medium (10,000) and large (100,000) records.
 # Seeded with our own generator, so every run on every engine writes the same
 # bytes, and every value is made up: the files contain nobody's data.
 #
 #   raku gen.raku                  # small, medium and large
-#   raku gen.raku 1000000 huge     # huge.csv and huge.json, 1,000,000 records
+#   raku gen.raku 1000000 huge     # huge.csv, .json and .jsonl, 1,000,000 records
 #
-# Both files are written by hand, not by a CSV or JSON module, so that what
+# All three are written by hand, not by a CSV or JSON module, so that what
 # is being tested is never what produced the input.
 
 my %sizes = small => 100, medium => 10_000, large => 100_000;
@@ -136,5 +137,6 @@ for %sizes.sort(*.value) -> $size {
     }
     "$name.csv".IO.spurt(@csv.join("\n") ~ "\n");
     "$name.json".IO.spurt("[\n" ~ @json.join(",\n") ~ "\n]\n");
-    say "$name: $count records, $name.csv {"$name.csv".IO.s} bytes, $name.json {"$name.json".IO.s} bytes";
+    "$name.jsonl".IO.spurt(@json.join("\n") ~ "\n");
+    say "$name: $count records, " ~ <csv json jsonl>.map({ "$name.$_ {"$name.$_".IO.s} bytes" }).join(', ');
 }
